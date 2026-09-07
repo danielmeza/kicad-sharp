@@ -234,15 +234,19 @@ and, where a number is quoted, measured against the KiCad 10 corpus.
 **IPC surface.**
 
 - **No schematic access at all** (see above).
-- **~25 board commands in the vendored protos are not wrapped.** `Board` surfaces 15. Missing, among
-  others: `GetNets`, `GetItemsByNet`, `GetItemsByNetClass`, `GetConnectedItems`,
-  `GetNetClassForNets`, `GetBoardOrigin`/`SetBoardOrigin`, `GetBoardLayerName`,
-  `GetBoardLayerByName`, `GetVisibleLayers`/`SetVisibleLayers`,
-  `GetBoardEnabledLayers`/`SetBoardEnabledLayers`, `GetBoardStackup`/`UpdateBoardStackup`,
-  `GetGraphicsDefaults`, `GetPadShapeAsPolygon`, `FlipItems`, `InteractiveMoveItems`, and the
-  editor-level `AddToSelection`, `RemoveFromSelection`, `HitTest`, `GetBoundingBox`,
-  `GetTitleBlockInfo`/`SetTitleBlockInfo`, `SaveSelectionToString`,
-  `ParseAndCreateItemsFromString`. Send them by hand with `KiCadIPCClient.Send<TResult>`.
+- **Most of the vendored command surface is not wrapped.** `Board` sends 15 command messages
+  (counted in `Board.cs`), of which only `RefillZones`, `GetActiveLayer` and `SetActiveLayer` come
+  from `board_commands.proto` — that file declares **26** commands. Not wrapped anywhere:
+  `GetNets`, `GetItemsByNet`, `GetItemsByNetClass`, `GetConnectedItems`, `GetNetClassForNets`,
+  `GetBoardOrigin`/`SetBoardOrigin`, `GetBoardLayerName`, `GetBoardLayerByName`,
+  `GetVisibleLayers`/`SetVisibleLayers`, `GetBoardEnabledLayers`/`SetBoardEnabledLayers`,
+  `GetBoardStackup`/`UpdateBoardStackup`, `GetGraphicsDefaults`, `GetPadShapeAsPolygon`,
+  `CheckPadstackPresenceOnLayers`, `InjectDrcError`, `FlipItems`, `InteractiveMoveItems`,
+  `GetBoardEditorAppearanceSettings`/`SetBoardEditorAppearanceSettings`, and from
+  `editor_commands.proto`: `GetItemsById`, `GetBoundingBox`, `AddToSelection`,
+  `RemoveFromSelection`, `HitTest`, `GetTitleBlockInfo`/`SetTitleBlockInfo`,
+  `SaveSelectionToString`, `ParseAndCreateItemsFromString`. Send them by hand with
+  `KiCadIPCClient.Send<TResult>` — the message types are all in `KiCadSharp.Protos`.
 - **`KiCad.RefreshPaths()` and `KiCad.ImportLibrary(...)` are no-ops.** The commands they would send
   do not exist in KiCad's IPC API; the methods return `ValueTask.CompletedTask` and do nothing. A
   `GetPath(PathType)` is commented out for the same reason.
