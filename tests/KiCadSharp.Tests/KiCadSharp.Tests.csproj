@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/KiCadSharp/KiCadSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- The fixtures are real KiCad 10 files, copied verbatim from the orbion-kicad repository. They
+       are the measurements in the assertions: orbion.kicad_sym is 108,583 bytes with 35 symbols and
+       112 pins, and duplicate-refs/ is the hierarchy that produces duplicate reference designators.
+       Copied to the output directory rather than embedded so a test can also hand a path to
+       kicad-cli. -->
+  <ItemGroup>
+    <None Include="data/**/*" CopyToOutputDirectory="PreserveNewest" LinkBase="data" />
+  </ItemGroup>
+
+</Project>

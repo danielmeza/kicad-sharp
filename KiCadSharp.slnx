@@ -3,6 +3,9 @@
     <Project Path="src/KiCadSharp/KiCadSharp.csproj" />
     <Project Path="src/KiCadSharp.Protos/KiCadSharp.Protos.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/KiCadSharp.Tests/KiCadSharp.Tests.csproj" />
+  </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/KiCadSharp.Cli/KiCadSharp.Cli.csproj" />
   </Folder>
