@@ -26,7 +26,14 @@ SExpressions. The schematic side of KiCad's IPC API does not answer on KiCad 10;
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
-    <PackageReference Include="Rebus.nng" />
+    <!-- IncludeAssets, not the default: nng.NET 1.4.0-rc0 ships its assemblies twice, under
+         runtimes/ and again in the legacy NuGet content/ folder. Content flows into the package of
+         whatever references it, so packing KiCadSharp raised NU5118 for every one of them, the same
+         nng.NET.dll offered from two places at once. Rebus.nng absorbed that by being the package
+         that referenced nng.NET; referencing it directly exposes it. Naming the assets we actually
+         consume leaves the content behind. -->
+    <PackageReference Include="nng.NET" IncludeAssets="compile;runtime;native" />
+    <PackageReference Include="nng.NET.Shared" IncludeAssets="compile;runtime;native" />
     <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 

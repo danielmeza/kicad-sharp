@@ -32,7 +32,12 @@
          Rebus 8.6.1, which meant the build depended on somebody else's dependency choice; it is
          declared here at the version that was already resolving. -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageVersion Include="Rebus.nng" Version="8.6.1" />
+    <!-- The nng bindings the IPC client is built on. These used to arrive through Rebus.nng, a
+         transport adapter for the Rebus message bus: it brought the bindings, and it also brought
+         Rebus itself and Newtonsoft.Json, neither of which this library references. Nothing in
+         src/ or tools/ has a `using Rebus`. -->
+    <PackageVersion Include="nng.NET" Version="1.4.0-rc0" />
+    <PackageVersion Include="nng.NET.Shared" Version="1.4.0-rc0" />
   </ItemGroup>
 
   <ItemGroup>
