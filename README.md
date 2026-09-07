@@ -303,7 +303,24 @@ What is still missing here:
 
 **IPC surface.**
 
-- **No schematic access at all** (see above).
+- **The schematic half of the IPC API is not there in KiCad 10.0.6, and this is what that looks
+  like.** Measured against `eeschema` in the release container, with a schematic open:
+
+  ```
+  Ping        -> AS_UNHANDLED  "no handler available for request of type kiapi.common.commands.Ping"
+  GetVersion  -> AS_UNHANDLED  "no handler available for request of type kiapi.common.commands.GetVersion"
+  GetOpenDocuments(DOCTYPE_SCHEMATIC) -> 1 document
+  ```
+
+  So `eeschema` does answer — it is not deaf, and a timeout is not the symptom to look for. It
+  registers a handler set of nearly nothing: even `Ping` and `GetVersion`, which `pcbnew` answers,
+  come back `AS_UNHANDLED`. `GetOpenDocuments` is the one command in this library that works
+  against it. `schematic_commands.proto` carries no message for a symbol, wire, junction or sheet,
+  so there is nothing to wrap even by hand. **Read and write schematics on disk**, through
+  `KiCadSchematic` and `SchematicAnnotator`; the IPC route is a KiCad 11 story.
+
+  `scripts/kicad-ipc-container.sh start sheet.kicad_sch` starts `eeschema` instead of `pcbnew` if
+  you want to watch this for yourself.
 - **Most of the vendored command surface is not wrapped.** `Board` sends 15 command messages
   (counted in `Board.cs`), of which only `RefillZones`, `GetActiveLayer` and `SetActiveLayer` come
   from `board_commands.proto` — that file declares **26** commands. Not wrapped anywhere:

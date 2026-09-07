@@ -6,7 +6,8 @@
 # out so a test process on the host can dial it. A unix socket on a bind mount works across the
 # container boundary -- same kernel, same inode.
 #
-#   eval "$(scripts/kicad-ipc-container.sh start)"   # exports KICADSHARP_IPC_SOCKET
+#   eval "$(scripts/kicad-ipc-container.sh start board.kicad_pcb)"   # exports KICADSHARP_IPC_SOCKET
+#   eval "$(scripts/kicad-ipc-container.sh start sheet.kicad_sch)"   # eeschema instead of pcbnew
 #   dotnet test KiCadSharp.slnx -c Release
 #   scripts/kicad-ipc-container.sh stop
 #
@@ -67,10 +68,18 @@ dismiss_first_run() {
   "$RUNTIME" exec "$CONTAINER" bash -c '
     export DISPLAY=:99
     for attempt in 1 2 3 4 5 6; do
-      window=$(xdotool search --name "^KiCad Setup$" 2>/dev/null | head -1)
+      window=$(xdotool search --name "^(KiCad Setup|Information|Load Schematic)$" 2>/dev/null | head -1)
       [ -z "$window" ] && exit 0
       eval $(xdotool getwindowgeometry --shell "$window")
-      xdotool mousemove --sync $((X + 532)) $((Y + 388)) click 1
+
+      # Two candidate button positions, clicked in turn. The wizard is a fixed 680x416 with
+      # "Next >" at 148px in from the right edge; the small "Information" / "Load Schematic"
+      # dialogs put their one button in the middle. Clicking dead space costs nothing, and this
+      # beats guessing one point that fits both -- the midpoint of the wizard lands between
+      # "< Back" and "Next >" and dismisses nothing, which is how this was got wrong once already.
+      xdotool mousemove --sync $((X + WIDTH - 148)) $((Y + HEIGHT - 28)) click 1
+      sleep 1
+      xdotool mousemove --sync $((X + WIDTH / 2)) $((Y + HEIGHT - 30)) click 1
       sleep 2
     done
   ' 2>/dev/null || true
@@ -83,10 +92,21 @@ start() {
   if [[ -n "$board" ]]; then
     cp "$board" "$PROJECT/"
   fi
+  # Which editor to run follows the file. pcbnew answers the whole common command set; eeschema
+  # answers almost none of it -- see the README -- but it is still the only way to reach a
+  # schematic over IPC at all, so the harness can start it.
   shopt -s nullglob
-  local boards=("$PROJECT"/*.kicad_pcb)
+  local documents=("$PROJECT"/*.kicad_pcb "$PROJECT"/*.kicad_sch)
   shopt -u nullglob
-  [[ ${#boards[@]} -gt 0 ]] || { log "no .kicad_pcb in $PROJECT; pass one to 'start'"; return 1; }
+  [[ ${#documents[@]} -gt 0 ]] || { log "no .kicad_pcb or .kicad_sch in $PROJECT; pass one to 'start'"; return 1; }
+
+  local target="${documents[0]}"
+  if [[ -n "$board" ]]; then
+    target="$PROJECT/$(basename "$board")"
+  fi
+
+  local editor=pcbnew
+  [[ "$target" == *.kicad_sch ]] && editor=eeschema
 
   # A previous run that did not shut down cleanly leaves a lock file, and KiCad then opens a modal
   # "File Open Warning" -- which is another way to get AS_NOT_READY forever.
@@ -104,7 +124,7 @@ start() {
       Xvfb :99 -screen 0 1280x1024x24 >/dev/null 2>&1 &
       sleep 2
       export DISPLAY=:99
-      exec pcbnew '/project/$(basename "${boards[0]}")'
+      exec $editor '/project/$(basename "$target")'
     " >/dev/null
 
   local socket="$SOCKET/api.sock"
