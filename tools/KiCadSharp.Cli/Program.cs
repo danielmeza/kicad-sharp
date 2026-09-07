@@ -57,10 +57,10 @@ namespace KiCadSharp.Cli
 
             var scan = SourceScanner.Scan(text);
 
-            SExpressionDocument document;
+            SDocument document;
             try
             {
-                document = SExpressionSource.ReadText(text);
+                document = new SExpressionParser().ParseAll(text);
             }
             catch (FormatException ex)
             {
@@ -95,7 +95,6 @@ namespace KiCadSharp.Cli
                     ["nodes"] = nodes,
                     ["values"] = values,
                     ["depth"] = depth,
-                    ["multiFormApiAvailable"] = SExpressionSource.SupportsMultipleForms,
                     ["topLevelHeads"] = ToHeadList(heads),
                 };
 
@@ -157,10 +156,10 @@ namespace KiCadSharp.Cli
 
             var scan = SourceScanner.Scan(text);
 
-            SExpressionDocument document;
+            SDocument document;
             try
             {
-                document = SExpressionSource.ReadText(text);
+                document = new SExpressionParser().ParseAll(text);
             }
             catch (FormatException ex)
             {
@@ -179,10 +178,10 @@ namespace KiCadSharp.Cli
 
             // Re-parse the output and compare the trees. A pretty printer is allowed to move whitespace;
             // it is not allowed to change the tree.
-            SExpressionDocument reparsed;
+            SDocument reparsed;
             try
             {
-                reparsed = SExpressionSource.ReadText(formatted);
+                reparsed = new SExpressionParser().ParseAll(formatted);
             }
             catch (FormatException ex)
             {
@@ -211,12 +210,14 @@ namespace KiCadSharp.Cli
                 return ExitOk;
             }
 
-            // Refuse to write back anything the round trip would silently drop.
-            if (!document.AllFormsRead && scan.TopLevelForms > document.Forms.Count)
+            // Refuse to write back anything the round trip would silently drop. ParseAll always
+            // returns every form now, so a shortfall here means the parser and the scanner disagree
+            // about the file - a real defect, not a missing API.
+            if (scan.TopLevelForms > document.Forms.Count)
             {
                 Console.Error.WriteLine(
-                    $"{file.FullName}: refusing --in-place. The file has {scan.TopLevelForms} top-level forms but the " +
-                    $"installed SExpressions only returns the first, so writing back would delete the rest.");
+                    $"{file.FullName}: refusing --in-place. The scanner found {scan.TopLevelForms} top-level forms but " +
+                    $"the parser returned {document.Forms.Count}, so writing back would delete the difference.");
                 return ExitProblemFound;
             }
 
@@ -263,10 +264,10 @@ namespace KiCadSharp.Cli
 
             var scan = SourceScanner.Scan(text);
 
-            SExpressionDocument document;
+            SDocument document;
             try
             {
-                document = SExpressionSource.ReadText(text);
+                document = new SExpressionParser().ParseAll(text);
             }
             catch (FormatException ex)
             {
@@ -345,10 +346,10 @@ namespace KiCadSharp.Cli
                 failed = true;
             }
 
-            SExpressionDocument? document = null;
+            SDocument? document = null;
             try
             {
-                document = SExpressionSource.ReadText(text);
+                document = new SExpressionParser().ParseAll(text);
             }
             catch (FormatException ex)
             {
@@ -393,17 +394,16 @@ namespace KiCadSharp.Cli
             }
         }
 
-        private static void WarnIfTruncated(SExpressionDocument document, ScanResult scan)
+        private static void WarnIfTruncated(SDocument document, ScanResult scan)
         {
-            if (document.AllFormsRead || scan.TopLevelForms <= document.Forms.Count)
+            if (scan.TopLevelForms <= document.Forms.Count)
             {
                 return;
             }
 
             Console.Error.WriteLine(
-                $"warning: only the first of {scan.TopLevelForms} top-level forms was read. The installed " +
-                $"SExpressions has no ParseAll/ParseAllFile, and Parse returns a single form. " +
-                $"Everything after the first form was ignored.");
+                $"warning: the scanner found {scan.TopLevelForms} top-level forms but the parser returned " +
+                $"{document.Forms.Count}. Everything past the last parsed form was ignored.");
         }
     }
 }
