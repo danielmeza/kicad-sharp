@@ -177,10 +177,8 @@ namespace KiCadSharp.Schematics
         /// <see cref="Symbols"/> is what is actually on the sheet — and the two lists cannot be
         /// confused because the cache is nested one level down.
         /// </remarks>
-        public IReadOnlyList<KiCadSymbol> LibrarySymbols =>
-            Node.GetChild("lib_symbols") is { } cache
-                ? cache.GetChildren("symbol").Select(n => new KiCadSymbol(n)).ToArray()
-                : Array.Empty<KiCadSymbol>();
+        public KiCadNodeList<KiCadSymbol> LibrarySymbols =>
+            new(Node.GetChild("lib_symbols"), "symbol", n => new KiCadSymbol(n));
 
         /// <summary>Gets the symbol cache as a mutable list, adding the <c>(lib_symbols ...)</c> form when the file has none.</summary>
         /// <returns>The live list.</returns>
@@ -190,10 +188,8 @@ namespace KiCadSharp.Schematics
         /// Gets the page numbers this file assigns, one per hierarchical path. On a root sheet the
         /// list holds every path in the design; on a child sheet it holds only <c>"/"</c>.
         /// </summary>
-        public IReadOnlyList<KiCadSheetInstance> SheetInstances =>
-            Node.GetChild("sheet_instances") is { } instances
-                ? instances.GetChildren("path").Select(n => new KiCadSheetInstance(n)).ToArray()
-                : Array.Empty<KiCadSheetInstance>();
+        public KiCadNodeList<KiCadSheetInstance> SheetInstances =>
+            new(Node.GetChild("sheet_instances"), "path", n => new KiCadSheetInstance(n));
 
         /// <summary>Gets the page map as a mutable list, adding the <c>(sheet_instances ...)</c> form when the file has none.</summary>
         /// <returns>The live list.</returns>

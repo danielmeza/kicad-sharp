@@ -83,6 +83,47 @@ public class GettersDoNotModifyTests
     }
 
     [Fact]
+    public void AReadOnlyCollectionOverAMissingForm_ReadsEmptyWithoutCreatingIt()
+    {
+        var schematic = KiCadSchematic.Parse(BareSchematic);
+
+        Assert.Empty(schematic.LibrarySymbols);
+        Assert.Empty(schematic.SheetInstances);
+        Assert.False(schematic.Document.IsModified);
+        Assert.Equal(BareSchematic, schematic.ToText());
+    }
+
+    [Fact]
+    public void ACollectionOverAFormThatExists_IsLiveAndNotASnapshot()
+    {
+        // The first fix for the mutating getter turned these two into `.ToArray()` snapshots.
+        // That stops the write and quietly breaks the contract every other collection in this
+        // library keeps: KiCadNodeList IS the node's children, read at the moment you ask. A
+        // snapshot stops tracking the file, and re-allocates on every property read, so
+        // `for (i..) doc.LibrarySymbols[i]` becomes O(n^2). This is the assertion a snapshot
+        // fails: a reference taken before the addition sees it.
+        var schematic = KiCadSchematic.Load(TestData.Rs485Bridge);
+        var symbols = schematic.LibrarySymbols;
+        var before = symbols.Count;
+
+        schematic.LibrarySymbols.Add().Id = "probe:R";
+
+        Assert.Equal(before + 1, symbols.Count);
+        Assert.Equal("probe:R", symbols[before].Id);
+    }
+
+    [Fact]
+    public void AddingToTheEmptyStandIn_SaysWhatToDoInstead()
+    {
+        var schematic = KiCadSchematic.Parse(BareSchematic);
+
+        var error = Assert.Throws<InvalidOperationException>(() => schematic.LibrarySymbols.Add());
+
+        Assert.Contains("Require", error.Message, StringComparison.Ordinal);
+        Assert.False(schematic.Document.IsModified);
+    }
+
+    [Fact]
     public void ReadingEveryOptionalSubFormOfABoard_LeavesTheFileAlone()
     {
         var board = KiCadBoard.Load(TestData.PowerInputBoard);
