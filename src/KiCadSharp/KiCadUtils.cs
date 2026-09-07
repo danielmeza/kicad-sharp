@@ -24,12 +24,10 @@ namespace KiCadSharp
                 throw new FileNotFoundException($"KiCad symbol library file not found: {filePath}");
             }
 
-            // Use our S-expression parser to load the file
-            var parser = new SExpressionParser();
-            var rootExpression = parser.ParseFile(filePath);
-            
-            // Create a symbol library from the parsed S-expression
-            return new KiCadSymbolLibrary(rootExpression);
+            // Load, not Parse: SExpressionParser.ParseFile returns only the first top-level form
+            // and drops the rest of the file with it. KiCadSymbolLibrary.Load keeps the whole
+            // document, which is what makes an untouched save byte-identical.
+            return KiCadSymbolLibrary.Load(filePath);
         }
 
         /// <summary>
@@ -91,6 +89,91 @@ namespace KiCadSharp
         {
             ArgumentNullException.ThrowIfNull(originalSymbol);
             return originalSymbol.CloneAs(newId);
+        }
+
+        // --------------------------------------------------------------------------- footprints
+
+        /// <summary>
+        /// Parse a KiCad footprint file: a single footprint (<c>.kicad_mod</c>) or a board
+        /// (<c>.kicad_pcb</c>).
+        /// </summary>
+        /// <param name="filePath">Path to the file.</param>
+        /// <returns>The parsed library.</returns>
+        /// <exception cref="FileNotFoundException">The file is not there.</exception>
+        public static KiCadFootprintLibrary ParseFootprintLibrary(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException($"KiCad footprint file not found: {filePath}");
+            }
+
+            return KiCadFootprintLibrary.Load(filePath);
+        }
+
+        /// <summary>
+        /// Export a footprint to its own <c>.kicad_mod</c> file.
+        /// </summary>
+        /// <param name="footprint">Footprint to export.</param>
+        /// <param name="filePath">Path to the output file.</param>
+        /// <remarks>
+        /// The footprint's own bytes are reproduced, so exporting one out of a board and reading it
+        /// back gives the same form the board held — including everything this library does not
+        /// model.
+        /// </remarks>
+        public static void ExportFootprintToFile(KiCadFootprint footprint, string filePath) =>
+            KiCadFootprintLibrary.SaveFootprint(footprint, filePath);
+
+        /// <summary>
+        /// Validate a KiCad footprint file.
+        /// </summary>
+        /// <param name="filePath">Path to the file.</param>
+        /// <returns>True when the file parses and its root form is one KiCad would recognise.</returns>
+        /// <remarks>
+        /// Accepts all three spellings: <c>footprint</c> (KiCad 6+ <c>.kicad_mod</c>), <c>module</c>
+        /// (KiCad 5), and <c>kicad_pcb</c> (a board, which holds footprints as children). A KiCad 5
+        /// <c>module</c> has no <c>version</c> token, so that is only required of the other two.
+        /// </remarks>
+        public static bool ValidateFootprintLibrary(string filePath)
+        {
+            try
+            {
+                var root = SDocument.Load(filePath).Root;
+                if (root is null)
+                {
+                    return false;
+                }
+
+                if (string.Equals(root.Token, "module", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                var isFootprintFile = string.Equals(root.Token, "footprint", StringComparison.Ordinal)
+                    || string.Equals(root.Token, "kicad_pcb", StringComparison.Ordinal);
+
+                return isFootprintFile && root.GetChild("version") is not null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Create a copy of a footprint under a new name.
+        /// </summary>
+        /// <param name="originalFootprint">Footprint to copy.</param>
+        /// <param name="newId">Name for the copy.</param>
+        /// <returns>The copy, with no parent.</returns>
+        /// <remarks>
+        /// A deep copy, for the same reason <see cref="CloneSymbol"/> is: a <see cref="KiCadFootprint"/>
+        /// is a view, so wrapping one node twice would give two handles on one footprint and renaming
+        /// through either would rename the original.
+        /// </remarks>
+        public static KiCadFootprint CloneFootprint(KiCadFootprint originalFootprint, string newId)
+        {
+            ArgumentNullException.ThrowIfNull(originalFootprint);
+            return originalFootprint.CloneAs(newId);
         }
 
         /// <summary>
