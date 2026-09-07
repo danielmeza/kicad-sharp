@@ -15,7 +15,7 @@ jobs:
       # KiCad source tree on every run to obtain 128 KB of files.
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
