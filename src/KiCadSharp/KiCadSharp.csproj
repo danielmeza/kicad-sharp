@@ -9,8 +9,8 @@
     <IsPackable>true</IsPackable>
     <PackageId>KiCadSharp</PackageId>
     <Description>A .NET client for KiCad. Talks to a running KiCad over its nng IPC API to read and edit
-boards, schematics and project settings, and reads the on-disk s-expression formats (symbol and
-footprint libraries, design rules) through SExpressions.</Description>
+boards and project settings, and reads the on-disk s-expression symbol and footprint formats through
+SExpressions. The schematic side of KiCad's IPC API does not answer on KiCad 10; see the README.</Description>
     <PackageTags>kicad;eda;pcb;schematic;footprint;symbol;ipc;nng</PackageTags>
   </PropertyGroup>
 
