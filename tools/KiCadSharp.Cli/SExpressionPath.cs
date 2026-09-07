@@ -22,7 +22,7 @@ namespace KiCadSharp.Cli
     /// </remarks>
     internal static class SExpressionPath
     {
-        public static IReadOnlyList<SExpression> Resolve(SExpressionDocument document, string path)
+        public static IReadOnlyList<SExpression> Resolve(SDocument document, string path)
         {
             var segments = path.Split(new[] { '.', '/' }, StringSplitOptions.RemoveEmptyEntries);
             if (segments.Length == 0)
