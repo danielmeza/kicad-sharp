@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-using SExpressionSharp;
+using SExpressions;
 
 namespace KiCadSharp.Cli
 {
@@ -35,7 +35,7 @@ namespace KiCadSharp.Cli
     /// <remarks>
     /// A .kicad_dru is a <em>sequence</em> of forms, and <c>SExpressionParser.Parse</c> returns only the
     /// first one — 26 KB in, one 12-byte <c>(version 1)</c> out. <c>ParseAll</c>/<c>ParseAllFile</c> are
-    /// being added to SExpressionSharp in a parallel change, so this binds to them by reflection: the CLI
+    /// being added to SExpressions in a parallel change, so this binds to them by reflection: the CLI
     /// compiles and runs against today's library, and picks the multi-form API up automatically once it
     /// ships, without a second implementation of the parser living here.
     /// Collapse this type into a direct <c>ParseAllFile</c> call once that change has landed.
@@ -48,7 +48,7 @@ namespace KiCadSharp.Cli
         private static readonly MethodInfo? ParseAllMethod =
             typeof(SExpressionParser).GetMethod("ParseAll", BindingFlags.Public | BindingFlags.Instance, new[] { typeof(string) });
 
-        /// <summary>True when the referenced SExpressionSharp exposes the multi-form API.</summary>
+        /// <summary>True when the referenced SExpressions exposes the multi-form API.</summary>
         public static bool SupportsMultipleForms => ParseAllFileMethod is not null || ParseAllMethod is not null;
 
         public static SExpressionDocument ReadFile(string path)
@@ -98,7 +98,7 @@ namespace KiCadSharp.Cli
             }
 
             throw new InvalidOperationException(
-                $"SExpressionSharp's ParseAll returned {parseAllResult?.GetType().FullName ?? "null"}, which is not a sequence of SExpression.");
+                $"SExpressions's ParseAll returned {parseAllResult?.GetType().FullName ?? "null"}, which is not a sequence of SExpression.");
         }
     }
 }

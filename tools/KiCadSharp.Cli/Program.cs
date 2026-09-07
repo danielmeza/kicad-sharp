@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-using SExpressionSharp;
+using SExpressions;
 
 namespace KiCadSharp.Cli
 {
@@ -216,7 +216,7 @@ namespace KiCadSharp.Cli
             {
                 Console.Error.WriteLine(
                     $"{file.FullName}: refusing --in-place. The file has {scan.TopLevelForms} top-level forms but the " +
-                    $"installed SExpressionSharp only returns the first, so writing back would delete the rest.");
+                    $"installed SExpressions only returns the first, so writing back would delete the rest.");
                 return ExitProblemFound;
             }
 
@@ -402,7 +402,7 @@ namespace KiCadSharp.Cli
 
             Console.Error.WriteLine(
                 $"warning: only the first of {scan.TopLevelForms} top-level forms was read. The installed " +
-                $"SExpressionSharp has no ParseAll/ParseAllFile, and Parse returns a single form. " +
+                $"SExpressions has no ParseAll/ParseAllFile, and Parse returns a single form. " +
                 $"Everything after the first form was ignored.");
         }
     }

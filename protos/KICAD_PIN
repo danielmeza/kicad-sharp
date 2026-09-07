@@ -1,0 +1,9 @@
+# The KiCad release whose api/proto tree is vendored in this directory.
+#
+# This MUST be a release tag, never a branch: the generated client speaks the wire format of one
+# KiCad version, and tracking a moving branch would silently desynchronise the messages this library
+# sends from the KiCad the user is running.
+#
+# To move the pin: edit both lines, run scripts/sync-protos.sh, and commit the result.
+KICAD_TAG=10.0.6
+KICAD_COMMIT=caf7377e9cb6fa1535ec3596dcb8c99bf44a996e

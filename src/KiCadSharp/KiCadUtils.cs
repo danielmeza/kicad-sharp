@@ -3,7 +3,7 @@ using System.IO;
 
 using KiCadSharp.Documents;
 
-using SExpressionSharp;
+using SExpressions;
 
 namespace KiCadSharp
 {

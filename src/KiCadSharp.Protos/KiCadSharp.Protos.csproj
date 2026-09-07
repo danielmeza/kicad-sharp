@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <RootNamespace>KiCadSharp</RootNamespace>
     <!-- Generated protobuf code is not ours to keep warning-clean. -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -18,23 +17,29 @@ in KiCadSharp's public surface, so consumers have to be able to name them.</Desc
     <PackageTags>kicad;protobuf;ipc;eda;pcb;kiapi</PackageTags>
   </PropertyGroup>
 
-  <!-- The .proto sources come from the `submodules/kicad` git submodule and are compiled in place.
-       An earlier version copied them into obj/proto from a BeforeTargets="Build" target and globbed
-       obj/proto in an ItemGroup; MSBuild evaluates items before any target runs, so the first build
-       of a fresh clone always produced an empty assembly and every Kiapi.* type failed to resolve.
-       Globbing the submodule directly removes that two-pass requirement. -->
+  <!-- The .proto sources are vendored under protos/ at the repository root and pinned to a KiCad
+       release tag by protos/KICAD_PIN. They used to come from a `submodules/kicad` git submodule,
+       which cost a 1.4 GB checkout of the entire KiCad source tree per clone and per CI run to
+       obtain 128 KB of interface definitions; scripts/sync-protos.sh re-fetches them from the pin
+       and its `check` mode (run in CI) fails if the vendored copies have drifted from it.
+
+       They are globbed and compiled in place. An earlier version copied them into obj/proto from a
+       BeforeTargets="Build" target and globbed obj/proto in an ItemGroup; MSBuild evaluates items
+       before any target runs, so the first build of a fresh clone always produced an empty assembly
+       and every Kiapi.* type failed to resolve. Globbing the source directly removes that two-pass
+       requirement. -->
   <PropertyGroup>
-    <KiCadProtoRoot>$(MSBuildThisFileDirectory)../../../submodules/kicad/api/proto/</KiCadProtoRoot>
+    <KiCadProtoRoot>$(MSBuildThisFileDirectory)../../protos/</KiCadProtoRoot>
   </PropertyGroup>
 
   <ItemGroup>
     <Protobuf Include="$(KiCadProtoRoot)**/*.proto" ProtoRoot="$(KiCadProtoRoot)" GrpcServices="None" />
   </ItemGroup>
 
-  <!-- Fail loudly rather than silently emitting an empty assembly when the submodule is absent. -->
-  <Target Name="EnsureKiCadProtoSubmodule" BeforeTargets="Protobuf_BeforeCompile;CoreCompile">
+  <!-- Fail loudly rather than silently emitting an empty assembly if the vendored tree goes missing. -->
+  <Target Name="EnsureKiCadProtos" BeforeTargets="Protobuf_BeforeCompile;CoreCompile">
     <Error Condition="'@(Protobuf)' == ''"
-           Text="No .proto files found under $(KiCadProtoRoot). Run: git submodule update --init --depth 1 submodules/kicad" />
+           Text="No .proto files found under $(KiCadProtoRoot). Run: scripts/sync-protos.sh" />
   </Target>
 
   <ItemGroup>
