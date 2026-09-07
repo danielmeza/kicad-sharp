@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-using SExpressionSharp;
+using SExpressions;
 
 namespace KiCadSharp.Cli
 {
