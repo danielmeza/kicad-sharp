@@ -278,6 +278,57 @@ public class SchematicViewTests
     }
 
     [Fact]
+    public void PlacedSymbol_ReadsWhereItIsAndHowItIsBuilt()
+    {
+        var symbol = KiCadSchematic.Load(TestData.Rs485Bridge).Symbols[0];
+
+        // The first placement in the fixture is a connector, turned 0 degrees and flipped about y.
+        Assert.Equal("orbion:Conn_01x02", symbol.LibId);
+        Assert.Equal(new KiCadPosition(40.64, 43.18, 0), symbol.Position);
+        Assert.Equal("y", symbol.Mirror);
+        Assert.Equal(1, symbol.Unit);
+        Assert.Equal(1, symbol.BodyStyle);
+        Assert.Null(symbol.LibName);
+        Assert.False(symbol.ExcludeFromSim);
+        Assert.True(symbol.InBom);
+        Assert.True(symbol.OnBoard);
+        Assert.False(symbol.Dnp);
+    }
+
+    [Fact]
+    public void PlacedSymbol_MovingOne_MovesNoOther()
+    {
+        var schematic = KiCadSchematic.Load(TestData.Rs485Bridge);
+        var second = schematic.Symbols[1].Position;
+
+        schematic.Symbols[0].Position = new KiCadPosition(40.64, 43.19, 0);
+
+        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion-rs485-bridge.kicad_sch");
+        schematic.Save(output);
+
+        // "43.18" became "43.19": one digit, so the file is the same length.
+        Assert.Equal(170_001, new FileInfo(output).Length);
+
+        var reloaded = KiCadSchematic.Load(output);
+        Assert.Equal(new KiCadPosition(40.64, 43.19, 0), reloaded.Symbols[0].Position);
+        Assert.Equal("y", reloaded.Symbols[0].Mirror);
+        Assert.Equal(second, reloaded.Symbols[1].Position);
+        Assert.Equal(74, reloaded.Symbols.Count);
+    }
+
+    [Fact]
+    public void Sheet_ReadsTheBoxItDraws()
+    {
+        var sheet = Assert.Single(KiCadSchematic.Parse(RicherSheet).Sheets);
+
+        Assert.Equal(new KiCadPosition(190.5, 30.48), sheet.Position);
+        Assert.Equal(new KiCadSize(40.64, 25.4), sheet.Size);
+        Assert.Equal(0.1524, sheet.Stroke!.Width);
+        Assert.Equal("solid", sheet.Stroke!.Type);
+        Assert.Equal(new[] { "0", "0", "0", "0.0000" }, sheet.Fill!.Color);
+    }
+
+    [Fact]
     public void ChildSheetFixture_ReadsTheSameCountsThroughTheViews()
     {
         var root = SExpression.Load(TestData.DuplicateRefsChild);
@@ -663,6 +714,15 @@ public class SchematicViewTests
             _ = symbol.LibId;
             _ = symbol.Unit;
             _ = symbol.Uuid;
+            _ = symbol.Position;
+            _ = symbol.Mirror;
+            _ = symbol.BodyStyle;
+            _ = symbol.LibName;
+            _ = symbol.ExcludeFromSim;
+            _ = symbol.InBom;
+            _ = symbol.OnBoard;
+            _ = symbol.Dnp;
+            _ = symbol.InPosFiles;
             _ = symbol.ReferenceProperty;
             _ = symbol.IsPowerSymbol;
             foreach (var property in symbol.Properties)
@@ -693,6 +753,14 @@ public class SchematicViewTests
             _ = sheet.Uuid;
             _ = sheet.SheetName;
             _ = sheet.SheetFile;
+            _ = sheet.Position;
+            _ = sheet.Size;
+            _ = sheet.Stroke?.Width;
+            _ = sheet.Fill?.Type;
+            _ = sheet.ExcludeFromSim;
+            _ = sheet.InBom;
+            _ = sheet.OnBoard;
+            _ = sheet.Dnp;
             foreach (var pin in sheet.Pins)
             {
                 _ = pin.Name;

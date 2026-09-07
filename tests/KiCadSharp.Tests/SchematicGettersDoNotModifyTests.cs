@@ -76,6 +76,8 @@ public class SchematicGettersDoNotModifyTests
         Assert.Null(bare.Rectangles[0].Fill);
         Assert.Null(bare.TextBoxes[0].FontEffects);
         Assert.Null(bare.Sheets[0].Pins[0].FontEffects);
+        Assert.Null(bare.Sheets[0].Stroke);
+        Assert.Null(bare.Sheets[0].Fill);
         Assert.Empty(bare.LibrarySymbols);
 
         Assert.False(bare.IsModified);
@@ -234,6 +236,15 @@ public class SchematicGettersDoNotModifyTests
             _ = symbol.LibId;
             _ = symbol.Unit;
             _ = symbol.ReferenceProperty;
+            _ = symbol.Position;
+            _ = symbol.Mirror;
+            _ = symbol.BodyStyle;
+            _ = symbol.LibName;
+            _ = symbol.ExcludeFromSim;
+            _ = symbol.InBom;
+            _ = symbol.OnBoard;
+            _ = symbol.Dnp;
+            _ = symbol.InPosFiles;
             foreach (var property in symbol.Properties)
             {
                 _ = property.Key;
@@ -263,6 +274,14 @@ public class SchematicGettersDoNotModifyTests
         {
             _ = sheet.SheetName;
             _ = sheet.SheetFile;
+            _ = sheet.Position;
+            _ = sheet.Size;
+            _ = sheet.Stroke?.Width;
+            _ = sheet.Fill?.Type;
+            _ = sheet.ExcludeFromSim;
+            _ = sheet.InBom;
+            _ = sheet.OnBoard;
+            _ = sheet.Dnp;
             foreach (var pin in sheet.Pins)
             {
                 _ = pin.Name;
