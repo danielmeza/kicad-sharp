@@ -31,19 +31,27 @@ namespace KiCadSharp
         /// </summary>
         /// <typeparam name="TResult">Type of result to return</typeparam>
         /// <param name="command">Command to send</param>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
         /// <returns>Result of the command</returns>
-        protected async ValueTask<TResult> Send<TResult>(IMessage command) where TResult : IMessage, new()
+        /// <remarks>
+        /// The token is passed through. It used to be dropped here, which meant
+        /// <see cref="KiCadIPCClient.Send{TResult}"/> took a <see cref="CancellationToken"/> that
+        /// nothing on <see cref="KiCad"/>, <see cref="Board"/> or <see cref="Project"/> could supply.
+        /// </remarks>
+        protected async ValueTask<TResult> Send<TResult>(IMessage command, CancellationToken cancellationToken = default)
+            where TResult : IMessage, new()
         {
-            return await Client.Send<TResult>(command);
+            return await Client.Send<TResult>(command, cancellationToken);
         }
-        
+
         /// <summary>
         /// Sends a command to KiCad with no result
         /// </summary>
         /// <param name="command">Command to send</param>
-        protected async ValueTask Send(IMessage command)
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        protected async ValueTask Send(IMessage command, CancellationToken cancellationToken = default)
         {
-            await Client.Send(command);
+            await Client.Send(command, cancellationToken);
         }
     }
 }

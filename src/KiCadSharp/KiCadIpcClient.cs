@@ -73,7 +73,14 @@ namespace KiCadSharp
                 throw new ArgumentNullException(nameof(command));
             }
 
-            var token = CancellationTokenSource.CreateLinkedTokenSource(_connectionCancellationSource.Token, cancellationToken).Token;
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(_connectionCancellationSource.Token, cancellationToken);
+
+            // The linked token used to be built and then never looked at, so nothing this client did
+            // could be cancelled or would even notice a disconnect. The nng round trip below is
+            // synchronous and cannot be interrupted once the request is on the wire, so what is
+            // honest here is to refuse to start and to notice on the way out -- not to pretend the
+            // send itself is cancellable.
+            linked.Token.ThrowIfCancellationRequested();
 
             if (!IsConnected)
             {
@@ -84,8 +91,17 @@ namespace KiCadSharp
             envelope.Message = Any.Pack(command);
             envelope.Header = new ApiRequestHeader()
             {
-                KicadToken = _settings.Token,
-                ClientName = _settings.PipeName,
+                // Never null. Protobuf's generated string setters throw ArgumentNullException, so a
+                // client that KiCad did not launch itself -- one with no KICAD_API_TOKEN in its
+                // environment -- used to die here, on its first request, before a single byte
+                // reached KiCad. An empty token is exactly what a new client is supposed to send:
+                // KiCad answers with one, and the reply handler below adopts it.
+                KicadToken = _settings.Token ?? string.Empty,
+
+                // The client's own name, not the socket path. KiCad shows this in its API log, so
+                // sending the pipe name made every client look the same and made the name passed to
+                // AddKiCad("my-plugin") do nothing.
+                ClientName = _settings.ClientName ?? KiCadClientSettings.DefaultClientName,
             };
 
 
@@ -127,6 +143,8 @@ namespace KiCadSharp
             {
                 _settings.Token = reply.Header.KicadToken;
             }
+
+            linked.Token.ThrowIfCancellationRequested();
             return result;
         }
 

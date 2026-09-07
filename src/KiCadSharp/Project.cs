@@ -1,4 +1,4 @@
-using Google.Protobuf.WellKnownTypes;
+﻿using Google.Protobuf.WellKnownTypes;
 
 using Kiapi.Common.Commands;
 using Kiapi.Common.Project;
@@ -48,10 +48,10 @@ namespace KiCadSharp
         /// Gets the net classes defined in the project
         /// </summary>
         /// <returns>Array of net classes</returns>
-        public async ValueTask<NetClass[]> GetNetClasses()
+        public async ValueTask<NetClass[]> GetNetClasses(CancellationToken cancellationToken = default)
         {
             var command = new GetNetClasses();
-            var response = await Send<NetClassesResponse>(command);
+            var response = await Send<NetClassesResponse>(command, cancellationToken);
             return [.. response.NetClasses];
         }
         
@@ -60,14 +60,14 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="netClasses">Net classes to set</param>
         /// <param name="mergeMode">How to merge with existing net classes</param>
-        public async ValueTask SetNetClasses(NetClass[] netClasses, MapMergeMode mergeMode = MapMergeMode.MmmMerge)
+        public async ValueTask SetNetClasses(NetClass[] netClasses, MapMergeMode mergeMode = MapMergeMode.MmmMerge, CancellationToken cancellationToken = default)
         {
             var command = new SetNetClasses
             {
                 MergeMode = mergeMode
             };
             command.NetClasses.AddRange(netClasses);
-            await Send(command);
+            await Send(command, cancellationToken);
         }
         
         /// <summary>
@@ -75,7 +75,7 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="text">Text containing variables to expand</param>
         /// <returns>Text with variables expanded</returns>
-        public async ValueTask<string> ExpandTextVariables(string text)
+        public async ValueTask<string> ExpandTextVariables(string text, CancellationToken cancellationToken = default)
         {
             var command = new ExpandTextVariables
             {
@@ -83,7 +83,7 @@ namespace KiCadSharp
             };
             command.Text.Add(text);
             
-            var response = await Send<ExpandTextVariablesResponse>(command);
+            var response = await Send<ExpandTextVariablesResponse>(command, cancellationToken);
             return response.Text.Count > 0 ? response.Text[0] : string.Empty;
         }
         
@@ -92,7 +92,7 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="texts">Array of texts containing variables to expand</param>
         /// <returns>Array of texts with variables expanded</returns>
-        public async ValueTask<string[]> ExpandTextVariables(string[] texts)
+        public async ValueTask<string[]> ExpandTextVariables(string[] texts, CancellationToken cancellationToken = default)
         {
             var command = new ExpandTextVariables
             {
@@ -100,7 +100,7 @@ namespace KiCadSharp
             };
             command.Text.AddRange(texts);
             
-            var response = await Send<ExpandTextVariablesResponse>(command);
+            var response = await Send<ExpandTextVariablesResponse>(command, cancellationToken);
             return response.Text.ToArray();
         }
         
@@ -108,13 +108,13 @@ namespace KiCadSharp
         /// Gets the text variables defined in the project
         /// </summary>
         /// <returns>Text variables object</returns>
-        public async ValueTask<TextVariables> GetTextVariables()
+        public async ValueTask<TextVariables> GetTextVariables(CancellationToken cancellationToken = default)
         {
             var command = new GetTextVariables
             {
                 Document = _document
             };
-            return await Send<TextVariables>(command);
+            return await Send<TextVariables>(command, cancellationToken);
         }
         
         /// <summary>
@@ -122,7 +122,7 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="variables">Text variables to set</param>
         /// <param name="mergeMode">How to merge with existing variables</param>
-        public async ValueTask SetTextVariables(TextVariables variables, MapMergeMode mergeMode = MapMergeMode.MmmMerge)
+        public async ValueTask SetTextVariables(TextVariables variables, MapMergeMode mergeMode = MapMergeMode.MmmMerge, CancellationToken cancellationToken = default)
         {
             var command = new SetTextVariables
             {
@@ -130,7 +130,7 @@ namespace KiCadSharp
                 Variables = variables,
                 MergeMode = mergeMode
             };
-            await Send(command);
+            await Send(command, cancellationToken);
         }
     }
 }
