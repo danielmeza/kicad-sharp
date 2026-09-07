@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches: [master]
+  # Every pull request, not only those targeting master. A stacked change opened against the branch
+  # below it in the stack is still a change that has to build and pass, and restricting this to
+  # [master] meant those PRs reported no checks at all.
   pull_request:
-    branches: [master]
 
 jobs:
   build:
@@ -32,7 +34,7 @@ jobs:
         run: dotnet build KiCadSharp.slnx -c Release --no-restore
 
       - name: Test
-        run: dotnet test KiCadSharp.slnx -c Release --no-build
+        run: dotnet test KiCadSharp.slnx -c Release --no-build --logger "console;verbosity=normal"
 
       - name: Pack
         run: dotnet pack KiCadSharp.slnx -c Release --no-build -o artifacts/packages
