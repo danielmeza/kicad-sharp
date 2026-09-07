@@ -465,7 +465,11 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets the text rendering of the property, creating an <c>(effects ...)</c> if needed.</summary>
-        public KiCadFontEffects FontEffects => new(Require("effects"));
+        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+
+        /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
     }
 
     /// <summary>
@@ -576,10 +580,18 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets the stroke, creating a <c>(stroke ...)</c> child if there is none.</summary>
-        public KiCadStroke Stroke => new(Require("stroke"));
+        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+
+        /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadStroke RequireStroke() => new(Require("stroke"));
 
         /// <summary>Gets the fill, creating a <c>(fill ...)</c> child if there is none.</summary>
-        public KiCadFill Fill => new(Require("fill"));
+        public KiCadFill? Fill => Node.GetChild("fill") is { } node ? new KiCadFill(node) : null;
+
+        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFill RequireFill() => new(Require("fill"));
 
         /// <summary>Enumerates the drawing elements directly inside <paramref name="owner"/>.</summary>
         /// <param name="owner">The form to look in.</param>
@@ -802,6 +814,10 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets the text rendering, creating an <c>(effects ...)</c> if there is none.</summary>
-        public KiCadFontEffects FontEffects => new(Require("effects"));
+        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+
+        /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
     }
 }
