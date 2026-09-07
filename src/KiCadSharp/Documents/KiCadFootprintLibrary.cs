@@ -1,1410 +1,939 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using SExpressions;
 
 namespace KiCadSharp.Documents
 {
     /// <summary>
-    /// Represents a KiCad footprint library
+    /// A file holding footprints — a board (<c>.kicad_pcb</c>) or a single footprint
+    /// (<c>.kicad_mod</c>) — as a view over the file's s-expression tree.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A <c>.kicad_mod</c> is one footprint at the root of the file, not a library containing one:
+    /// the root token is <c>footprint</c> in KiCad 6 and later and <c>module</c> in KiCad 5. Both
+    /// are recognised here, and both present as a library of exactly one footprint.
+    /// </para>
+    /// <para>
+    /// Saving writes the parsed document back, so everything the file holds — nets, zones, groups,
+    /// setup, tracks, and every token this type does not model — is still there afterwards.
+    /// </para>
+    /// </remarks>
     public class KiCadFootprintLibrary
     {
-        private readonly SExpression _rootExpression;
-        
-        /// <summary>
-        /// Gets the library version
-        /// </summary>
-        public string Version { get; }
-        
-        /// <summary>
-        /// Gets the generator used to create the library
-        /// </summary>
-        public string Generator { get; }
+        private readonly SDocument _document;
+        private readonly SExpression _root;
+        private readonly bool _rootIsFootprint;
 
-        /// <summary>
-        /// Gets the list of footprints in this library
-        /// </summary>
-        public List<KiCadFootprint> Footprints { get; } = new List<KiCadFootprint>();
-
-        /// <summary>
-        /// Create a new empty KiCad footprint library
-        /// </summary>
-        /// <param name="generator">Name of the generator creating this library</param>
-        /// <param name="version">Version string</param>
+        /// <summary>Creates a new, empty board-shaped library.</summary>
+        /// <param name="generator">The value of the <c>generator</c> token.</param>
+        /// <param name="version">The value of the <c>version</c> token.</param>
         public KiCadFootprintLibrary(string generator = "KiCad Library Importer", string version = "20211014")
         {
-            _rootExpression = new SExpression("kicad_pcb");
-            _rootExpression.CreateChild("version", version);
-            _rootExpression.CreateChild("generator", generator);
-            
-            Version = version;
-            Generator = generator;
-            
-            // Add common elements
-            _rootExpression.CreateChild("general");
-            _rootExpression.CreateChild("paper", "A4");
-            _rootExpression.CreateChild("layers");
+            _root = new SExpression("kicad_pcb");
+            _root.CreateChild("version", version);
+            _root.CreateChild("generator").AddValue(generator, SQuoteStyle.Quoted);
+            _root.CreateChild("general");
+            _root.CreateChild("paper").AddValue("A4", SQuoteStyle.Quoted);
+            _root.CreateChild("layers");
+            _document = new SDocument();
+            _document.Add(_root);
+            _rootIsFootprint = false;
         }
 
-        /// <summary>
-        /// Create a KiCad footprint library from an existing S-expression
-        /// </summary>
-        /// <param name="expression">Root S-expression for the library</param>
+        /// <summary>Creates a library over an existing s-expression.</summary>
+        /// <param name="expression">A board form, or a single <c>footprint</c>/<c>module</c> form.</param>
         public KiCadFootprintLibrary(SExpression expression)
         {
-            _rootExpression = expression;
-            
-            // Extract metadata
-            var versionExp = expression.GetChild("version");
-            Version = versionExp?.GetValueAsString() ?? "20211014";
-            
-            var generatorExp = expression.GetChild("generator");
-            Generator = generatorExp?.GetValueAsString() ?? "KiCad Library Importer";
-            
-            // Extract all footprints
-            foreach (var footprintExp in expression.GetChildren("footprint"))
-            {
-                Footprints.Add(new KiCadFootprint(footprintExp));
-            }
-            
-            // Handle the special case where a .kicad_mod file contains a single module directly
-            if (Footprints.Count == 0 && expression.Token == "module")
-            {
-                Footprints.Add(new KiCadFootprint(expression));
-            }
+            ArgumentNullException.ThrowIfNull(expression);
+            _root = expression;
+            _rootIsFootprint = IsFootprintToken(expression.Token);
+            _document = new SDocument();
+            _document.Add(expression);
         }
 
-        /// <summary>
-        /// Load a KiCad footprint library from a file
-        /// </summary>
-        /// <param name="filePath">Path to the .kicad_pcb or .kicad_mod file</param>
-        /// <returns>The loaded footprint library</returns>
-        public static KiCadFootprintLibrary Load(string filePath)
+        private KiCadFootprintLibrary(SDocument document)
         {
-            var parser = new SExpressionParser();
-            var expression = parser.ParseFile(filePath);
-            return new KiCadFootprintLibrary(expression);
+            _document = document;
+            _root = document.Root ?? throw new InvalidOperationException("The file holds no s-expression.");
+            _rootIsFootprint = IsFootprintToken(_root.Token);
         }
 
-        /// <summary>
-        /// Add a footprint to the library
-        /// </summary>
-        /// <param name="footprint">Footprint to add</param>
-        public void AddFootprint(KiCadFootprint footprint)
+        /// <summary>Gets the whole parsed file.</summary>
+        public SDocument Document => _document;
+
+        /// <summary>Gets the root form: a board, or the footprint itself for a <c>.kicad_mod</c>.</summary>
+        public SExpression Node => _root;
+
+        /// <summary>True when the file is a single footprint rather than a board.</summary>
+        public bool IsSingleFootprint => _rootIsFootprint;
+
+        /// <summary>Gets or sets the file format version.</summary>
+        public string Version
         {
-            Footprints.Add(footprint);
-            _rootExpression.AddChild(footprint.ToSExpression());
+            get => _root.GetChildValue("version") ?? "20211014";
+            set => _root.SetChildValue("version", value, SQuoteStyle.Bare);
         }
 
-        /// <summary>
-        /// Save the library to a file
-        /// </summary>
-        /// <param name="filePath">Path to the output file</param>
-        public void Save(string filePath)
+        /// <summary>Gets or sets the name of the program that wrote the file.</summary>
+        public string Generator
         {
-            // Clear existing footprints and re-add them
-            // This ensures the root expression has the current state of all footprints
-            var footprintExpressions = _rootExpression.GetChildren("footprint").ToList();
-            foreach (var footprintExp in footprintExpressions)
-            {
-                _rootExpression.Children.Remove(footprintExp);
-            }
-            
-            foreach (var footprint in Footprints)
-            {
-                _rootExpression.AddChild(footprint.ToSExpression());
-            }
-            
-            // Write to file
-            var writer = new SExpressionWriter();
-            writer.WriteToFile(_rootExpression, filePath);
+            get => _root.GetChildValue("generator") ?? "KiCad Library Importer";
+            set => _root.SetChildValue("generator", value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
-        /// Save a single footprint to a .kicad_mod file
+        /// Gets the footprints in the file. For a <c>.kicad_mod</c> this is the root form itself,
+        /// as one element; for a board it is a live view over its <c>footprint</c> children, with
+        /// KiCad 5's <c>module</c> children included.
         /// </summary>
-        /// <param name="footprint">Footprint to save</param>
-        /// <param name="filePath">Path to the output .kicad_mod file</param>
+        public IReadOnlyList<KiCadFootprint> Footprints
+        {
+            get
+            {
+                if (_rootIsFootprint)
+                {
+                    return new[] { new KiCadFootprint(_root) };
+                }
+
+                return _root.Children
+                    .Where(c => IsFootprintToken(c.Token))
+                    .Select(c => new KiCadFootprint(c))
+                    .ToArray();
+            }
+        }
+
+        /// <summary>Loads a file.</summary>
+        /// <param name="filePath">Path to a <c>.kicad_pcb</c> or <c>.kicad_mod</c>.</param>
+        /// <returns>The library.</returns>
+        public static KiCadFootprintLibrary Load(string filePath) => new(SDocument.Load(filePath));
+
+        /// <summary>Loads a file asynchronously.</summary>
+        /// <param name="filePath">Path to a <c>.kicad_pcb</c> or <c>.kicad_mod</c>.</param>
+        /// <param name="cancellationToken">Cancels the read.</param>
+        /// <returns>The library.</returns>
+        public static async Task<KiCadFootprintLibrary> LoadAsync(string filePath, CancellationToken cancellationToken = default) =>
+            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false));
+
+        /// <summary>Parses a file from text.</summary>
+        /// <param name="text">The file contents.</param>
+        /// <returns>The library.</returns>
+        public static KiCadFootprintLibrary Parse(string text) => new(SDocument.Parse(text));
+
+        /// <summary>Appends a footprint.</summary>
+        /// <param name="footprint">The footprint.</param>
+        /// <returns>The footprint, now a child of this file.</returns>
+        /// <exception cref="InvalidOperationException">The file is a single footprint and cannot hold another.</exception>
+        public KiCadFootprint AddFootprint(KiCadFootprint footprint)
+        {
+            ArgumentNullException.ThrowIfNull(footprint);
+            if (_rootIsFootprint)
+            {
+                throw new InvalidOperationException("A .kicad_mod holds exactly one footprint, at the root of the file.");
+            }
+
+            _root.AddChild(footprint.Node);
+            return footprint;
+        }
+
+        /// <summary>Removes the first footprint with the given name.</summary>
+        /// <param name="id">The footprint's name.</param>
+        /// <returns>True when a footprint was removed.</returns>
+        public bool RemoveFootprint(string id)
+        {
+            if (_rootIsFootprint)
+            {
+                return false;
+            }
+
+            var footprint = GetFootprint(id);
+            return footprint is not null && _root.Children.Remove(footprint.Node);
+        }
+
+        /// <summary>Gets the first footprint with the given name.</summary>
+        /// <param name="id">The footprint's name.</param>
+        /// <returns>The footprint, or <see langword="null"/>.</returns>
+        public KiCadFootprint? GetFootprint(string id) =>
+            Footprints.FirstOrDefault(f => string.Equals(f.Id, id, StringComparison.Ordinal));
+
+        /// <summary>
+        /// Writes the file back out. An untouched file comes out byte for byte; a changed one differs
+        /// only where it was changed.
+        /// </summary>
+        /// <param name="filePath">Destination path.</param>
+        public void Save(string filePath) => _document.Save(filePath);
+
+        /// <summary>Writes the file back out asynchronously.</summary>
+        /// <param name="filePath">Destination path.</param>
+        /// <param name="cancellationToken">Cancels the write.</param>
+        /// <returns>A task that completes when the file is written.</returns>
+        public Task SaveAsync(string filePath, CancellationToken cancellationToken = default) =>
+            _document.SaveAsync(filePath, cancellationToken);
+
+        /// <summary>Renders the file to text.</summary>
+        /// <returns>The file contents.</returns>
+        public string ToText() => _document.ToText();
+
+        /// <summary>Writes one footprint out as a <c>.kicad_mod</c>.</summary>
+        /// <param name="footprint">The footprint to write.</param>
+        /// <param name="filePath">Destination path.</param>
+        /// <remarks>The footprint's own bytes are reproduced; it is not re-formatted.</remarks>
         public static void SaveFootprint(KiCadFootprint footprint, string filePath)
         {
-            var writer = new SExpressionWriter();
-            writer.WriteToFile(footprint.ToSExpression(), filePath);
+            ArgumentNullException.ThrowIfNull(footprint);
+            new SExpressionWriter().WriteToFile(footprint.Node, filePath);
         }
 
-        /// <summary>
-        /// Gets a footprint by ID from the library
-        /// </summary>
-        /// <param name="id">Footprint ID to find</param>
-        /// <returns>The footprint, or null if not found</returns>
-        public KiCadFootprint? GetFootprint(string id)
-        {
-            return Footprints.FirstOrDefault(s => s.Id == id);
-        }
+        private static bool IsFootprintToken(string token) =>
+            string.Equals(token, "footprint", StringComparison.Ordinal) || string.Equals(token, "module", StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// Represents a KiCad footprint
+    /// One footprint, as a view over its <c>(footprint "Name" ...)</c> form.
     /// </summary>
-    public class KiCadFootprint
+    /// <remarks>
+    /// Every property here reads and writes the form in place. That is what keeps <c>descr</c>,
+    /// <c>tags</c>, <c>property</c>, <c>fp_rect</c>, <c>fp_text_box</c>, <c>fp_curve</c>, zones,
+    /// groups, and whatever KiCad adds next: they are never copied out, so they cannot be left
+    /// behind.
+    /// </remarks>
+    public class KiCadFootprint : KiCadNode
     {
-        /// <summary>
-        /// Gets the identifier of this footprint
-        /// </summary>
-        public string Id { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the layer on which this footprint is placed
-        /// </summary>
-        public string Layer { get; set; } = "F.Cu";
-        
-        /// <summary>
-        /// Gets or sets optional tedit timestamp
-        /// </summary>
-        public long Tedit { get; set; }
-        
-        /// <summary>
-        /// Gets or sets optional tstamp timestamp
-        /// </summary>
-        public long Tstamp { get; set; }
-        
-        /// <summary>
-        /// Gets the list of attributes for this footprint
-        /// </summary>
-        public List<string> Attributes { get; } = new List<string>();
-        
-        /// <summary>
-        /// Gets the list of model 3D references for this footprint
-        /// </summary>
-        public List<KiCadModel> Models { get; } = new List<KiCadModel>();
-        
-        /// <summary>
-        /// Gets the list of text items for this footprint
-        /// </summary>
-        public List<KiCadFpText> TextItems { get; } = new List<KiCadFpText>();
-        
-        /// <summary>
-        /// Gets the list of pads for this footprint
-        /// </summary>
-        public List<KiCadPad> Pads { get; } = new List<KiCadPad>();
-        
-        /// <summary>
-        /// Gets the list of lines for this footprint
-        /// </summary>
-        public List<KiCadFpLine> Lines { get; } = new List<KiCadFpLine>();
-        
-        /// <summary>
-        /// Gets the list of circles for this footprint
-        /// </summary>
-        public List<KiCadFpCircle> Circles { get; } = new List<KiCadFpCircle>();
-        
-        /// <summary>
-        /// Gets the list of arcs for this footprint
-        /// </summary>
-        public List<KiCadFpArc> Arcs { get; } = new List<KiCadFpArc>();
-        
-        /// <summary>
-        /// Gets the list of polygons for this footprint
-        /// </summary>
-        public List<KiCadFpPoly> Polygons { get; } = new List<KiCadFpPoly>();
-
-        /// <summary>
-        /// Create a new KiCad footprint
-        /// </summary>
-        /// <param name="id">Footprint identifier</param>
-        public KiCadFootprint(string id)
+        /// <summary>Creates a view over a <c>(footprint ...)</c> or <c>(module ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadFootprint(SExpression node)
+            : base(node)
         {
-            Id = id;
-            Tedit = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            Tstamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            
-            // Add mandatory reference and value text
+        }
+
+        /// <summary>Creates a new footprint with the reference and value text KiCad expects.</summary>
+        /// <param name="id">The footprint's name.</param>
+        public KiCadFootprint(string id)
+            : base(new SExpression("footprint"))
+        {
+            ArgumentNullException.ThrowIfNull(id);
+            Node.AddValue(id, SQuoteStyle.Quoted);
+            Node.SetChildValue("layer", "F.Cu", SQuoteStyle.Quoted);
             AddFpText("reference", "REF**", 0, 0, "F.SilkS");
             AddFpText("value", id, 0, 1.27, "F.Fab");
         }
 
-        /// <summary>
-        /// Create a KiCad footprint from an S-expression
-        /// </summary>
-        /// <param name="expression">S-expression node for the footprint</param>
-        public KiCadFootprint(SExpression expression)
+        /// <summary>Gets or sets the footprint's name, the first value of the form.</summary>
+        public string Id
         {
-            // The token could be either 'footprint' or 'module' depending on the file format version
-            // Extract ID, which is the first value
-            Id = expression.GetValue(0) ?? "Unknown";
-            
-            // Extract layer
-            var layerExp = expression.GetChild("layer");
-            Layer = layerExp?.GetValueAsString() ?? "F.Cu";
-            
-            // Extract timestamps if present
-            var teditExp = expression.GetChild("tedit");
-            if (teditExp != null)
-            {
-                // The timestamp is a hexadecimal string
-                string teditHex = teditExp.GetValueAsString() ?? "0";
-                if (teditHex.StartsWith("0x"))
-                    teditHex = teditHex.Substring(2);
-                
-                if (long.TryParse(teditHex, System.Globalization.NumberStyles.HexNumber, null, out long tedit))
-                    Tedit = tedit;
-            }
-            
-            var tstampExp = expression.GetChild("tstamp");
-            if (tstampExp != null)
-            {
-                // The timestamp is a hexadecimal string
-                string tstampHex = tstampExp.GetValueAsString() ?? "0";
-                if (tstampHex.StartsWith("0x"))
-                    tstampHex = tstampHex.Substring(2);
-                
-                if (long.TryParse(tstampHex, System.Globalization.NumberStyles.HexNumber, null, out long tstamp))
-                    Tstamp = tstamp;
-            }
-            
-            // Extract attributes
-            var attrsExp = expression.GetChild("attr");
-            if (attrsExp != null)
-            {
-                foreach (var attr in attrsExp.Values)
-                {
-                    Attributes.Add(attr);
-                }
-            }
-            
-            // Extract 3D models
-            foreach (var modelExp in expression.GetChildren("model"))
-            {
-                Models.Add(new KiCadModel(modelExp));
-            }
-            
-            // Extract text items
-            foreach (var textExp in expression.GetChildren("fp_text"))
-            {
-                TextItems.Add(new KiCadFpText(textExp));
-            }
-            
-            // Extract pads
-            foreach (var padExp in expression.GetChildren("pad"))
-            {
-                Pads.Add(new KiCadPad(padExp));
-            }
-            
-            // Extract lines
-            foreach (var lineExp in expression.GetChildren("fp_line"))
-            {
-                Lines.Add(new KiCadFpLine(lineExp));
-            }
-            
-            // Extract circles
-            foreach (var circleExp in expression.GetChildren("fp_circle"))
-            {
-                Circles.Add(new KiCadFpCircle(circleExp));
-            }
-            
-            // Extract arcs
-            foreach (var arcExp in expression.GetChildren("fp_arc"))
-            {
-                Arcs.Add(new KiCadFpArc(arcExp));
-            }
-            
-            // Extract polygons
-            foreach (var polyExp in expression.GetChildren("fp_poly"))
-            {
-                Polygons.Add(new KiCadFpPoly(polyExp));
-            }
+            get => Node.GetValue(0) ?? "Unknown";
+            set => WriteValue(0, value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets the layer the footprint sits on.</summary>
+        public string Layer
+        {
+            get => ReadChild("layer") ?? "F.Cu";
+            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets the footprint's description, the <c>(descr "...")</c> token.</summary>
+        public string? Description
+        {
+            get => ReadChild("descr");
+            set => WriteChild("descr", value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets the footprint's search keywords, the <c>(tags "...")</c> token.</summary>
+        public string? Tags
+        {
+            get => ReadChild("tags");
+            set => WriteChild("tags", value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
-        /// Add a text item to the footprint
+        /// Gets or sets the KiCad 5 edit timestamp, or 0 when the file has none. KiCad 7 replaced it
+        /// with a UUID and no longer writes it.
         /// </summary>
-        /// <param name="type">Text type (reference, value, user)</param>
-        /// <param name="text">Text content</param>
-        /// <param name="x">X position</param>
-        /// <param name="y">Y position</param>
-        /// <param name="layer">Layer name</param>
-        /// <returns>The created text item</returns>
+        public long Tedit
+        {
+            get => ReadHex("tedit");
+            set => Node.SetChildValue("tedit", value.ToString("X", CultureInfo.InvariantCulture), SQuoteStyle.Bare);
+        }
+
+        /// <summary>Gets or sets the KiCad 5 placement timestamp, or 0 when the file has none.</summary>
+        public long Tstamp
+        {
+            get => ReadHex("tstamp");
+            set => Node.SetChildValue("tstamp", value.ToString("X", CultureInfo.InvariantCulture), SQuoteStyle.Bare);
+        }
+
+        /// <summary>Gets the values of the <c>(attr ...)</c> token, e.g. <c>smd</c>, <c>through_hole</c>.</summary>
+        public IReadOnlyList<string> Attributes
+        {
+            get
+            {
+                var attr = Node.GetChild("attr");
+                return attr is null ? Array.Empty<string>() : attr.Values.ToArray();
+            }
+        }
+
+        /// <summary>Gets the footprint's fields, as a live view over its <c>property</c> children.</summary>
+        public KiCadNodeList<KiCadProperty> Properties => new(Node, "property", n => new KiCadProperty(n));
+
+        /// <summary>Gets the 3D models attached to the footprint.</summary>
+        public KiCadNodeList<KiCadModel> Models => new(Node, "model", n => new KiCadModel(n));
+
+        /// <summary>Gets the footprint's text items.</summary>
+        public KiCadNodeList<KiCadFpText> TextItems => new(Node, "fp_text", n => new KiCadFpText(n));
+
+        /// <summary>Gets the footprint's pads.</summary>
+        public KiCadNodeList<KiCadPad> Pads => new(Node, "pad", n => new KiCadPad(n));
+
+        /// <summary>Gets the footprint's lines.</summary>
+        public KiCadNodeList<KiCadFpLine> Lines => new(Node, "fp_line", n => new KiCadFpLine(n));
+
+        /// <summary>Gets the footprint's rectangles.</summary>
+        public KiCadNodeList<KiCadFpRect> Rectangles => new(Node, "fp_rect", n => new KiCadFpRect(n));
+
+        /// <summary>Gets the footprint's circles.</summary>
+        public KiCadNodeList<KiCadFpCircle> Circles => new(Node, "fp_circle", n => new KiCadFpCircle(n));
+
+        /// <summary>Gets the footprint's arcs.</summary>
+        public KiCadNodeList<KiCadFpArc> Arcs => new(Node, "fp_arc", n => new KiCadFpArc(n));
+
+        /// <summary>Gets the footprint's polygons.</summary>
+        public KiCadNodeList<KiCadFpPoly> Polygons => new(Node, "fp_poly", n => new KiCadFpPoly(n));
+
+        /// <summary>Gets the value of a named field.</summary>
+        /// <param name="key">The field key, e.g. <c>Reference</c>.</param>
+        /// <returns>The value, or <see langword="null"/>.</returns>
+        public string? GetPropertyValue(string key) =>
+            Properties.FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.Ordinal))?.Value;
+
+        /// <summary>Appends a text item.</summary>
+        /// <param name="type">The kind of text: <c>reference</c>, <c>value</c> or <c>user</c>.</param>
+        /// <param name="text">The text.</param>
+        /// <param name="x">X, millimetres.</param>
+        /// <param name="y">Y, millimetres.</param>
+        /// <param name="layer">The layer to draw it on.</param>
+        /// <returns>The text item.</returns>
         public KiCadFpText AddFpText(string type, string text, double x, double y, string layer)
         {
-            var fpText = new KiCadFpText
-            {
-                Type = type,
-                Text = text,
-                Position = new KiCadPosition(x, y),
-                Layer = layer
-            };
-            
-            TextItems.Add(fpText);
-            return fpText;
+            var item = new KiCadFpText(type, text, new KiCadPosition(x, y), layer);
+            Node.AddChild(item.Node);
+            return item;
         }
 
-        /// <summary>
-        /// Add a pad to the footprint
-        /// </summary>
-        /// <param name="number">Pad number or name</param>
-        /// <param name="type">Pad type (smd, thru_hole, etc.)</param>
-        /// <param name="shape">Pad shape (rect, circle, etc.)</param>
-        /// <param name="x">X position</param>
-        /// <param name="y">Y position</param>
-        /// <param name="width">Pad width</param>
-        /// <param name="height">Pad height</param>
-        /// <param name="layers">List of layers</param>
-        /// <returns>The created pad</returns>
-        public KiCadPad AddPad(string number, string type, string shape, double x, double y, double width, double height, List<string> layers)
+        /// <summary>Appends a pad.</summary>
+        /// <param name="number">The pad number.</param>
+        /// <param name="type">The pad type, e.g. <c>smd</c>, <c>thru_hole</c>.</param>
+        /// <param name="shape">The pad shape, e.g. <c>rect</c>, <c>roundrect</c>.</param>
+        /// <param name="x">X, millimetres.</param>
+        /// <param name="y">Y, millimetres.</param>
+        /// <param name="width">Pad width, millimetres.</param>
+        /// <param name="height">Pad height, millimetres.</param>
+        /// <param name="layers">The layers the pad is on.</param>
+        /// <returns>The pad.</returns>
+        public KiCadPad AddPad(string number, string type, string shape, double x, double y, double width, double height, IEnumerable<string> layers)
         {
-            var pad = new KiCadPad
-            {
-                Number = number,
-                Type = type,
-                Shape = shape,
-                Position = new KiCadPosition(x, y),
-                Size = new KiCadSize(width, height),
-                Layers = layers
-            };
-            
-            Pads.Add(pad);
+            var pad = new KiCadPad(number, type, shape, new KiCadPosition(x, y), new KiCadSize(width, height), layers);
+            Node.AddChild(pad.Node);
             return pad;
         }
 
-        /// <summary>
-        /// Add a line to the footprint
-        /// </summary>
-        /// <param name="startX">Start X position</param>
-        /// <param name="startY">Start Y position</param>
-        /// <param name="endX">End X position</param>
-        /// <param name="endY">End Y position</param>
-        /// <param name="layer">Layer name</param>
-        /// <param name="width">Line width</param>
-        /// <returns>The created line</returns>
+        /// <summary>Appends a line.</summary>
+        /// <param name="startX">Start X.</param>
+        /// <param name="startY">Start Y.</param>
+        /// <param name="endX">End X.</param>
+        /// <param name="endY">End Y.</param>
+        /// <param name="layer">The layer.</param>
+        /// <param name="width">Stroke width, millimetres.</param>
+        /// <returns>The line.</returns>
         public KiCadFpLine AddLine(double startX, double startY, double endX, double endY, string layer, double width = 0.12)
         {
-            var line = new KiCadFpLine
+            var line = new KiCadFpLine(new SExpression("fp_line"))
             {
                 Start = new KiCadPosition(startX, startY),
                 End = new KiCadPosition(endX, endY),
                 Layer = layer,
-                Width = width
+                Width = width,
             };
-            
-            Lines.Add(line);
+
+            Node.AddChild(line.Node);
             return line;
         }
 
-        /// <summary>
-        /// Add a circle to the footprint
-        /// </summary>
-        /// <param name="centerX">Center X position</param>
-        /// <param name="centerY">Center Y position</param>
-        /// <param name="endX">End X position (defines radius)</param>
-        /// <param name="endY">End Y position (defines radius)</param>
-        /// <param name="layer">Layer name</param>
-        /// <param name="width">Line width</param>
-        /// <returns>The created circle</returns>
+        /// <summary>Appends a circle.</summary>
+        /// <param name="centerX">Centre X.</param>
+        /// <param name="centerY">Centre Y.</param>
+        /// <param name="endX">A point on the circumference, X.</param>
+        /// <param name="endY">A point on the circumference, Y.</param>
+        /// <param name="layer">The layer.</param>
+        /// <param name="width">Stroke width, millimetres.</param>
+        /// <returns>The circle.</returns>
         public KiCadFpCircle AddCircle(double centerX, double centerY, double endX, double endY, string layer, double width = 0.12)
         {
-            var circle = new KiCadFpCircle
+            var circle = new KiCadFpCircle(new SExpression("fp_circle"))
             {
                 Center = new KiCadPosition(centerX, centerY),
                 End = new KiCadPosition(endX, endY),
                 Layer = layer,
-                Width = width
+                Width = width,
             };
-            
-            Circles.Add(circle);
+
+            Node.AddChild(circle.Node);
             return circle;
         }
 
-        /// <summary>
-        /// Add a 3D model to the footprint
-        /// </summary>
-        /// <param name="path">Path to the 3D model file</param>
-        /// <returns>The created model reference</returns>
+        /// <summary>Appends a 3D model reference.</summary>
+        /// <param name="path">The model path, usually with a <c>${KICAD…_3DMODEL_DIR}</c> prefix.</param>
+        /// <returns>The model.</returns>
         public KiCadModel AddModel(string path)
         {
-            var model = new KiCadModel
-            {
-                Path = path,
-                Offset = new KiCadOffset(0, 0, 0),
-                Scale = new KiCadScale(1, 1, 1),
-                Rotation = new KiCadRotation(0, 0, 0)
-            };
-            
-            Models.Add(model);
+            var model = new KiCadModel(path);
+            Node.AddChild(model.Node);
             return model;
         }
 
-        /// <summary>
-        /// Convert the footprint to an S-expression
-        /// </summary>
-        /// <returns>The S-expression representing this footprint</returns>
-        public SExpression ToSExpression()
+        /// <summary>Deep-copies the footprint under a new name.</summary>
+        /// <param name="newId">The copy's name.</param>
+        /// <returns>The copy, with no parent.</returns>
+        public KiCadFootprint CloneAs(string newId)
         {
-            var expression = new SExpression("footprint", Id);
-            
-            // Add layer
-            expression.CreateChild("layer", Layer);
-            
-            // Add tedit/tstamp
-            if (Tedit > 0)
+            ArgumentNullException.ThrowIfNull(newId);
+            return new KiCadFootprint(Node.Clone()) { Id = newId };
+        }
+
+        private long ReadHex(string token)
+        {
+            var text = ReadChild(token);
+            if (text is null)
             {
-                expression.CreateChild("tedit", $"0x{Tedit:X}");
+                return 0;
             }
-            
-            if (Tstamp > 0)
+
+            if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
             {
-                expression.CreateChild("tstamp", $"0x{Tstamp:X}");
+                text = text[2..];
             }
-            
-            // Add attributes
-            if (Attributes.Count > 0)
-            {
-                var attrsExp = expression.CreateChild("attr");
-                foreach (var attr in Attributes)
-                {
-                    attrsExp.Values.Add(attr);
-                }
-            }
-            
-            // Add text items
-            foreach (var text in TextItems)
-            {
-                expression.AddChild(text.ToSExpression());
-            }
-            
-            // Add pads
-            foreach (var pad in Pads)
-            {
-                expression.AddChild(pad.ToSExpression());
-            }
-            
-            // Add lines
-            foreach (var line in Lines)
-            {
-                expression.AddChild(line.ToSExpression());
-            }
-            
-            // Add circles
-            foreach (var circle in Circles)
-            {
-                expression.AddChild(circle.ToSExpression());
-            }
-            
-            // Add arcs
-            foreach (var arc in Arcs)
-            {
-                expression.AddChild(arc.ToSExpression());
-            }
-            
-            // Add polygons
-            foreach (var poly in Polygons)
-            {
-                expression.AddChild(poly.ToSExpression());
-            }
-            
-            // Add 3D models
-            foreach (var model in Models)
-            {
-                expression.AddChild(model.ToSExpression());
-            }
-            
-            return expression;
+
+            return long.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var value) ? value : 0;
         }
     }
 
     /// <summary>
-    /// Represents a text element in a KiCad footprint
+    /// A footprint drawing element that sits on a layer and has a stroke.
     /// </summary>
-    public class KiCadFpText
+    public abstract class KiCadFpItem : KiCadNode
     {
-        /// <summary>
-        /// Gets or sets the type of text (reference, value, user)
-        /// </summary>
-        public string Type { get; set; } = "user";
-        
-        /// <summary>
-        /// Gets or sets the text content
-        /// </summary>
-        public string Text { get; set; } = "";
-        
-        /// <summary>
-        /// Gets or sets the position
-        /// </summary>
-        public KiCadPosition Position { get; set; } = new KiCadPosition(0, 0);
-        
-        /// <summary>
-        /// Gets or sets the layer
-        /// </summary>
-        public string Layer { get; set; } = "F.SilkS";
-        
-        /// <summary>
-        /// Gets or sets the text size
-        /// </summary>
-        public KiCadSize Size { get; set; } = new KiCadSize(1, 1);
-        
-        /// <summary>
-        /// Gets or sets the text thickness
-        /// </summary>
-        public double Thickness { get; set; } = 0.15;
-        
-        /// <summary>
-        /// Gets or sets whether the text is italic
-        /// </summary>
-        public bool Italic { get; set; } = false;
-        
-        /// <summary>
-        /// Gets or sets whether the text is hidden
-        /// </summary>
-        public bool Hide { get; set; } = false;
+        /// <summary>Creates a view over the form.</summary>
+        /// <param name="node">The form.</param>
+        protected KiCadFpItem(SExpression node)
+            : base(node)
+        {
+        }
+
+        /// <summary>Gets or sets the layer the element is drawn on.</summary>
+        public string Layer
+        {
+            get => ReadChild("layer") ?? "F.SilkS";
+            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+        }
 
         /// <summary>
-        /// Create a KiCad footprint text from an S-expression
+        /// Gets or sets the stroke width. KiCad 7+ writes <c>(stroke (width w) ...)</c>; KiCad 5 and
+        /// 6 wrote a bare <c>(width w)</c>, and both are read here.
         /// </summary>
-        /// <param name="expression">S-expression node for the text</param>
-        public KiCadFpText(SExpression expression)
+        public double Width
         {
-            Type = expression.GetValue(0) ?? "user";
-            Text = expression.GetValue(1) ?? "";
-            
-            var atExp = expression.GetChild("at");
-            if (atExp != null)
+            get
             {
-                Position = new KiCadPosition(
-                    atExp.GetValueAsDouble(0),
-                    atExp.GetValueAsDouble(1),
-                    atExp.Values.Count > 2 ? atExp.GetValueAsDouble(2) : 0);
-            }
-            
-            var layerExp = expression.GetChild("layer");
-            Layer = layerExp?.GetValueAsString() ?? "F.SilkS";
-            
-            var effectsExp = expression.GetChild("effects");
-            if (effectsExp != null)
-            {
-                var fontExp = effectsExp.GetChild("font");
-                if (fontExp != null)
+                var stroke = Node.GetChild("stroke");
+                if (stroke is not null && stroke.GetChild("width") is { } strokeWidth && strokeWidth.TryGetValue<double>(0, out var fromStroke))
                 {
-                    var sizeExp = fontExp.GetChild("size");
-                    if (sizeExp != null)
-                    {
-                        Size = new KiCadSize(
-                            sizeExp.GetValueAsDouble(0),
-                            sizeExp.GetValueAsDouble(1));
-                    }
-                    
-                    var thicknessExp = fontExp.GetChild("thickness");
-                    if (thicknessExp != null)
-                    {
-                        Thickness = thicknessExp.GetValueAsDouble();
-                    }
-                    
-                    Italic = fontExp.GetChild("italic") != null;
+                    return fromStroke;
                 }
-                
-                Hide = effectsExp.GetChild("hide") != null;
+
+                return ReadChildDouble("width", 0, 0.12);
+            }
+
+            set
+            {
+                if (Node.GetChild("stroke") is { } stroke)
+                {
+                    stroke.SetChildValue("width", Numbers.Format(value), SQuoteStyle.Bare);
+                    return;
+                }
+
+                WriteChildDouble("width", value);
             }
         }
 
-        /// <summary>
-        /// Create a new KiCad footprint text
-        /// </summary>
-        public KiCadFpText()
-        {
-        }
-
-        /// <summary>
-        /// Convert the text to an S-expression
-        /// </summary>
-        /// <returns>The S-expression representing this text</returns>
-        public SExpression ToSExpression()
-        {
-            var expression = new SExpression("fp_text", Type, Text);
-            
-            // Add position
-            var atExp = expression.CreateChild("at", 
-                Position.X.ToString(), 
-                Position.Y.ToString());
-            
-            if (Position.Rotation != 0)
-            {
-                atExp.Values.Add(Position.Rotation.ToString());
-            }
-            
-            // Add layer
-            expression.CreateChild("layer", Layer);
-            
-            // Add effects
-            var effectsExp = expression.CreateChild("effects");
-            var fontExp = effectsExp.CreateChild("font");
-            
-            fontExp.CreateChild("size", 
-                Size.Width.ToString(), 
-                Size.Height.ToString());
-            
-            fontExp.CreateChild("thickness", Thickness.ToString());
-            
-            if (Italic)
-            {
-                fontExp.CreateChild("italic");
-            }
-            
-            if (Hide)
-            {
-                effectsExp.CreateChild("hide");
-            }
-            
-            return expression;
-        }
+        /// <summary>Gets the stroke, creating a <c>(stroke ...)</c> child if there is none.</summary>
+        public KiCadStroke Stroke => new(Require("stroke"));
     }
 
-    /// <summary>
-    /// Represents a pad in a KiCad footprint
-    /// </summary>
-    public class KiCadPad
+    /// <summary>A line: <c>(fp_line (start x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
+    public class KiCadFpLine : KiCadFpItem
     {
-        /// <summary>
-        /// Gets or sets the pad number or name
-        /// </summary>
-        public string Number { get; set; } = "1";
-        
-        /// <summary>
-        /// Gets or sets the pad type (smd, thru_hole, npth)
-        /// </summary>
-        public string Type { get; set; } = "smd";
-        
-        /// <summary>
-        /// Gets or sets the pad shape (rect, circle, oval, etc.)
-        /// </summary>
-        public string Shape { get; set; } = "rect";
-        
-        /// <summary>
-        /// Gets or sets the position
-        /// </summary>
-        public KiCadPosition Position { get; set; } = new KiCadPosition(0, 0);
-        
-        /// <summary>
-        /// Gets or sets the size
-        /// </summary>
-        public KiCadSize Size { get; set; } = new KiCadSize(1, 1);
-        
-        /// <summary>
-        /// Gets or sets the drill (for thru_hole pads)
-        /// </summary>
-        public KiCadDrill? Drill { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the layers this pad is on
-        /// </summary>
-        public List<string> Layers { get; set; } = new List<string>();
-
-        /// <summary>
-        /// Create a KiCad pad from an S-expression
-        /// </summary>
-        /// <param name="expression">S-expression node for the pad</param>
-        public KiCadPad(SExpression expression)
-        {
-            Number = expression.GetValue(0) ?? "1";
-            Type = expression.GetValue(1) ?? "smd";
-            Shape = expression.GetValue(2) ?? "rect";
-            
-            var atExp = expression.GetChild("at");
-            if (atExp != null)
-            {
-                Position = new KiCadPosition(
-                    atExp.GetValueAsDouble(0),
-                    atExp.GetValueAsDouble(1),
-                    atExp.Values.Count > 2 ? atExp.GetValueAsDouble(2) : 0);
-            }
-            
-            var sizeExp = expression.GetChild("size");
-            if (sizeExp != null)
-            {
-                Size = new KiCadSize(
-                    sizeExp.GetValueAsDouble(0),
-                    sizeExp.GetValueAsDouble(1));
-            }
-            
-            var drillExp = expression.GetChild("drill");
-            if (drillExp != null)
-            {
-                double drillSize = drillExp.GetValueAsDouble(0);
-                if (drillExp.Values.Count > 1)
-                {
-                    // Oval drill
-                    Drill = new KiCadDrill(
-                        drillExp.GetValueAsDouble(0),
-                        drillExp.GetValueAsDouble(1));
-                }
-                else
-                {
-                    // Round drill
-                    Drill = new KiCadDrill(drillSize);
-                }
-                
-                // Check for offset
-                var drillOffsetExp = drillExp.GetChild("offset");
-                if (drillOffsetExp != null)
-                {
-                    Drill.Offset = new KiCadPosition(
-                        drillOffsetExp.GetValueAsDouble(0),
-                        drillOffsetExp.GetValueAsDouble(1));
-                }
-            }
-            
-            var layersExp = expression.GetChild("layers");
-            if (layersExp != null)
-            {
-                Layers = layersExp.Values.ToList();
-            }
-        }
-
-        /// <summary>
-        /// Create a new KiCad pad
-        /// </summary>
-        public KiCadPad()
+        /// <summary>Creates a view over an <c>(fp_line ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadFpLine(SExpression node)
+            : base(node)
         {
         }
 
-        /// <summary>
-        /// Convert the pad to an S-expression
-        /// </summary>
-        /// <returns>The S-expression representing this pad</returns>
-        public SExpression ToSExpression()
-        {
-            var expression = new SExpression("pad", Number, Type, Shape);
-            
-            // Add position
-            var atExp = expression.CreateChild("at", 
-                Position.X.ToString(), 
-                Position.Y.ToString());
-            
-            if (Position.Rotation != 0)
-            {
-                atExp.Values.Add(Position.Rotation.ToString());
-            }
-            
-            // Add size
-            expression.CreateChild("size", 
-                Size.Width.ToString(), 
-                Size.Height.ToString());
-            
-            // Add drill for thru_hole pads
-            if (Drill != null && Type == "thru_hole")
-            {
-                var drillExp = Drill.IsRound
-                    ? expression.CreateChild("drill", Drill.Size.ToString())
-                    : expression.CreateChild("drill", Drill.Width.ToString(), Drill.Height.ToString());
-                
-                if (Drill.Offset != null && (Drill.Offset.X != 0 || Drill.Offset.Y != 0))
-                {
-                    drillExp.CreateChild("offset", 
-                        Drill.Offset.X.ToString(), 
-                        Drill.Offset.Y.ToString());
-                }
-            }
-            
-            // Add layers
-            var layersExp = expression.CreateChild("layers");
-            foreach (var layer in Layers)
-            {
-                layersExp.Values.Add(layer);
-            }
-            
-            return expression;
-        }
-    }
-
-    /// <summary>
-    /// Represents a line in a KiCad footprint
-    /// </summary>
-    public class KiCadFpLine
-    {
-        /// <summary>
-        /// Gets or sets the start position
-        /// </summary>
-        public KiCadPosition Start { get; set; } = new KiCadPosition(0, 0);
-        
-        /// <summary>
-        /// Gets or sets the end position
-        /// </summary>
-        public KiCadPosition End { get; set; } = new KiCadPosition(0, 0);
-        
-        /// <summary>
-        /// Gets or sets the layer
-        /// </summary>
-        public string Layer { get; set; } = "F.SilkS";
-        
-        /// <summary>
-        /// Gets or sets the line width
-        /// </summary>
-        public double Width { get; set; } = 0.12;
-
-        /// <summary>
-        /// Create a KiCad footprint line from an S-expression
-        /// </summary>
-        /// <param name="expression">S-expression node for the line</param>
-        public KiCadFpLine(SExpression expression)
-        {
-            var startExp = expression.GetChild("start");
-            if (startExp != null)
-            {
-                Start = new KiCadPosition(
-                    startExp.GetValueAsDouble(0),
-                    startExp.GetValueAsDouble(1));
-            }
-            
-            var endExp = expression.GetChild("end");
-            if (endExp != null)
-            {
-                End = new KiCadPosition(
-                    endExp.GetValueAsDouble(0),
-                    endExp.GetValueAsDouble(1));
-            }
-            
-            var layerExp = expression.GetChild("layer");
-            Layer = layerExp?.GetValueAsString() ?? "F.SilkS";
-            
-            var widthExp = expression.GetChild("width");
-            Width = widthExp?.GetValueAsDouble() ?? 0.12;
-        }
-
-        /// <summary>
-        /// Create a new KiCad footprint line
-        /// </summary>
+        /// <summary>Creates an empty line.</summary>
         public KiCadFpLine()
+            : base(new SExpression("fp_line"))
         {
         }
 
-        /// <summary>
-        /// Convert the line to an S-expression
-        /// </summary>
-        /// <returns>The S-expression representing this line</returns>
-        public SExpression ToSExpression()
+        /// <summary>Gets or sets the start point.</summary>
+        public KiCadPosition Start
         {
-            var expression = new SExpression("fp_line");
-            
-            // Add start and end points
-            expression.CreateChild("start", Start.X.ToString(), Start.Y.ToString());
-            expression.CreateChild("end", End.X.ToString(), End.Y.ToString());
-            
-            // Add layer
-            expression.CreateChild("layer", Layer);
-            
-            // Add width
-            expression.CreateChild("width", Width.ToString());
-            
-            return expression;
+            get => KiCadPosition.Read(Node.GetChild("start"));
+            set => value.Write(Require("start"), includeRotation: false);
+        }
+
+        /// <summary>Gets or sets the end point.</summary>
+        public KiCadPosition End
+        {
+            get => KiCadPosition.Read(Node.GetChild("end"));
+            set => value.Write(Require("end"), includeRotation: false);
         }
     }
 
-    /// <summary>
-    /// Represents a circle in a KiCad footprint
-    /// </summary>
-    public class KiCadFpCircle
+    /// <summary>A rectangle: <c>(fp_rect (start x y) (end x y) (stroke ...) (fill ...) (layer "..."))</c>.</summary>
+    public class KiCadFpRect : KiCadFpItem
     {
-        /// <summary>
-        /// Gets or sets the center position
-        /// </summary>
-        public KiCadPosition Center { get; set; } = new KiCadPosition(0, 0);
-        
-        /// <summary>
-        /// Gets or sets the end position (defines radius)
-        /// </summary>
-        public KiCadPosition End { get; set; } = new KiCadPosition(0, 0);
-        
-        /// <summary>
-        /// Gets or sets the layer
-        /// </summary>
-        public string Layer { get; set; } = "F.SilkS";
-        
-        /// <summary>
-        /// Gets or sets the line width
-        /// </summary>
-        public double Width { get; set; } = 0.12;
-
-        /// <summary>
-        /// Create a KiCad footprint circle from an S-expression
-        /// </summary>
-        /// <param name="expression">S-expression node for the circle</param>
-        public KiCadFpCircle(SExpression expression)
+        /// <summary>Creates a view over an <c>(fp_rect ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadFpRect(SExpression node)
+            : base(node)
         {
-            var centerExp = expression.GetChild("center");
-            if (centerExp != null)
-            {
-                Center = new KiCadPosition(
-                    centerExp.GetValueAsDouble(0),
-                    centerExp.GetValueAsDouble(1));
-            }
-            
-            var endExp = expression.GetChild("end");
-            if (endExp != null)
-            {
-                End = new KiCadPosition(
-                    endExp.GetValueAsDouble(0),
-                    endExp.GetValueAsDouble(1));
-            }
-            
-            var layerExp = expression.GetChild("layer");
-            Layer = layerExp?.GetValueAsString() ?? "F.SilkS";
-            
-            var widthExp = expression.GetChild("width");
-            Width = widthExp?.GetValueAsDouble() ?? 0.12;
         }
 
-        /// <summary>
-        /// Create a new KiCad footprint circle
-        /// </summary>
+        /// <summary>Creates an empty rectangle.</summary>
+        public KiCadFpRect()
+            : base(new SExpression("fp_rect"))
+        {
+        }
+
+        /// <summary>Gets or sets the first corner.</summary>
+        public KiCadPosition Start
+        {
+            get => KiCadPosition.Read(Node.GetChild("start"));
+            set => value.Write(Require("start"), includeRotation: false);
+        }
+
+        /// <summary>Gets or sets the opposite corner.</summary>
+        public KiCadPosition End
+        {
+            get => KiCadPosition.Read(Node.GetChild("end"));
+            set => value.Write(Require("end"), includeRotation: false);
+        }
+
+        /// <summary>Gets the fill, creating a <c>(fill ...)</c> child if there is none.</summary>
+        public KiCadFill Fill => new(Require("fill"));
+    }
+
+    /// <summary>A circle: <c>(fp_circle (center x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
+    public class KiCadFpCircle : KiCadFpItem
+    {
+        /// <summary>Creates a view over an <c>(fp_circle ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadFpCircle(SExpression node)
+            : base(node)
+        {
+        }
+
+        /// <summary>Creates an empty circle.</summary>
         public KiCadFpCircle()
+            : base(new SExpression("fp_circle"))
         {
         }
 
-        /// <summary>
-        /// Convert the circle to an S-expression
-        /// </summary>
-        /// <returns>The S-expression representing this circle</returns>
-        public SExpression ToSExpression()
+        /// <summary>Gets or sets the centre.</summary>
+        public KiCadPosition Center
         {
-            var expression = new SExpression("fp_circle");
-            
-            // Add center and end points
-            expression.CreateChild("center", Center.X.ToString(), Center.Y.ToString());
-            expression.CreateChild("end", End.X.ToString(), End.Y.ToString());
-            
-            // Add layer
-            expression.CreateChild("layer", Layer);
-            
-            // Add width
-            expression.CreateChild("width", Width.ToString());
-            
-            return expression;
+            get => KiCadPosition.Read(Node.GetChild("center"));
+            set => value.Write(Require("center"), includeRotation: false);
+        }
+
+        /// <summary>Gets or sets a point on the circumference.</summary>
+        public KiCadPosition End
+        {
+            get => KiCadPosition.Read(Node.GetChild("end"));
+            set => value.Write(Require("end"), includeRotation: false);
         }
     }
 
-    /// <summary>
-    /// Represents an arc in a KiCad footprint
-    /// </summary>
-    public class KiCadFpArc
+    /// <summary>An arc: <c>(fp_arc (start x y) (mid x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
+    public class KiCadFpArc : KiCadFpItem
     {
-        /// <summary>
-        /// Gets or sets the start position
-        /// </summary>
-        public KiCadPosition Start { get; set; } = new KiCadPosition(0, 0);
-        
-        /// <summary>
-        /// Gets or sets the end position
-        /// </summary>
-        public KiCadPosition End { get; set; } = new KiCadPosition(0, 0);
-        
-        /// <summary>
-        /// Gets or sets the angle in degrees
-        /// </summary>
-        public double Angle { get; set; } = 0;
-        
-        /// <summary>
-        /// Gets or sets the layer
-        /// </summary>
-        public string Layer { get; set; } = "F.SilkS";
-        
-        /// <summary>
-        /// Gets or sets the line width
-        /// </summary>
-        public double Width { get; set; } = 0.12;
-
-        /// <summary>
-        /// Create a KiCad footprint arc from an S-expression
-        /// </summary>
-        /// <param name="expression">S-expression node for the arc</param>
-        public KiCadFpArc(SExpression expression)
+        /// <summary>Creates a view over an <c>(fp_arc ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadFpArc(SExpression node)
+            : base(node)
         {
-            var startExp = expression.GetChild("start");
-            if (startExp != null)
-            {
-                Start = new KiCadPosition(
-                    startExp.GetValueAsDouble(0),
-                    startExp.GetValueAsDouble(1));
-            }
-            
-            var endExp = expression.GetChild("end");
-            if (endExp != null)
-            {
-                End = new KiCadPosition(
-                    endExp.GetValueAsDouble(0),
-                    endExp.GetValueAsDouble(1));
-            }
-            
-            var angleExp = expression.GetChild("angle");
-            if (angleExp != null)
-            {
-                Angle = angleExp.GetValueAsDouble();
-            }
-            
-            var layerExp = expression.GetChild("layer");
-            Layer = layerExp?.GetValueAsString() ?? "F.SilkS";
-            
-            var widthExp = expression.GetChild("width");
-            Width = widthExp?.GetValueAsDouble() ?? 0.12;
         }
 
-        /// <summary>
-        /// Create a new KiCad footprint arc
-        /// </summary>
+        /// <summary>Creates an empty arc.</summary>
         public KiCadFpArc()
+            : base(new SExpression("fp_arc"))
         {
         }
 
-        /// <summary>
-        /// Convert the arc to an S-expression
-        /// </summary>
-        /// <returns>The S-expression representing this arc</returns>
-        public SExpression ToSExpression()
+        /// <summary>Gets or sets the start point.</summary>
+        public KiCadPosition Start
         {
-            var expression = new SExpression("fp_arc");
-            
-            // Add start and end points
-            expression.CreateChild("start", Start.X.ToString(), Start.Y.ToString());
-            expression.CreateChild("end", End.X.ToString(), End.Y.ToString());
-            
-            // Add angle
-            expression.CreateChild("angle", Angle.ToString());
-            
-            // Add layer
-            expression.CreateChild("layer", Layer);
-            
-            // Add width
-            expression.CreateChild("width", Width.ToString());
-            
-            return expression;
+            get => KiCadPosition.Read(Node.GetChild("start"));
+            set => value.Write(Require("start"), includeRotation: false);
+        }
+
+        /// <summary>Gets or sets the mid point the arc passes through, KiCad 6 and later.</summary>
+        public KiCadPosition Mid
+        {
+            get => KiCadPosition.Read(Node.GetChild("mid"));
+            set => value.Write(Require("mid"), includeRotation: false);
+        }
+
+        /// <summary>Gets or sets the end point.</summary>
+        public KiCadPosition End
+        {
+            get => KiCadPosition.Read(Node.GetChild("end"));
+            set => value.Write(Require("end"), includeRotation: false);
+        }
+
+        /// <summary>Gets or sets the KiCad 5 sweep angle, or 0 when the file uses a mid point instead.</summary>
+        public double Angle
+        {
+            get => ReadChildDouble("angle");
+            set => WriteChildDouble("angle", value);
         }
     }
 
-    /// <summary>
-    /// Represents a polygon in a KiCad footprint
-    /// </summary>
-    public class KiCadFpPoly
+    /// <summary>A polygon: <c>(fp_poly (pts (xy x y) ...) (stroke ...) (layer "..."))</c>.</summary>
+    public class KiCadFpPoly : KiCadFpItem
     {
-        /// <summary>
-        /// Gets or sets the points in the polygon
-        /// </summary>
-        public List<KiCadPosition> Points { get; set; } = new List<KiCadPosition>();
-        
-        /// <summary>
-        /// Gets or sets the layer
-        /// </summary>
-        public string Layer { get; set; } = "F.SilkS";
-        
-        /// <summary>
-        /// Gets or sets the line width
-        /// </summary>
-        public double Width { get; set; } = 0.12;
+        /// <summary>Creates a view over an <c>(fp_poly ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadFpPoly(SExpression node)
+            : base(node)
+        {
+        }
+
+        /// <summary>Creates an empty polygon.</summary>
+        public KiCadFpPoly()
+            : base(new SExpression("fp_poly"))
+        {
+        }
+
+        /// <summary>Gets the vertices, in order.</summary>
+        public IReadOnlyList<KiCadPosition> Points =>
+            (Node.GetChild("pts")?.GetChildren("xy") ?? Enumerable.Empty<SExpression>())
+                .Select(xy => new KiCadPosition(xy.GetValueAsDouble(0), xy.GetValueAsDouble(1)))
+                .ToArray();
+
+        /// <summary>Appends a vertex.</summary>
+        /// <param name="x">X, millimetres.</param>
+        /// <param name="y">Y, millimetres.</param>
+        public void AddPoint(double x, double y)
+        {
+            var points = Node.GetChild("pts") ?? Node.CreateChild("pts");
+            points.CreateChild("xy", Numbers.Format(x), Numbers.Format(y));
+        }
+    }
+
+    /// <summary>Footprint text: <c>(fp_text reference "REF**" (at ...) (layer "...") (effects ...))</c>.</summary>
+    public class KiCadFpText : KiCadNode
+    {
+        /// <summary>Creates a view over an <c>(fp_text ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadFpText(SExpression node)
+            : base(node)
+        {
+        }
+
+        /// <summary>Creates an empty text item.</summary>
+        public KiCadFpText()
+            : base(new SExpression("fp_text"))
+        {
+        }
+
+        /// <summary>Creates a text item.</summary>
+        /// <param name="type">The kind of text: <c>reference</c>, <c>value</c> or <c>user</c>.</param>
+        /// <param name="text">The text.</param>
+        /// <param name="position">Where the text sits.</param>
+        /// <param name="layer">The layer to draw it on.</param>
+        public KiCadFpText(string type, string text, KiCadPosition position, string layer)
+            : base(new SExpression("fp_text"))
+        {
+            Node.AddValue(type, SQuoteStyle.Bare);
+            Node.AddValue(text, SQuoteStyle.Quoted);
+            Position = position;
+            Layer = layer;
+        }
+
+        /// <summary>Gets or sets the kind of text.</summary>
+        public string Type
+        {
+            get => Node.GetValue(0) ?? "user";
+            set => WriteValue(0, value, SQuoteStyle.Bare);
+        }
+
+        /// <summary>Gets or sets the text.</summary>
+        public string Text
+        {
+            get => Node.GetValue(1) ?? string.Empty;
+            set => WriteValue(1, value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets where the text sits.</summary>
+        public KiCadPosition Position
+        {
+            get => KiCadPosition.Read(Node.GetChild("at"));
+            set => value.Write(Require("at"), includeRotation: true);
+        }
+
+        /// <summary>Gets or sets the layer.</summary>
+        public string Layer
+        {
+            get => ReadChild("layer") ?? "F.SilkS";
+            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets the text rendering, creating an <c>(effects ...)</c> if there is none.</summary>
+        public KiCadFontEffects FontEffects => new(Require("effects"));
+
+        /// <summary>Gets or sets the glyph size.</summary>
+        public KiCadSize Size
+        {
+            get => KiCadSize.Read(Node.GetChild("effects")?.GetChild("font")?.GetChild("size"), 1);
+            set => FontEffects.Size = value;
+        }
+
+        /// <summary>Gets or sets the pen thickness.</summary>
+        public double Thickness
+        {
+            get => Node.GetChild("effects") is null ? 0.15 : FontEffects.Thickness;
+            set => FontEffects.Thickness = value;
+        }
+
+        /// <summary>Gets or sets whether the text is italic.</summary>
+        public bool Italic
+        {
+            get => Node.GetChild("effects") is not null && FontEffects.Italic;
+            set => FontEffects.Italic = value;
+        }
 
         /// <summary>
-        /// Create a KiCad footprint polygon from an S-expression
+        /// Gets or sets whether the text is hidden. KiCad 7+ writes <c>(hide yes)</c> inside
+        /// <c>(effects ...)</c>; KiCad 5 wrote a bare <c>hide</c> value on the form itself.
         /// </summary>
-        /// <param name="expression">S-expression node for the polygon</param>
-        public KiCadFpPoly(SExpression expression)
+        public bool Hide
         {
-            var ptsExp = expression.GetChild("pts");
-            if (ptsExp != null)
+            get => (Node.GetChild("effects") is not null && FontEffects.Hide)
+                || Node.Values.Any(v => string.Equals(v, "hide", StringComparison.Ordinal));
+            set => FontEffects.Hide = value;
+        }
+    }
+
+    /// <summary>A pad: <c>(pad "1" smd roundrect (at x y) (size w h) (layers ...) ...)</c>.</summary>
+    public class KiCadPad : KiCadNode
+    {
+        /// <summary>Creates a view over a <c>(pad ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadPad(SExpression node)
+            : base(node)
+        {
+        }
+
+        /// <summary>Creates an empty pad.</summary>
+        public KiCadPad()
+            : base(new SExpression("pad"))
+        {
+        }
+
+        /// <summary>Creates a pad.</summary>
+        /// <param name="number">The pad number.</param>
+        /// <param name="type">The pad type, e.g. <c>smd</c>.</param>
+        /// <param name="shape">The pad shape, e.g. <c>roundrect</c>.</param>
+        /// <param name="position">Where the pad sits.</param>
+        /// <param name="size">The pad size.</param>
+        /// <param name="layers">The layers the pad is on.</param>
+        public KiCadPad(string number, string type, string shape, KiCadPosition position, KiCadSize size, IEnumerable<string> layers)
+            : base(new SExpression("pad"))
+        {
+            ArgumentNullException.ThrowIfNull(layers);
+            Node.AddValue(number, SQuoteStyle.Quoted);
+            Node.AddValue(type, SQuoteStyle.Bare);
+            Node.AddValue(shape, SQuoteStyle.Bare);
+            Position = position;
+            Size = size;
+            Layers = layers.ToArray();
+        }
+
+        /// <summary>Gets or sets the pad number.</summary>
+        public string Number
+        {
+            get => Node.GetValue(0) ?? "1";
+            set => WriteValue(0, value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets the pad type.</summary>
+        public string Type
+        {
+            get => Node.GetValue(1) ?? "smd";
+            set => WriteValue(1, value, SQuoteStyle.Bare);
+        }
+
+        /// <summary>Gets or sets the pad shape.</summary>
+        public string Shape
+        {
+            get => Node.GetValue(2) ?? "rect";
+            set => WriteValue(2, value, SQuoteStyle.Bare);
+        }
+
+        /// <summary>Gets or sets where the pad sits.</summary>
+        public KiCadPosition Position
+        {
+            get => KiCadPosition.Read(Node.GetChild("at"));
+            set => value.Write(Require("at"), includeRotation: false);
+        }
+
+        /// <summary>Gets or sets the pad size.</summary>
+        public KiCadSize Size
+        {
+            get => KiCadSize.Read(Node.GetChild("size"), 1);
+            set => value.Write(Require("size"));
+        }
+
+        /// <summary>Gets or sets the layers the pad is on.</summary>
+        public IReadOnlyList<string> Layers
+        {
+            get
             {
-                foreach (var xyExp in ptsExp.GetChildren("xy"))
+                var layers = Node.GetChild("layers");
+                return layers is null ? Array.Empty<string>() : layers.Values.ToArray();
+            }
+
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                var layers = Require("layers");
+                layers.Values.Clear();
+                foreach (var layer in value)
                 {
-                    Points.Add(new KiCadPosition(
-                        xyExp.GetValueAsDouble(0),
-                        xyExp.GetValueAsDouble(1)));
+                    layers.Values.Add(layer, SQuoteStyle.Quoted);
                 }
             }
-            
-            var layerExp = expression.GetChild("layer");
-            Layer = layerExp?.GetValueAsString() ?? "F.SilkS";
-            
-            var widthExp = expression.GetChild("width");
-            Width = widthExp?.GetValueAsDouble() ?? 0.12;
         }
 
-        /// <summary>
-        /// Create a new KiCad footprint polygon
-        /// </summary>
-        public KiCadFpPoly()
-        {
-        }
+        /// <summary>Gets the drill, or <see langword="null"/> for a surface-mount pad.</summary>
+        public KiCadDrill? Drill => Node.GetChild("drill") is { } drill ? new KiCadDrill(drill) : null;
 
-        /// <summary>
-        /// Convert the polygon to an S-expression
-        /// </summary>
-        /// <returns>The S-expression representing this polygon</returns>
-        public SExpression ToSExpression()
+        /// <summary>Gets or sets the net this pad is connected to, or <see langword="null"/> when it has none.</summary>
+        public string? Net
         {
-            var expression = new SExpression("fp_poly");
-            
-            // Add points
-            var ptsExp = expression.CreateChild("pts");
-            foreach (var point in Points)
+            get => Node.GetChild("net")?.GetValue(1);
+            set
             {
-                ptsExp.CreateChild("xy", point.X.ToString(), point.Y.ToString());
+                if (value is null)
+                {
+                    Node.RemoveChild("net");
+                    return;
+                }
+
+                Require("net").SetValue(1, value, SQuoteStyle.Quoted);
             }
-            
-            // Add layer
-            expression.CreateChild("layer", Layer);
-            
-            // Add width
-            expression.CreateChild("width", Width.ToString());
-            
-            return expression;
         }
     }
 
-    /// <summary>
-    /// Represents a 3D model reference in a KiCad footprint
-    /// </summary>
-    public class KiCadModel
+    /// <summary>A drill: <c>(drill 0.8)</c> or <c>(drill oval w h)</c>, with an optional offset.</summary>
+    public class KiCadDrill : KiCadNode
     {
-        /// <summary>
-        /// Gets or sets the path to the 3D model
-        /// </summary>
-        public string Path { get; set; } = "";
-        
-        /// <summary>
-        /// Gets or sets the offset
-        /// </summary>
-        public KiCadOffset Offset { get; set; } = new KiCadOffset(0, 0, 0);
-        
-        /// <summary>
-        /// Gets or sets the scale
-        /// </summary>
-        public KiCadScale Scale { get; set; } = new KiCadScale(1, 1, 1);
-        
-        /// <summary>
-        /// Gets or sets the rotation
-        /// </summary>
-        public KiCadRotation Rotation { get; set; } = new KiCadRotation(0, 0, 0);
-
-        /// <summary>
-        /// Create a KiCad model from an S-expression
-        /// </summary>
-        /// <param name="expression">S-expression node for the model</param>
-        public KiCadModel(SExpression expression)
+        /// <summary>Creates a view over a <c>(drill ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadDrill(SExpression node)
+            : base(node)
         {
-            Path = expression.GetValue(0) ?? "";
-            
-            var offsetExp = expression.GetChild("offset");
-            if (offsetExp != null)
-            {
-                Offset = new KiCadOffset(
-                    offsetExp.GetChild("xyz")?.GetValueAsDouble(0) ?? 0,
-                    offsetExp.GetChild("xyz")?.GetValueAsDouble(1) ?? 0,
-                    offsetExp.GetChild("xyz")?.GetValueAsDouble(2) ?? 0);
-            }
-            
-            var scaleExp = expression.GetChild("scale");
-            if (scaleExp != null)
-            {
-                Scale = new KiCadScale(
-                    scaleExp.GetChild("xyz")?.GetValueAsDouble(0) ?? 1,
-                    scaleExp.GetChild("xyz")?.GetValueAsDouble(1) ?? 1,
-                    scaleExp.GetChild("xyz")?.GetValueAsDouble(2) ?? 1);
-            }
-            
-            var rotateExp = expression.GetChild("rotate");
-            if (rotateExp != null)
-            {
-                Rotation = new KiCadRotation(
-                    rotateExp.GetChild("xyz")?.GetValueAsDouble(0) ?? 0,
-                    rotateExp.GetChild("xyz")?.GetValueAsDouble(1) ?? 0,
-                    rotateExp.GetChild("xyz")?.GetValueAsDouble(2) ?? 0);
-            }
         }
 
-        /// <summary>
-        /// Create a new KiCad model
-        /// </summary>
+        /// <summary>True when the drill is an oval slot rather than a round hole.</summary>
+        public bool IsOval => string.Equals(Node.GetValue(0), "oval", StringComparison.Ordinal);
+
+        /// <summary>True when the drill is a plain round hole.</summary>
+        public bool IsRound => !IsOval;
+
+        /// <summary>Gets the diameter of a round hole, or 0 for an oval one.</summary>
+        public double Size => IsOval ? 0 : Node.GetValueAsDouble(0);
+
+        /// <summary>Gets the width: the diameter for a round hole, the long axis for an oval one.</summary>
+        public double Width => IsOval ? Node.GetValueAsDouble(1) : Node.GetValueAsDouble(0);
+
+        /// <summary>Gets the height: the diameter for a round hole, the short axis for an oval one.</summary>
+        public double Height => IsOval ? Node.GetValueAsDouble(2) : Node.GetValueAsDouble(0);
+
+        /// <summary>Gets the drill offset from the pad centre, or <see langword="null"/> when there is none.</summary>
+        public KiCadPosition? Offset =>
+            Node.GetChild("offset") is { } offset ? KiCadPosition.Read(offset) : null;
+    }
+
+    /// <summary>A 3D model reference: <c>(model "path" (offset (xyz ...)) (scale (xyz ...)) (rotate (xyz ...)))</c>.</summary>
+    public class KiCadModel : KiCadNode
+    {
+        /// <summary>Creates a view over a <c>(model ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadModel(SExpression node)
+            : base(node)
+        {
+        }
+
+        /// <summary>Creates an empty model reference.</summary>
         public KiCadModel()
+            : base(new SExpression("model"))
         {
         }
 
-        /// <summary>
-        /// Convert the model to an S-expression
-        /// </summary>
-        /// <returns>The S-expression representing this model</returns>
-        public SExpression ToSExpression()
+        /// <summary>Creates a model reference.</summary>
+        /// <param name="path">The model path.</param>
+        public KiCadModel(string path)
+            : base(new SExpression("model"))
         {
-            var expression = new SExpression("model", Path);
-            
-            // Add offset
-            var offsetExp = expression.CreateChild("offset");
-            offsetExp.CreateChild("xyz", Offset.X.ToString(), Offset.Y.ToString(), Offset.Z.ToString());
-            
-            // Add scale
-            var scaleExp = expression.CreateChild("scale");
-            scaleExp.CreateChild("xyz", Scale.X.ToString(), Scale.Y.ToString(), Scale.Z.ToString());
-            
-            // Add rotation
-            var rotateExp = expression.CreateChild("rotate");
-            rotateExp.CreateChild("xyz", Rotation.X.ToString(), Rotation.Y.ToString(), Rotation.Z.ToString());
-            
-            return expression;
-        }
-    }
-
-    #region Helper Structures
-
-    /// <summary>
-    /// Represents a drill definition for a thru_hole pad
-    /// </summary>
-    public class KiCadDrill
-    {
-        /// <summary>
-        /// Gets the drill size for a round hole
-        /// </summary>
-        public double Size { get; }
-        
-        /// <summary>
-        /// Gets the drill width for an oval hole
-        /// </summary>
-        public double Width { get; }
-        
-        /// <summary>
-        /// Gets the drill height for an oval hole
-        /// </summary>
-        public double Height { get; }
-        
-        /// <summary>
-        /// Gets whether the drill is round
-        /// </summary>
-        public bool IsRound { get; }
-        
-        /// <summary>
-        /// Gets or sets the drill offset
-        /// </summary>
-        public KiCadPosition? Offset { get; set; }
-
-        /// <summary>
-        /// Create a round drill
-        /// </summary>
-        /// <param name="size">Drill diameter</param>
-        public KiCadDrill(double size)
-        {
-            Size = size;
-            Width = size;
-            Height = size;
-            IsRound = true;
+            ArgumentNullException.ThrowIfNull(path);
+            Node.AddValue(path, SQuoteStyle.Quoted);
         }
 
-        /// <summary>
-        /// Create an oval drill
-        /// </summary>
-        /// <param name="width">Drill width</param>
-        /// <param name="height">Drill height</param>
-        public KiCadDrill(double width, double height)
+        /// <summary>Gets or sets the model path.</summary>
+        public string Path
         {
-            Size = Math.Min(width, height);
-            Width = width;
-            Height = height;
-            IsRound = false;
+            get => Node.GetValue(0) ?? string.Empty;
+            set => WriteValue(0, value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets the model offset.</summary>
+        public KiCadXyz Offset
+        {
+            get => KiCadXyz.Read(Node.GetChild("offset"), 0);
+            set => value.Write(Require("offset"));
+        }
+
+        /// <summary>Gets or sets the model scale.</summary>
+        public KiCadXyz Scale
+        {
+            get => KiCadXyz.Read(Node.GetChild("scale"), 1);
+            set => value.Write(Require("scale"));
+        }
+
+        /// <summary>Gets or sets the model rotation, in degrees.</summary>
+        public KiCadXyz Rotation
+        {
+            get => KiCadXyz.Read(Node.GetChild("rotate"), 0);
+            set => value.Write(Require("rotate"));
         }
     }
-
-    /// <summary>
-    /// Represents a 3D offset
-    /// </summary>
-    public class KiCadOffset
-    {
-        /// <summary>
-        /// Gets or sets the X offset
-        /// </summary>
-        public double X { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the Y offset
-        /// </summary>
-        public double Y { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the Z offset
-        /// </summary>
-        public double Z { get; set; }
-
-        /// <summary>
-        /// Create a new 3D offset
-        /// </summary>
-        /// <param name="x">X offset</param>
-        /// <param name="y">Y offset</param>
-        /// <param name="z">Z offset</param>
-        public KiCadOffset(double x, double y, double z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-    }
-
-    /// <summary>
-    /// Represents a 3D scale
-    /// </summary>
-    public class KiCadScale
-    {
-        /// <summary>
-        /// Gets or sets the X scale
-        /// </summary>
-        public double X { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the Y scale
-        /// </summary>
-        public double Y { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the Z scale
-        /// </summary>
-        public double Z { get; set; }
-
-        /// <summary>
-        /// Create a new 3D scale
-        /// </summary>
-        /// <param name="x">X scale</param>
-        /// <param name="y">Y scale</param>
-        /// <param name="z">Z scale</param>
-        public KiCadScale(double x, double y, double z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-    }
-
-    /// <summary>
-    /// Represents a 3D rotation
-    /// </summary>
-    public class KiCadRotation
-    {
-        /// <summary>
-        /// Gets or sets the X rotation
-        /// </summary>
-        public double X { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the Y rotation
-        /// </summary>
-        public double Y { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the Z rotation
-        /// </summary>
-        public double Z { get; set; }
-
-        /// <summary>
-        /// Create a new 3D rotation
-        /// </summary>
-        /// <param name="x">X rotation</param>
-        /// <param name="y">Y rotation</param>
-        /// <param name="z">Z rotation</param>
-        public KiCadRotation(double x, double y, double z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-    }
-
-    #endregion
 }

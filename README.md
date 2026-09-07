@@ -69,23 +69,32 @@ plus `Document` and `Name`.
 
 | Type | File | What it actually does |
 |---|---|---|
-| `KiCadSymbolLibrary` | `.kicad_sym` | `Load`, `Save`, `AddSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`. Models the top-level `(symbol …)` only. |
-| `KiCadSymbol` | — | `Id`, `Properties`, `Pins`, `GraphicalItems` (polyline / rectangle / circle / arc / text), `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `ToSExpression()`. |
-| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`, `Save`, `AddFootprint`, `GetFootprint`, `Footprints`, `SaveFootprint`. Surfaces `(footprint …)` children only. |
-| `KiCadFootprint` | — | `Id`, `Layer`, `Tedit`/`Tstamp`, `Attributes`, `Models`, `TextItems`, `Pads`, `Lines`, `Circles`, `Arcs`, `Polygons`, `ToSExpression()`. |
+| `KiCadNode` | — | Base of every typed view: `Node` (the live s-expression), `ToSExpression()`. Everything below reads and writes through it. |
+| `KiCadNodeList<T>` | — | A live view over a node's children with one token: `Count`, indexer, `Add`, `Remove`, `Insert`. |
+| `KiCadSymbolLibrary` | `.kicad_sym` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddSymbol`, `RemoveSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`, `Document`, `Node`. |
+| `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. |
+| `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
+| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). |
+| `KiCadFootprint` | — | `Id`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
 | `KiCadUtils` | `.kicad_sym` | `ParseSymbolLibrary`, `ExportSymbolToLibrary`, `ValidateSymbolLibrary`, `CloneSymbol`, `GetLibraryName`. |
-| `KiCadFileExtensions` | — | Three constants: `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`. |
+| `KiCadFileExtensions` | — | `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`, `.kicad_sym`, `.kicad_mod`, `.kicad_dru`, `.kicad_wks`, `.kicad_prl`. |
 | `KiCadSharp.Settings.IWritableOptions<T>` / `WritableOptions<T>` | JSON | A writable `IOptions<T>` that patches one section of a JSON file and reloads configuration. Unrelated to KiCad IPC. |
 
 ### Typed vs. generic, by file type
 
 | File | Typed model? |
 |---|---|
-| `.kicad_sym` | Partial — see [Pending](#pending). |
-| `.kicad_mod` / `(footprint …)` inside `.kicad_pcb` | Partial — see [Pending](#pending). |
+| `.kicad_sym` | **Yes**, as a view. Reads sub-units; an untouched save is byte-identical. |
+| `.kicad_mod` / `(footprint …)` inside `.kicad_pcb` | **Yes**, as a view. An untouched save is byte-identical. |
 | `.kicad_pcb` (tracks, vias, zones, nets, layers, stackup) | **No.** Only reachable live, over IPC, or as generic s-expressions. |
 | `.kicad_sch` | **No.** No offline model, and no working IPC path either. |
 | `.kicad_pro`, `.kicad_dru`, `.kicad_wks`, `.kicad_prl` | **No.** Generic s-expressions (or JSON, for `.kicad_pro`). |
+
+**These are views, not models.** A `KiCadSymbol` holds no fields — every property reads and writes
+the `SExpression` it was built over, and `Save` writes the parsed document back. Nothing is
+re-serialised, so a token this library has never heard of survives the round trip untouched, and a
+save that changed one property differs from the input in exactly that property's bytes. Reach
+anything not modelled through `Node`.
 
 Anything in the "No" rows is still fully readable and *losslessly writable* through
 [`SExpressions`](https://github.com/danielmeza/sexpressions), which is a dependency of this package —
@@ -209,27 +218,27 @@ files are read and written on disk instead, through `SExpressions` or the CLI.
 What a reader would reasonably expect and will not find. Everything here is derived from the code
 and, where a number is quoted, measured against the KiCad 10 corpus.
 
-**Document layer — the write paths lose data.**
+**Document layer.**
 
-- **`KiCadSymbolLibrary` does not model sub-units, so it reads no pins and its `Save` destroys the
-  file.** KiCad 6+ puts pins and graphics inside a nested `(symbol "R_0_1" …)` unit, which the model
-  ignores. Measured on a 108,583-byte, 35-symbol library holding 112 pins: `Symbols` reports **0
-  pins for every symbol**, and `Save()` writes **38,055 bytes** — the 35 symbols keep their names
-  and properties, and every sub-unit, pin and graphic is gone. Do not use it to rewrite a real
-  library.
-- **`KiCadFootprintLibrary.Load` returns zero footprints for a standalone `.kicad_mod`.** Its
-  fallback only fires when the root token is `module` (KiCad 5); KiCad 6+ writes `footprint`.
-  Measured on a real `LED_0603_1608Metric.kicad_mod`: `Footprints.Count == 0`.
-- **`KiCadFootprint` models only `attr`, `model`, `fp_text`, `pad`, `fp_line`, `fp_circle`,
-  `fp_arc`, `fp_poly`.** `Save` re-serialises every footprint from that model, so `fp_rect`,
-  `property`, `descr`, `tags`, `fp_text_box`, `fp_curve`, embedded zones and groups are dropped.
-  Non-footprint board content survives, because the root s-expression is kept.
-- **No `RemoveSymbol` / `RemoveFootprint`** — only add, get and save.
-- **No footprint equivalent of `KiCadUtils`** (no `ParseFootprintLibrary`, `ValidateFootprintLibrary`
-  or `CloneFootprint`).
-- **`KiCadFileExtensions` names only three formats** — `.kicad_pro`, `.kicad_sch`, `.kicad_pcb` — and
-  omits `.kicad_sym`, `.kicad_mod`, `.kicad_dru`, `.kicad_wks`, all of which this repo handles
-  elsewhere.
+The document layer is a typed *view* over the s-expression tree, not a parallel model. Loading keeps
+the parsed document; every property reads and writes the node it came from; saving writes that same
+document back. Nothing is re-serialised from fields, so a token this library has never heard of is
+still in the file afterwards — it was never copied out, so it cannot be left behind. Reach anything
+this library does not model through `Node`.
+
+Measured on the vendored KiCad 10 fixtures: a 108,583-byte, 35-symbol library reads all **112** pins
+across its 67 sub-units and saves back **byte-identical**; changing one property changes **one byte**.
+A standalone `.kicad_mod` loads as one footprint and saves byte-identical, `descr`, `tags`,
+`property`, `fp_rect`, `embedded_fonts` and all.
+
+What is still missing here:
+
+- **No schematic document type.** A `.kicad_sch` is reachable through `SExpressions`, but there is
+  no `KiCadSchematic` view over its symbols, wires, labels, buses or sheets.
+- **`KiCadUtils` has no footprint half** — no `ParseFootprintLibrary`, `ValidateFootprintLibrary` or
+  `CloneFootprint`. `KiCadFootprint.CloneAs` covers the last of those.
+- **Board-level content has no views.** Zones, groups, tracks, vias and the `setup` block round-trip
+  intact but are only reachable as raw s-expressions.
 
 **IPC surface.**
 
@@ -265,11 +274,10 @@ and, where a number is quoted, measured against the KiCad 10 corpus.
 
 **Repository.**
 
-- **The document-layer bugs above are pinned, not fixed.** `tests/KiCadSharp.Tests` is a
-  characterisation suite: it asserts what the library does *today*, with the measured numbers in the
-  assertions (0 pins read, 38,055 bytes written, 0 footprints found), so a fix has something to
-  flip. Nothing in it asserts correct behaviour for a bug that is still open. 17 tests; run them
-  with `dotnet test KiCadSharp.slnx`.
+- **`tests/KiCadSharp.Tests` is the only gate on the document layer.** 27 tests over the vendored
+  KiCad 10 fixtures, with the byte counts in the assertions. There is no test for the IPC surface at
+  all — that needs a running KiCad, and nothing here fakes one. Run them with
+  `dotnet test KiCadSharp.slnx`.
 
 ## Building
 
