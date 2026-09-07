@@ -13,7 +13,7 @@ jobs:
       # No submodules: the KiCad .proto definitions are vendored under protos/ and pinned by
       # protos/KICAD_PIN. Fetching them through a submodule cost a 1.4 GB checkout of the whole
       # KiCad source tree on every run to obtain 128 KB of files.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v6
         with:
