@@ -8,13 +8,102 @@ using SExpressions;
 namespace KiCadSharp.Documents
 {
     /// <summary>
+    /// Reads the <c>(net …)</c> child that copper, zones and pads all carry, in both spellings the
+    /// board format has used.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Up to and including KiCad 9 — board format <c>20241229</c> — copper points at a net by number:
+    /// <c>(segment … (net 1))</c>, with the number resolved against the board-level
+    /// <c>(net 1 "GND")</c> table. A pad wrote both, <c>(net 1 "GND")</c>.
+    /// </para>
+    /// <para>
+    /// KiCad 10 — board format <c>20260206</c> — writes the <em>name</em> in that place,
+    /// <c>(segment … (net "GND"))</c>, and drops the board-level table entirely. MEASURED against a
+    /// board saved by pcbnew 10.0.6: 0 <c>(net …)</c> forms at the top level, and every segment, via,
+    /// arc, zone and pad naming its net.
+    /// </para>
+    /// <para>
+    /// The two are told apart by how the atom is written, which the parser records: a code is bare, a
+    /// name is quoted. That is the file's own distinction, not a guess about the content — a net
+    /// genuinely called <c>5</c> is still <c>(net "5")</c>.
+    /// </para>
+    /// </remarks>
+    internal static class KiCadNetRef
+    {
+        /// <summary>Reads the net code, or <see langword="null"/> when the form names its net instead.</summary>
+        /// <param name="net">The <c>(net …)</c> form, or <see langword="null"/>.</param>
+        /// <returns>The code.</returns>
+        internal static int? ReadCode(SExpression? net)
+        {
+            if (net is null || IsQuoted(net, 0))
+            {
+                return null;
+            }
+
+            return net.TryGetValue<int>(0, out var code) ? code : null;
+        }
+
+        /// <summary>Reads the net name, or <see langword="null"/> when the form carries only a code.</summary>
+        /// <param name="net">The <c>(net …)</c> form, or <see langword="null"/>.</param>
+        /// <returns>The name.</returns>
+        internal static string? ReadName(SExpression? net)
+        {
+            if (net is null)
+            {
+                return null;
+            }
+
+            // (net 1 "GND") — a pad up to KiCad 9 carries both, name second.
+            if (net.GetValue(1) is { } second)
+            {
+                return second;
+            }
+
+            // (net "GND") — KiCad 10 writes the name where the code used to be.
+            return IsQuoted(net, 0) ? net.GetValue(0) : null;
+        }
+
+        /// <summary>Writes a net name into whichever slot the form already keeps it in.</summary>
+        /// <param name="net">The <c>(net …)</c> form.</param>
+        /// <param name="name">The name.</param>
+        internal static void WriteName(SExpression net, string name) =>
+            net.SetValue(NameIndex(net), name, SQuoteStyle.Quoted);
+
+        /// <summary>The value index a name belongs at: 0 when the form names its net, 1 when it numbers it.</summary>
+        /// <param name="net">The <c>(net …)</c> form.</param>
+        /// <returns>The index.</returns>
+        internal static int NameIndex(SExpression net) => ReadCode(net) is null ? 0 : 1;
+
+        private static bool IsQuoted(SExpression node, int index)
+        {
+            var seen = 0;
+            foreach (var item in node.Items)
+            {
+                if (item.Kind != SItemKind.Atom)
+                {
+                    continue;
+                }
+
+                if (seen++ == index)
+                {
+                    return item.QuoteStyle == SQuoteStyle.Quoted;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Something on a board that belongs to a net and carries a UUID: a track segment, a track arc,
     /// or a via.
     /// </summary>
     /// <remarks>
-    /// Copper names its net by code, never by name, because the code is what the pads and the zones
-    /// name too. Read the name through <see cref="KiCadBoard.GetNet(int)"/> — it lives in exactly one
-    /// place in the file, and this is not it.
+    /// How copper points at its net changed with the board format, so both <see cref="Net"/> — the
+    /// KiCad 9 code, resolved through <see cref="KiCadBoard.GetNet(int)"/> — and
+    /// <see cref="NetName"/> — the KiCad 10 name, written on the item itself — are here, and exactly
+    /// one of them answers on any given file. See <see cref="KiCadNetRef"/> for the measurement.
     /// </remarks>
     public abstract class KiCadTrackItem : KiCadNode
     {
@@ -25,12 +114,22 @@ namespace KiCadSharp.Documents
         {
         }
 
-        /// <summary>Gets or sets the net code, 0 for copper that belongs to no net.</summary>
+        /// <summary>
+        /// Gets or sets the net code, 0 for copper that belongs to no net — and also 0 on a KiCad 10
+        /// board, which writes no codes at all. <see cref="NetName"/> is what answers there.
+        /// </summary>
         public int Net
         {
-            get => Node.GetChild("net") is { } net && net.TryGetValue<int>(0, out var value) ? value : 0;
+            get => KiCadNetRef.ReadCode(Node.GetChild("net")) ?? 0;
             set => Node.SetChildValue("net", value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
         }
+
+        /// <summary>
+        /// Gets the net name the item carries — KiCad 10's <c>(net "GND")</c> — or
+        /// <see langword="null"/> on a file that numbers its nets instead, where the name lives in
+        /// the board's net table and <see cref="KiCadBoard.GetNet(int)"/> reaches it.
+        /// </summary>
+        public string? NetName => KiCadNetRef.ReadName(Node.GetChild("net"));
 
         /// <summary>
         /// Gets or sets the item's UUID, which is how a <see cref="KiCadGroup"/> refers to it.
@@ -325,21 +424,36 @@ namespace KiCadSharp.Documents
         {
         }
 
-        /// <summary>Gets or sets the net code the zone pours, 0 for a rule area.</summary>
+        /// <summary>
+        /// Gets or sets the net code the zone pours, 0 for a rule area — and also 0 on a KiCad 10
+        /// board, which names its nets rather than numbering them. <see cref="NetName"/> answers there.
+        /// </summary>
         public int Net
         {
-            get => Node.GetChild("net") is { } net && net.TryGetValue<int>(0, out var value) ? value : 0;
+            get => KiCadNetRef.ReadCode(Node.GetChild("net")) ?? 0;
             set => Node.SetChildValue("net", value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
         }
 
         /// <summary>
-        /// Gets or sets the net name. A zone is the one place a net is written twice — once as the
-        /// code and once as the name — so a rename that misses this leaves the file inconsistent.
+        /// Gets or sets the net name, in whichever place this file keeps it: KiCad 9 wrote it beside
+        /// the code as <c>(net 1) (net_name "GND")</c>, so a zone was the one place a net was spelled
+        /// twice; KiCad 10 writes <c>(net "GND")</c> and no <c>net_name</c> at all. A set goes back
+        /// into the spelling the node already uses rather than adding the other one.
         /// </summary>
         public string NetName
         {
-            get => ReadChild("net_name") ?? string.Empty;
-            set => WriteChild("net_name", value, SQuoteStyle.Quoted);
+            get => ReadChild("net_name") ?? KiCadNetRef.ReadName(Node.GetChild("net")) ?? string.Empty;
+
+            set
+            {
+                if (Node.GetChild("net_name") is null && Node.GetChild("net") is { } net && KiCadNetRef.ReadName(net) is not null)
+                {
+                    KiCadNetRef.WriteName(net, value);
+                    return;
+                }
+
+                WriteChild("net_name", value, SQuoteStyle.Quoted);
+            }
         }
 
         /// <summary>Gets or sets the layers the zone pours on.</summary>

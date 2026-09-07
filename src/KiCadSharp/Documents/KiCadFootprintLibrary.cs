@@ -836,10 +836,17 @@ namespace KiCadSharp.Documents
         /// <summary>Gets the drill, or <see langword="null"/> for a surface-mount pad.</summary>
         public KiCadDrill? Drill => Node.GetChild("drill") is { } drill ? new KiCadDrill(drill) : null;
 
-        /// <summary>Gets or sets the net this pad is connected to, or <see langword="null"/> when it has none.</summary>
+        /// <summary>
+        /// Gets or sets the net this pad is connected to, or <see langword="null"/> when it has none.
+        /// </summary>
+        /// <remarks>
+        /// Both spellings are read: KiCad 9 and earlier wrote <c>(net 1 "GND")</c>, KiCad 10 writes
+        /// <c>(net "GND")</c> and keeps no codes anywhere. A set goes back into whichever slot the
+        /// pad already keeps the name in.
+        /// </remarks>
         public string? Net
         {
-            get => Node.GetChild("net")?.GetValue(1);
+            get => KiCadNetRef.ReadName(Node.GetChild("net"));
             set
             {
                 if (value is null)
@@ -848,7 +855,7 @@ namespace KiCadSharp.Documents
                     return;
                 }
 
-                Require("net").SetValue(1, value, SQuoteStyle.Quoted);
+                KiCadNetRef.WriteName(Require("net"), value);
             }
         }
     }
