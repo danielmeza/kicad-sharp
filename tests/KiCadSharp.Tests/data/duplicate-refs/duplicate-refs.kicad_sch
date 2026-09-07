@@ -1,0 +1,57 @@
+(kicad_sch
+	(version 20250114)
+	(generator "orbion-hier-probe")
+	(generator_version "10.0")
+	(uuid "6ba5fed3-a9dd-5630-83f1-e943531b395f")
+	(paper "A4")
+	(title_block
+		(title "Hierarchy probe: one child, two instances")
+	)
+	(lib_symbols)
+	(sheet
+		(at 30.48 30.48)
+		(size 40.64 25.4)
+		(fields_autoplaced yes)
+		(stroke (width 0.1524) (type solid))
+		(fill (color 0 0 0 0.0000))
+		(uuid "afa5cb65-5e41-56e3-ac25-c18717ee477d")
+		(property "Sheetname" "PWR1"
+			(at 30.48 29.7684 0)
+			(effects (font (size 1.27 1.27)) (justify left bottom))
+		)
+		(property "Sheetfile" "power-input.kicad_sch"
+			(at 30.48 56.611599999999996 0)
+			(effects (font (size 1.27 1.27)) (justify left top))
+		)
+		(instances
+			(project "probe"
+				(path "/6ba5fed3-a9dd-5630-83f1-e943531b395f" (page "1"))
+			)
+		)
+	)
+	(sheet
+		(at 101.6 30.48)
+		(size 40.64 25.4)
+		(fields_autoplaced yes)
+		(stroke (width 0.1524) (type solid))
+		(fill (color 0 0 0 0.0000))
+		(uuid "b9c1a7a4-03b9-5937-bd8f-858301cac598")
+		(property "Sheetname" "PWR2"
+			(at 101.6 29.7684 0)
+			(effects (font (size 1.27 1.27)) (justify left bottom))
+		)
+		(property "Sheetfile" "power-input.kicad_sch"
+			(at 101.6 56.611599999999996 0)
+			(effects (font (size 1.27 1.27)) (justify left top))
+		)
+		(instances
+			(project "probe"
+				(path "/6ba5fed3-a9dd-5630-83f1-e943531b395f" (page "2"))
+			)
+		)
+	)
+	(sheet_instances
+		(path "/" (page "1"))
+	)
+	(embedded_fonts no)
+)

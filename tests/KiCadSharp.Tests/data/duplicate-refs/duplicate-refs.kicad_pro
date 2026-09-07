@@ -1,0 +1,594 @@
+{
+  "board": {
+    "design_settings": {
+      "defaults": {
+        "board_outline_line_width": 0.1,
+        "copper_line_width": 0.2,
+        "copper_text_size_h": 1.5,
+        "copper_text_size_v": 1.5,
+        "copper_text_thickness": 0.3,
+        "courtyard_line_width": 0.05,
+        "fab_line_width": 0.1,
+        "fab_text_size_h": 1.0,
+        "fab_text_size_v": 1.0,
+        "fab_text_thickness": 0.15,
+        "other_line_width": 0.15,
+        "silk_line_width": 0.15,
+        "silk_text_size_h": 1.0,
+        "silk_text_size_v": 1.0,
+        "silk_text_thickness": 0.15
+      },
+      "diff_pair_dimensions": [
+        {
+          "gap": 0.0,
+          "via_gap": 0.0,
+          "width": 0.0
+        },
+        {
+          "gap": 0.2,
+          "via_gap": 0.25,
+          "width": 0.22
+        },
+        {
+          "gap": 0.15,
+          "via_gap": 0.25,
+          "width": 0.24
+        },
+        {
+          "gap": 0.25,
+          "via_gap": 0.25,
+          "width": 0.25
+        }
+      ],
+      "drc_exclusions": [],
+      "rules": {
+        "allow_blind_buried_vias": false,
+        "allow_microvias": false,
+        "max_error": 0.005,
+        "min_clearance": 0.09,
+        "min_connection": 0.15,
+        "min_copper_edge_clearance": 0.2,
+        "min_hole_clearance": 0.25,
+        "min_hole_to_hole": 0.2,
+        "min_resolved_spokes": 2,
+        "min_silk_clearance": 0.15,
+        "min_text_height": 1.0,
+        "min_text_thickness": 0.15,
+        "min_through_hole_diameter": 0.3,
+        "min_track_width": 0.09,
+        "min_via_annular_width": 0.1,
+        "min_via_diameter": 0.4,
+        "solder_mask_clearance": 0.0,
+        "solder_mask_min_width": 0.1,
+        "solder_mask_to_copper_clearance": 0.005
+      },
+      "track_widths": [
+        0.0,
+        0.2,
+        0.25,
+        0.4,
+        0.6,
+        1.0,
+        1.5,
+        2.0
+      ],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        },
+        {
+          "diameter": 0.6,
+          "drill": 0.3
+        },
+        {
+          "diameter": 0.8,
+          "drill": 0.4
+        },
+        {
+          "diameter": 1.0,
+          "drill": 0.5
+        }
+      ],
+      "rule_severities": {
+        "missing_courtyard": "error",
+        "pth_inside_courtyard": "error",
+        "npth_inside_courtyard": "error",
+        "footprint_filters_mismatch": "warning",
+        "track_not_centered_on_via": "warning",
+        "tuning_profile_track_geometries": "warning",
+        "footprint_type_mismatch": "error"
+      }
+    }
+  },
+  "boards": [],
+  "libraries": {
+    "pinned_footprint_libs": [
+      "orbion"
+    ],
+    "pinned_symbol_libs": [
+      "orbion"
+    ]
+  },
+  "meta": {
+    "filename": "orbion-2layer.kicad_pro",
+    "version": 1
+  },
+  "net_settings": {
+    "classes": [
+      {
+        "name": "Default",
+        "clearance": 0.2,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "diff_pair_width": 0.2,
+        "diff_pair_gap": 0.2,
+        "diff_pair_via_gap": 0.25,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 2147483647
+      },
+      {
+        "name": "GND",
+        "clearance": 0.2,
+        "track_width": 0.3,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(80, 80, 80, 1.000)",
+        "schematic_color": "rgba(80, 80, 80, 1.000)",
+        "priority": 30
+      },
+      {
+        "name": "Power",
+        "clearance": 0.25,
+        "track_width": 0.5,
+        "via_diameter": 0.8,
+        "via_drill": 0.4,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(200, 52, 52, 1.000)",
+        "schematic_color": "rgba(200, 52, 52, 1.000)",
+        "priority": 20
+      },
+      {
+        "name": "HighCurrent",
+        "clearance": 0.3,
+        "track_width": 1.0,
+        "via_diameter": 1.0,
+        "via_drill": 0.5,
+        "wire_width": 8,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(255, 120, 0, 1.000)",
+        "schematic_color": "rgba(255, 120, 0, 1.000)",
+        "priority": 15
+      },
+      {
+        "name": "HV",
+        "clearance": 3.0,
+        "track_width": 0.8,
+        "via_diameter": 1.0,
+        "via_drill": 0.5,
+        "wire_width": 8,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(255, 0, 0, 1.000)",
+        "schematic_color": "rgba(255, 0, 0, 1.000)",
+        "priority": 1
+      },
+      {
+        "name": "Isolated",
+        "clearance": 0.3,
+        "track_width": 0.5,
+        "via_diameter": 0.8,
+        "via_drill": 0.4,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(255, 255, 255, 1.000)",
+        "schematic_color": "rgba(255, 255, 255, 1.000)",
+        "priority": 5
+      },
+      {
+        "name": "USB_DIFF",
+        "clearance": 0.2,
+        "track_width": 0.225,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "diff_pair_width": 0.225,
+        "diff_pair_gap": 0.15,
+        "diff_pair_via_gap": 0.25,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(0, 160, 200, 1.000)",
+        "schematic_color": "rgba(0, 160, 200, 1.000)",
+        "priority": 50
+      },
+      {
+        "name": "RS485",
+        "clearance": 0.2,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "diff_pair_width": 0.25,
+        "diff_pair_gap": 0.25,
+        "diff_pair_via_gap": 0.25,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(0, 180, 120, 1.000)",
+        "schematic_color": "rgba(0, 180, 120, 1.000)",
+        "priority": 70
+      },
+      {
+        "name": "Analog",
+        "clearance": 0.25,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(150, 0, 200, 1.000)",
+        "schematic_color": "rgba(150, 0, 200, 1.000)",
+        "priority": 85
+      },
+      {
+        "name": "RF",
+        "clearance": 0.3,
+        "track_width": 0.33,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(255, 200, 0, 1.000)",
+        "schematic_color": "rgba(255, 200, 0, 1.000)",
+        "priority": 75
+      },
+      {
+        "name": "Clock",
+        "clearance": 0.25,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(255, 255, 0, 1.000)",
+        "schematic_color": "rgba(255, 255, 0, 1.000)",
+        "priority": 80
+      },
+      {
+        "name": "Debug",
+        "clearance": 0.2,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(120, 120, 255, 1.000)",
+        "schematic_color": "rgba(120, 120, 255, 1.000)",
+        "priority": 100
+      },
+      {
+        "name": "I2C",
+        "clearance": 0.2,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(0, 200, 160, 1.000)",
+        "schematic_color": "rgba(0, 200, 160, 1.000)",
+        "priority": 110
+      },
+      {
+        "name": "SPI",
+        "clearance": 0.2,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(0, 140, 255, 1.000)",
+        "schematic_color": "rgba(0, 140, 255, 1.000)",
+        "priority": 120
+      },
+      {
+        "name": "UART",
+        "clearance": 0.2,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(100, 200, 100, 1.000)",
+        "schematic_color": "rgba(100, 200, 100, 1.000)",
+        "priority": 130
+      },
+      {
+        "name": "HighSpeed",
+        "clearance": 0.25,
+        "track_width": 0.2,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(255, 100, 200, 1.000)",
+        "schematic_color": "rgba(255, 100, 200, 1.000)",
+        "priority": 95
+      },
+      {
+        "name": "SDIO",
+        "clearance": 0.25,
+        "track_width": 0.2,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(255, 160, 60, 1.000)",
+        "schematic_color": "rgba(255, 160, 60, 1.000)",
+        "priority": 90
+      },
+      {
+        "name": "MIPI",
+        "clearance": 0.25,
+        "track_width": 0.22,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "diff_pair_width": 0.22,
+        "diff_pair_gap": 0.2,
+        "diff_pair_via_gap": 0.25,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(200, 80, 255, 1.000)",
+        "schematic_color": "rgba(200, 80, 255, 1.000)",
+        "priority": 55
+      },
+      {
+        "name": "Ethernet",
+        "clearance": 0.25,
+        "track_width": 0.22,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "diff_pair_width": 0.22,
+        "diff_pair_gap": 0.2,
+        "diff_pair_via_gap": 0.25,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(60, 180, 255, 1.000)",
+        "schematic_color": "rgba(60, 180, 255, 1.000)",
+        "priority": 60
+      },
+      {
+        "name": "CAN",
+        "clearance": 0.2,
+        "track_width": 0.25,
+        "via_diameter": 0.6,
+        "via_drill": 0.3,
+        "diff_pair_width": 0.25,
+        "diff_pair_gap": 0.25,
+        "diff_pair_via_gap": 0.25,
+        "wire_width": 6,
+        "bus_width": 12,
+        "line_style": 0,
+        "pcb_color": "rgba(180, 140, 0, 1.000)",
+        "schematic_color": "rgba(180, 140, 0, 1.000)",
+        "priority": 65
+      }
+    ],
+    "meta": {
+      "version": 4
+    },
+    "netclass_patterns": [
+      {
+        "netclass": "GND",
+        "pattern": "GND*"
+      },
+      {
+        "netclass": "GND",
+        "pattern": "*GND"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "+*V*"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "-*V*"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "V*"
+      },
+      {
+        "netclass": "HV",
+        "pattern": "HV_*"
+      },
+      {
+        "netclass": "HV",
+        "pattern": "AC_*"
+      },
+      {
+        "netclass": "HV",
+        "pattern": "MAINS_*"
+      },
+      {
+        "netclass": "HighCurrent",
+        "pattern": "PWR_*"
+      },
+      {
+        "netclass": "USB_DIFF",
+        "pattern": "USB*_D+"
+      },
+      {
+        "netclass": "USB_DIFF",
+        "pattern": "USB*_D-"
+      },
+      {
+        "netclass": "RS485",
+        "pattern": "RS485_*"
+      },
+      {
+        "netclass": "Analog",
+        "pattern": "AIN_*"
+      },
+      {
+        "netclass": "Analog",
+        "pattern": "AOUT_*"
+      },
+      {
+        "netclass": "RF",
+        "pattern": "RF_*"
+      },
+      {
+        "netclass": "RF",
+        "pattern": "ANT*"
+      },
+      {
+        "netclass": "Clock",
+        "pattern": "XTAL*"
+      },
+      {
+        "netclass": "Clock",
+        "pattern": "OSC*"
+      },
+      {
+        "netclass": "Clock",
+        "pattern": "CLK_*"
+      },
+      {
+        "netclass": "Debug",
+        "pattern": "SWD*"
+      },
+      {
+        "netclass": "Debug",
+        "pattern": "SWCLK"
+      },
+      {
+        "netclass": "Debug",
+        "pattern": "SWO"
+      },
+      {
+        "netclass": "Debug",
+        "pattern": "JTAG_*"
+      },
+      {
+        "netclass": "Debug",
+        "pattern": "RESET_N"
+      },
+      {
+        "netclass": "I2C",
+        "pattern": "I2C*_SDA"
+      },
+      {
+        "netclass": "I2C",
+        "pattern": "I2C*_SCL"
+      },
+      {
+        "netclass": "SPI",
+        "pattern": "SPI*_*"
+      },
+      {
+        "netclass": "UART",
+        "pattern": "UART*_*"
+      },
+      {
+        "netclass": "HighSpeed",
+        "pattern": "QSPI*_*"
+      },
+      {
+        "netclass": "HighSpeed",
+        "pattern": "LCD_*"
+      },
+      {
+        "netclass": "HighSpeed",
+        "pattern": "CAM_*"
+      },
+      {
+        "netclass": "SDIO",
+        "pattern": "SDIO*_*"
+      },
+      {
+        "netclass": "SDIO",
+        "pattern": "SD_*"
+      },
+      {
+        "netclass": "MIPI",
+        "pattern": "DSI_*"
+      },
+      {
+        "netclass": "MIPI",
+        "pattern": "CSI_*"
+      },
+      {
+        "netclass": "MIPI",
+        "pattern": "MIPI_*"
+      },
+      {
+        "netclass": "Ethernet",
+        "pattern": "ETH_*"
+      },
+      {
+        "netclass": "CAN",
+        "pattern": "CAN_*"
+      },
+      {
+        "netclass": "HighCurrent",
+        "pattern": "*_HC"
+      },
+      {
+        "netclass": "Isolated",
+        "pattern": "*_ISO"
+      },
+      {
+        "netclass": "Isolated",
+        "pattern": "ISO_*"
+      }
+    ]
+  },
+  "pcbnew": {
+    "page_layout_descr_file": "${KIPRJMOD}/../../orbion-kicad/config/worksheets/orbion-a3.kicad_wks"
+  },
+  "schematic": {
+    "page_layout_descr_file": "${KIPRJMOD}/../../orbion-kicad/config/worksheets/orbion-a3.kicad_wks"
+  },
+  "sheets": [],
+  "text_variables": {
+    "ORBION_PN": "ORB-PCB-XXXX",
+    "BOARD_REV": "A",
+    "BOARD_STATUS": "PROTOTYPE",
+    "COMPANY": "Orbion",
+    "LICENSE": "Proprietary - Orbion"
+  },
+  "erc": {
+    "erc_exclusions": [],
+    "meta": {
+      "version": 0
+    },
+    "rule_severities": {
+      "footprint_filter": "warning",
+      "four_way_junction": "warning",
+      "single_global_label": "error",
+      "simulation_model_issue": "warning"
+    }
+  }
+}

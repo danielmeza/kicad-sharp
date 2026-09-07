@@ -265,10 +265,11 @@ and, where a number is quoted, measured against the KiCad 10 corpus.
 
 **Repository.**
 
-- **There is no test project.** `dotnet test KiCadSharp.slnx` passes because it has nothing to run;
-  CI's `Test` step proves only that the solution builds. The `--check` proto-drift gate is the one
-  real gate in this repo. (The `SExpressions` half, by contrast, has 187 tests and a byte-identical
-  round trip over 52 real KiCad files.)
+- **The document-layer bugs above are pinned, not fixed.** `tests/KiCadSharp.Tests` is a
+  characterisation suite: it asserts what the library does *today*, with the measured numbers in the
+  assertions (0 pins read, 38,055 bytes written, 0 footprints found), so a fix has something to
+  flip. Nothing in it asserts correct behaviour for a bug that is still open. 17 tests; run them
+  with `dotnet test KiCadSharp.slnx`.
 
 ## Building
 
