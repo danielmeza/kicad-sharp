@@ -238,6 +238,40 @@ namespace KiCadSharp.Documents
             set => WriteChild("layer", value, SQuoteStyle.Quoted);
         }
 
+        /// <summary>
+        /// Gets or sets where the footprint is placed and how far it is turned, the
+        /// <c>(at x y [rotation])</c> form.
+        /// </summary>
+        /// <remarks>
+        /// A <c>.kicad_mod</c> on its own is drawn about the origin and carries no <c>at</c>, so this
+        /// reads <c>(0, 0)</c> there. A footprint reached through <see cref="KiCadBoard.Footprints"/>
+        /// is a <em>placed</em> one and this is where it sits — the first thing anyone asks a board.
+        /// Every child of the footprint is drawn relative to it.
+        /// </remarks>
+        public KiCadPosition Position
+        {
+            get => KiCadPosition.Read(Node.GetChild("at"));
+            set => value.Write(Require("at"), includeRotation: false);
+        }
+
+        /// <summary>
+        /// Gets or sets the footprint's UUID — how a <see cref="KiCadGroup"/> and the schematic's
+        /// <c>path</c> refer to it. <see langword="null"/> on a file old enough to have used
+        /// <see cref="Tstamp"/> instead.
+        /// </summary>
+        public string? Uuid
+        {
+            get => ReadChild("uuid");
+            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets whether the footprint is locked against being moved.</summary>
+        public bool Locked
+        {
+            get => ReadFlag("locked");
+            set => WriteFlag("locked", value);
+        }
+
         /// <summary>Gets or sets the footprint's description, the <c>(descr "...")</c> token.</summary>
         public string? Description
         {
