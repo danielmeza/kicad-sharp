@@ -164,15 +164,24 @@ namespace KiCadSharp.Documents
     /// Nothing is cached: the list is the node's children, read at the moment you ask. Adding here
     /// appends a child to the node and removing here removes one, so the file follows the list
     /// rather than being rebuilt from it.
+    /// <para>
+    /// The owner may be absent, and then the list is live AND empty. That is the shape a read-only
+    /// property needs when the form it reads has not been written yet: it can report "nothing here"
+    /// without creating a <c>(lib_symbols)</c> nobody asked for, and without degrading into a
+    /// snapshot that stops tracking the file the moment someone adds to it. Mutating such a list
+    /// throws, because there is nothing to mutate — take the <c>Require…()</c> accessor instead.
+    /// </para>
     /// </remarks>
     public sealed class KiCadNodeList<T> : IReadOnlyList<T>
         where T : KiCadNode
     {
-        private readonly SExpression _owner;
+        private static readonly IEnumerable<SExpression> None = Array.Empty<SExpression>();
+
+        private readonly SExpression? _owner;
         private readonly string _token;
         private readonly Func<SExpression, T> _view;
 
-        internal KiCadNodeList(SExpression owner, string token, Func<SExpression, T> view)
+        internal KiCadNodeList(SExpression? owner, string token, Func<SExpression, T> view)
         {
             _owner = owner;
             _token = token;
@@ -185,7 +194,7 @@ namespace KiCadSharp.Documents
             get
             {
                 var n = 0;
-                foreach (var _ in _owner.GetChildren(_token))
+                foreach (var _ in _owner?.GetChildren(_token) ?? None)
                 {
                     n++;
                 }
@@ -202,7 +211,7 @@ namespace KiCadSharp.Documents
             {
                 ArgumentOutOfRangeException.ThrowIfNegative(index);
                 var i = 0;
-                foreach (var child in _owner.GetChildren(_token))
+                foreach (var child in _owner?.GetChildren(_token) ?? None)
                 {
                     if (i++ == index)
                     {
@@ -214,9 +223,15 @@ namespace KiCadSharp.Documents
             }
         }
 
+        /// <summary>The owner, or a clear failure when this list is the empty stand-in for a missing form.</summary>
+        private SExpression Owner => _owner ?? throw new InvalidOperationException(
+            $"This list is a live view over a ({_token} ...) form that does not exist in the file. "
+            + "Reading it is fine and reports nothing; to add to it, take the Require... accessor, "
+            + "which creates the form deliberately.");
+
         /// <summary>Appends a new child with the token and returns a view over it.</summary>
         /// <returns>The new element.</returns>
-        public T Add() => _view(_owner.CreateChild(_token));
+        public T Add() => _view(Owner.CreateChild(_token));
 
         /// <summary>Appends an existing node as a child. It must carry this list's token.</summary>
         /// <param name="item">The view whose node to append.</param>
@@ -230,7 +245,7 @@ namespace KiCadSharp.Documents
                 throw new ArgumentException($"Expected a ({_token} ...) node but got ({item.Node.Token} ...).", nameof(item));
             }
 
-            _owner.AddChild(item.Node);
+            Owner.AddChild(item.Node);
             return item;
         }
 
@@ -240,7 +255,7 @@ namespace KiCadSharp.Documents
         public bool Remove(T item)
         {
             ArgumentNullException.ThrowIfNull(item);
-            return _owner.Children.Remove(item.Node);
+            return Owner.Children.Remove(item.Node);
         }
 
         /// <summary>Inserts a new child at <paramref name="index"/> among this node's children.</summary>
@@ -249,13 +264,13 @@ namespace KiCadSharp.Documents
         public void Insert(int index, T item)
         {
             ArgumentNullException.ThrowIfNull(item);
-            _owner.Children.Insert(index, item.Node);
+            Owner.Children.Insert(index, item.Node);
         }
 
         /// <inheritdoc />
         public IEnumerator<T> GetEnumerator()
         {
-            foreach (var child in _owner.GetChildren(_token))
+            foreach (var child in _owner?.GetChildren(_token) ?? None)
             {
                 yield return _view(child);
             }
