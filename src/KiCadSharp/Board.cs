@@ -1,4 +1,4 @@
-using Google.Protobuf;
+﻿using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 
 using Kiapi.Common.Commands;
@@ -47,13 +47,13 @@ namespace KiCadSharp
         /// <summary>
         /// Saves the board
         /// </summary>
-        public async ValueTask Save()
+        public async ValueTask Save(CancellationToken cancellationToken = default)
         {
             var command = new SaveDocument
             {
                 Document = _document
             };
-            await Send(command);
+            await Send(command, cancellationToken);
         }
         
         /// <summary>
@@ -62,7 +62,7 @@ namespace KiCadSharp
         /// <param name="filename">Path to save the board to</param>
         /// <param name="overwrite">Whether to overwrite existing files</param>
         /// <param name="includeProject">Whether to include the project files</param>
-        public async ValueTask SaveAs(string filename, bool overwrite = false, bool includeProject = true)
+        public async ValueTask SaveAs(string filename, bool overwrite = false, bool includeProject = true, CancellationToken cancellationToken = default)
         {
             var command = new SaveCopyOfDocument
             {
@@ -74,28 +74,28 @@ namespace KiCadSharp
                 Overwrite = overwrite,
                 IncludeProject = includeProject
             };
-            await Send(command);
+            await Send(command, cancellationToken);
         }
         
         /// <summary>
         /// Reverts the board to the last saved state
         /// </summary>
-        public async ValueTask Revert()
+        public async ValueTask Revert(CancellationToken cancellationToken = default)
         {
             var command = new RevertDocument
             {
                 Document = _document
             };
-            await Send(command);
+            await Send(command, cancellationToken);
         }
         
         /// <summary>
         /// Begins a commit transaction on the board
         /// </summary>
         /// <returns>Commit object with ID to be used in push/drop operations</returns>
-        public async ValueTask<Commit> BeginCommit()
+        public async ValueTask<Commit> BeginCommit(CancellationToken cancellationToken = default)
         {
-            var response = await Send<BeginCommitResponse>(new BeginCommit());
+            var response = await Send<BeginCommitResponse>(new BeginCommit(), cancellationToken);
             return new Commit(response.Id);
         }
         
@@ -104,7 +104,7 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="commit">Commit object returned from BeginCommit</param>
         /// <param name="message">Optional message describing the changes</param>
-        public async ValueTask PushCommit(Commit commit, string message = "")
+        public async ValueTask PushCommit(Commit commit, string message = "", CancellationToken cancellationToken = default)
         {
             var command = new EndCommit
             {
@@ -112,21 +112,21 @@ namespace KiCadSharp
                 Action = CommitAction.CmaCommit,
                 Message = message
             };
-            await Send<EndCommitResponse>(command);
+            await Send<EndCommitResponse>(command, cancellationToken);
         }
         
         /// <summary>
         /// Drops (cancels) changes made during a commit transaction
         /// </summary>
         /// <param name="commit">Commit object returned from BeginCommit</param>
-        public async ValueTask DropCommit(Commit commit)
+        public async ValueTask DropCommit(Commit commit, CancellationToken cancellationToken = default)
         {
             var command = new EndCommit
             {
                 Id = commit.Id,
                 Action = CommitAction.CmaDrop
             };
-            await Send<EndCommitResponse>(command);
+            await Send<EndCommitResponse>(command, cancellationToken);
         }
         
         /// <summary>
@@ -134,7 +134,13 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="types">Types of items to retrieve</param>
         /// <returns>Array of items</returns>
-        public async ValueTask<IMessage[]> GetItems(params KiCadObjectType[] types)
+        public ValueTask<IMessage[]> GetItems(params KiCadObjectType[] types) => GetItems(default, types);
+
+        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        /// <param name="types">As above.</param>
+        /// <returns>As above.</returns>
+        public async ValueTask<IMessage[]> GetItems(CancellationToken cancellationToken, params KiCadObjectType[] types)
         {
             var command = new GetItems
             {
@@ -142,7 +148,7 @@ namespace KiCadSharp
             };
             command.Types_.AddRange(types);
             
-            var response = await Send<GetItemsResponse>(command);
+            var response = await Send<GetItemsResponse>(command, cancellationToken);
             return response.Items.ToArray();
         }
         
@@ -151,7 +157,13 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="types">Optional filter for item types</param>
         /// <returns>Array of selected items</returns>
-        public async ValueTask<IMessage[]> GetSelection(params KiCadObjectType[] types)
+        public ValueTask<IMessage[]> GetSelection(params KiCadObjectType[] types) => GetSelection(default, types);
+
+        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        /// <param name="types">As above.</param>
+        /// <returns>As above.</returns>
+        public async ValueTask<IMessage[]> GetSelection(CancellationToken cancellationToken, params KiCadObjectType[] types)
         {
             var command = new GetSelection
             {
@@ -162,33 +174,33 @@ namespace KiCadSharp
                 command.Types_.AddRange(types);
             }
             
-            var response = await Send<SelectionResponse>(command);
+            var response = await Send<SelectionResponse>(command, cancellationToken);
             return response.Items.ToArray();
         }
         
         /// <summary>
         /// Clears the current selection on the board
         /// </summary>
-        public async ValueTask ClearSelection()
+        public async ValueTask ClearSelection(CancellationToken cancellationToken = default)
         {
             var command = new ClearSelection
             {
                 Header = new ItemHeader { Document = _document }
             };
-            await Send(command);
+            await Send(command, cancellationToken);
         }
         
         /// <summary>
         /// Gets the active layer on the board
         /// </summary>
         /// <returns>Active layer</returns>
-        public async ValueTask<BoardLayer> GetActiveLayer()
+        public async ValueTask<BoardLayer> GetActiveLayer(CancellationToken cancellationToken = default)
         {
             var command = new GetActiveLayer
             {
                 Board = _document
             };
-            var response = await Send<BoardLayerResponse>(command);
+            var response = await Send<BoardLayerResponse>(command, cancellationToken);
             return response.Layer;
         }
         
@@ -196,40 +208,40 @@ namespace KiCadSharp
         /// Sets the active layer on the board
         /// </summary>
         /// <param name="layer">Layer to set as active</param>
-        public async ValueTask SetActiveLayer(BoardLayer layer)
+        public async ValueTask SetActiveLayer(BoardLayer layer, CancellationToken cancellationToken = default)
         {
             var command = new SetActiveLayer
             {
                 Board = _document,
                 Layer = layer
             };
-            await Send(command);
+            await Send(command, cancellationToken);
         }
         
         /// <summary>
         /// Gets the board as a string in KiCad's board file format
         /// </summary>
         /// <returns>Board file content as string</returns>
-        public async ValueTask<string> GetAsString()
+        public async ValueTask<string> GetAsString(CancellationToken cancellationToken = default)
         {
             var command = new SaveDocumentToString
             {
                 Document = _document
             };
-            var response = await Send<SavedDocumentResponse>(command);
+            var response = await Send<SavedDocumentResponse>(command, cancellationToken);
             return response.Contents;
         }
         
         /// <summary>
         /// Refills all zones on the board
         /// </summary>
-        public async ValueTask RefillZones()
+        public async ValueTask RefillZones(CancellationToken cancellationToken = default)
         {
             var command = new RefillZones
             {
                 Board = _document
             };
-            await Send(command);
+            await Send(command, cancellationToken);
         }
         
         /// <summary>
@@ -237,7 +249,13 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="items">Items to create</param>
         /// <returns>Response containing the created items</returns>
-        public async ValueTask<CreateItemsResponse> CreateItems(params IMessage[] items)
+        public ValueTask<CreateItemsResponse> CreateItems(params IMessage[] items) => CreateItems(default, items);
+
+        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        /// <param name="items">As above.</param>
+        /// <returns>As above.</returns>
+        public async ValueTask<CreateItemsResponse> CreateItems(CancellationToken cancellationToken, params IMessage[] items)
         {
             var command = new CreateItems
             {
@@ -249,7 +267,7 @@ namespace KiCadSharp
                 command.Items.Add(Any.Pack(item));
             }
             
-            return await Send<CreateItemsResponse>(command);
+            return await Send<CreateItemsResponse>(command, cancellationToken);
         }
         
         /// <summary>
@@ -257,7 +275,13 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="items">Items to update</param>
         /// <returns>Response containing the updated items</returns>
-        public async ValueTask<UpdateItemsResponse> UpdateItems(params IMessage[] items)
+        public ValueTask<UpdateItemsResponse> UpdateItems(params IMessage[] items) => UpdateItems(default, items);
+
+        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        /// <param name="items">As above.</param>
+        /// <returns>As above.</returns>
+        public async ValueTask<UpdateItemsResponse> UpdateItems(CancellationToken cancellationToken, params IMessage[] items)
         {
             var command = new UpdateItems
             {
@@ -269,7 +293,7 @@ namespace KiCadSharp
                 command.Items.Add(Any.Pack(item));
             }
             
-            return await Send<UpdateItemsResponse>(command);
+            return await Send<UpdateItemsResponse>(command, cancellationToken);
         }
         
         /// <summary>
@@ -277,7 +301,13 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="itemIds">IDs of items to delete</param>
         /// <returns>Response containing the result of the deletion</returns>
-        public async ValueTask<DeleteItemsResponse> DeleteItems(params KIID[] itemIds)
+        public ValueTask<DeleteItemsResponse> DeleteItems(params KIID[] itemIds) => DeleteItems(default, itemIds);
+
+        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        /// <param name="itemIds">As above.</param>
+        /// <returns>As above.</returns>
+        public async ValueTask<DeleteItemsResponse> DeleteItems(CancellationToken cancellationToken, params KIID[] itemIds)
         {
             var command = new DeleteItems
             {
@@ -285,7 +315,7 @@ namespace KiCadSharp
             };
             command.ItemIds.AddRange(itemIds);
             
-            return await Send<DeleteItemsResponse>(command);
+            return await Send<DeleteItemsResponse>(command, cancellationToken);
         }
     }
     
