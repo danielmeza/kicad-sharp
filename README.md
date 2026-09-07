@@ -76,6 +76,11 @@ plus `Document` and `Name`.
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
 | `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). |
 | `KiCadFootprint` | — | `Id`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
+| `KiCadSchematic` | `.kicad_sch` | `Load`/`LoadAsync`/`Parse`, `Save`, `ToText`, `Uuid`, `Symbols`, `Sheets`, `FilePath`, `IsModified`. |
+| `KiCadSchematicSymbol` | — | `Uuid`, `LibId`, `Unit`, `Properties`, `ReferenceProperty`, `IsPowerSymbol`, `GetInstanceReference`, `SetInstanceReference`, `PruneInstances`. |
+| `KiCadSheet` | — | `Uuid`, `SheetName`, `SheetFile`, `Properties`. |
+| `SchematicHierarchy` | `.kicad_sch` | `Load(root)`, `ProjectName`, `Root`, `SheetInstances`, `Schematics`, `Placements`, `Save()`. |
+| `SchematicAnnotator` | `.kicad_sch` | `Annotate`, `AnnotateFile`, `FindDuplicateReferences`. |
 | `KiCadUtils` | `.kicad_sym` | `ParseSymbolLibrary`, `ExportSymbolToLibrary`, `ValidateSymbolLibrary`, `CloneSymbol`, `GetLibraryName`. |
 | `KiCadFileExtensions` | — | `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`, `.kicad_sym`, `.kicad_mod`, `.kicad_dru`, `.kicad_wks`, `.kicad_prl`. |
 | `KiCadSharp.Settings.IWritableOptions<T>` / `WritableOptions<T>` | JSON | A writable `IOptions<T>` that patches one section of a JSON file and reloads configuration. Unrelated to KiCad IPC. |
@@ -87,7 +92,7 @@ plus `Document` and `Name`.
 | `.kicad_sym` | **Yes**, as a view. Reads sub-units; an untouched save is byte-identical. |
 | `.kicad_mod` / `(footprint …)` inside `.kicad_pcb` | **Yes**, as a view. An untouched save is byte-identical. |
 | `.kicad_pcb` (tracks, vias, zones, nets, layers, stackup) | **No.** Only reachable live, over IPC, or as generic s-expressions. |
-| `.kicad_sch` | **No.** No offline model, and no working IPC path either. |
+| `.kicad_sch` | **Partial.** Symbols, sheets and reference designators, as a view — enough to walk a hierarchy and annotate it. No wires, labels or buses; no IPC path either. |
 | `.kicad_pro`, `.kicad_dru`, `.kicad_wks`, `.kicad_prl` | **No.** Generic s-expressions (or JSON, for `.kicad_pro`). |
 
 **These are views, not models.** A `KiCadSymbol` holds no fields — every property reads and writes
@@ -99,6 +104,61 @@ anything not modelled through `Node`.
 Anything in the "No" rows is still fully readable and *losslessly writable* through
 [`SExpressions`](https://github.com/danielmeza/sexpressions), which is a dependency of this package —
 you just write the accessors yourself.
+
+### Annotation
+
+`kicad-cli` has no `annotate` command. This does.
+
+```csharp
+var result = SchematicAnnotator.AnnotateFile("board.kicad_sch");
+Console.WriteLine($"{result.Changes.Count} designators moved, {result.ReferenceCount} now distinct");
+```
+
+Or in two steps, when you want to see what it would do first:
+
+```csharp
+var hierarchy = SchematicHierarchy.Load("board.kicad_sch");
+foreach (var (reference, sheets) in SchematicAnnotator.FindDuplicateReferences(hierarchy))
+{
+    Console.WriteLine($"{reference} is used in {string.Join(", ", sheets)}");
+}
+
+var result = SchematicAnnotator.Annotate(hierarchy);
+hierarchy.Save();   // writes only the files that changed
+```
+
+**Why this exists.** A hierarchical design instantiates one sheet file more than once. The
+designator that decides what a part *is* to the netlist is not the `Reference` property — it is the
+entry in the symbol's `(instances (project … (path … (reference …))))` block, keyed by the full path
+of the sheet instance. A sheet authored standalone has an entry for its own path and none for the
+paths it is used at, so KiCad falls back to the property, both instances answer with the same
+designator, and the netlist folds them into one part.
+
+Measured on the fixture in `tests/KiCadSharp.Tests/data/duplicate-refs` — one child sheet
+instantiated twice, 14 symbols:
+
+| `kicad-cli sch export netlist` | before | after |
+|---|---|---|
+| components | 14 | 14 |
+| distinct references | **7** | **14** |
+| nodes on `GND` | **4** | **8** |
+| `schematic has annotation errors` | yes | no |
+
+Four of that board's eight ground connections did not exist, and
+`kicad-cli sch erc --severity-all` reported 22 violations without naming one of them. The only
+signal KiCad gives is a single line on the netlist exporter's stderr.
+
+**What it does.** Walks the hierarchy from the root sheet, collects one placement per symbol per
+sheet instance, and gives each one a designator nothing else in the design uses. The prefix never
+changes — only the number, and a number that was written zero-padded stays zero-padded, so
+`#PWR001` becomes `#PWR006` and not `#PWR6`. A designator that is already numbered and not already
+taken is kept, which is what makes a second run write nothing at all.
+
+**What it does not touch.** The `Reference` property: it is the designator the sheet was authored
+with, it is what the editor draws, and a symbol on a sheet used twice has no single correct value
+for it. Instance entries filed under a *different* project name, which is what lets a shared sheet
+still open on its own. And every byte outside the `(instances …)` blocks — the test asserts that
+stripping those blocks from the file before and after leaves two identical texts.
 
 ## `KiCadSharp.Protos`
 
@@ -233,8 +293,9 @@ A standalone `.kicad_mod` loads as one footprint and saves byte-identical, `desc
 
 What is still missing here:
 
-- **No schematic document type.** A `.kicad_sch` is reachable through `SExpressions`, but there is
-  no `KiCadSchematic` view over its symbols, wires, labels, buses or sheets.
+- **`KiCadSchematic` models symbols, sheets and instances only** — enough to walk a hierarchy and
+  annotate it. Wires, junctions, labels, buses, no-connects and text are reachable through `Node`
+  and round-trip intact, but have no typed view.
 - **`KiCadUtils` has no footprint half** — no `ParseFootprintLibrary`, `ValidateFootprintLibrary` or
   `CloneFootprint`. `KiCadFootprint.CloneAs` covers the last of those.
 - **Board-level content has no views.** Zones, groups, tracks, vias and the `setup` block round-trip
@@ -274,9 +335,10 @@ What is still missing here:
 
 **Repository.**
 
-- **`tests/KiCadSharp.Tests` is the only gate on the document layer.** 27 tests over the vendored
+- **`tests/KiCadSharp.Tests` is the only gate on the document layer.** 38 tests over the vendored
   KiCad 10 fixtures, with the byte counts in the assertions. There is no test for the IPC surface at
-  all — that needs a running KiCad, and nothing here fakes one. Run them with
+  all — that needs a running KiCad, and nothing here fakes one. The one test that shells out to
+  `kicad-cli` returns early unless `KICADSHARP_KICAD_CLI` points at one. Run them with
   `dotnet test KiCadSharp.slnx`.
 
 ## Building
