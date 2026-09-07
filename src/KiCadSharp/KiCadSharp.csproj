@@ -23,7 +23,7 @@ footprint libraries, design rules) through SExpressions.</Description>
          $(SExpressionsVersion) defaults to the released version; see README "Developing against local
          SExpressions sources" for the local-feed loop. -->
     <PackageReference Include="SExpressions" Version="$(SExpressionsVersion)" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.4" />
     <PackageReference Include="Rebus.nng" Version="8.6.1" />
