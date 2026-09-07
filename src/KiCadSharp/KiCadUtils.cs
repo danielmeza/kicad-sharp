@@ -82,26 +82,15 @@ namespace KiCadSharp
         /// <param name="originalSymbol">Original symbol to copy</param>
         /// <param name="newId">New ID for the symbol</param>
         /// <returns>A copy of the symbol with the new ID</returns>
+        /// <remarks>
+        /// The copy is a deep copy of the original's node. Since <see cref="KiCadSymbol"/> is a view,
+        /// wrapping the same node twice would give two handles on one symbol, and renaming through
+        /// either would rename the original.
+        /// </remarks>
         public static KiCadSymbol CloneSymbol(KiCadSymbol originalSymbol, string newId)
         {
-            // First convert to S-expression, then parse back to get a deep copy
-            var sexp = originalSymbol.ToSExpression();
-            var clonedSymbol = new KiCadSymbol(sexp);
-            
-            // Update the ID and Value property
-            clonedSymbol.Id = newId;
-            
-            // Find and update Value property
-            foreach (var property in clonedSymbol.Properties)
-            {
-                if (property.Key == "Value")
-                {
-                    property.Value = newId;
-                    break;
-                }
-            }
-            
-            return clonedSymbol;
+            ArgumentNullException.ThrowIfNull(originalSymbol);
+            return originalSymbol.CloneAs(newId);
         }
 
         /// <summary>
