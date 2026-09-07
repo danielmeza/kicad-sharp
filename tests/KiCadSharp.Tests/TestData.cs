@@ -34,8 +34,15 @@ public static class TestData
     /// </summary>
     public static string StackupBoard => Path.Combine(Root, "orbion-4layer.kicad_pcb");
 
+    /// <summary>
+    /// A 5,986-byte board written by pcbnew 10.0.6 itself: <c>(version 20260206)</c>, every net
+    /// named rather than numbered, no board-level net table, and a zone the filler filled. The only
+    /// fixture here that any KiCad wrote.
+    /// </summary>
+    public static string Kicad10Board => Path.Combine(Root, "kicad10-pcbnew.kicad_pcb");
+
     /// <summary>Every <c>.kicad_pcb</c> fixture, for the tests that must hold for all of them.</summary>
-    public static IEnumerable<string> Boards => new[] { PowerInputBoard, ProbeBoard, StackupBoard };
+    public static IEnumerable<string> Boards => new[] { PowerInputBoard, ProbeBoard, StackupBoard, Kicad10Board };
 
     /// <summary>The hierarchy that instantiates one child sheet twice, so every designator is used twice.</summary>
     public static string DuplicateRefsRoot => Path.Combine(Root, "duplicate-refs", "duplicate-refs.kicad_sch");
