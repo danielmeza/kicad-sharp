@@ -27,7 +27,6 @@ SExpressions. The schematic side of KiCad's IPC API does not answer on KiCad 10;
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Rebus.nng" />
-    <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
 </Project>
