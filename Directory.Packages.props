@@ -1,0 +1,49 @@
+<Project>
+
+  <!-- Central Package Management. Every PackageReference in this repository omits its Version and
+       takes it from the matching PackageVersion below, so a version lives in exactly one place and
+       two projects can never drift onto different builds of the same package.
+
+       That drift is not hypothetical here: KiCadSharp and KiCadSharp.Protos both reference
+       Microsoft.Extensions.DependencyInjection, they were on 9.0.4 and 10.0.11 at the same time,
+       and the result was a real NU1605 downgrade that had to be fixed by hand in #15. Under CPM the
+       two projects cannot disagree, because there is only one place to say the version.
+
+       Transitive pinning is deliberately NOT enabled: it would promote every transitive dependency
+       to a direct one in the packed nuspec, changing what consumers of these packages resolve. That
+       is a packaging decision and does not belong in a tidy-up. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- SExpressions is the one version that is meant to be overridden from the command line:
+       $(SExpressionsVersion) is set in Directory.Build.props and points at a locally packed build
+       when scripts/use-local-libs.sh is in play. Directory.Build.props is imported before this
+       file, so the property is already defined by the time NuGet evaluates it. -->
+  <ItemGroup>
+    <PackageVersion Include="SExpressions" Version="$(SExpressionsVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.11" />
+    <!-- Used directly by Settings/WritableOptions.cs. It used to arrive only as a transitive of
+         Rebus 8.6.1, which meant the build depended on somebody else's dependency choice; it is
+         declared here at the version that was already resolving. -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageVersion Include="Rebus.nng" Version="8.6.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Google.Protobuf" Version="3.36.1" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.83.0" />
+    <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.83.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="System.CommandLine" Version="2.0.11" />
+  </ItemGroup>
+
+</Project>

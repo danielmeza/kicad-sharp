@@ -22,11 +22,12 @@ SExpressions. The schematic side of KiCad's IPC API does not answer on KiCad 10;
     <!-- SExpressions now ships from its own repository (danielmeza/sexpressions) as its own package.
          $(SExpressionsVersion) defaults to the released version; see README "Developing against local
          SExpressions sources" for the local-feed loop. -->
-    <PackageReference Include="SExpressions" Version="$(SExpressionsVersion)" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
-    <PackageReference Include="Rebus.nng" Version="8.6.1" />
+    <PackageReference Include="SExpressions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Rebus.nng" />
+    <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
 </Project>
