@@ -35,6 +35,7 @@
     <!-- SPDX license expression; needs no packed license file. -->
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <!-- Source Link: embed repo/commit info and untracked sources so consumers can step into the code.
@@ -44,5 +45,14 @@
     <!-- Deterministic, CI-stamped builds when running on GitHub Actions. -->
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
+
+  <!-- The package icon, shared by all three packages so they are recognisable as one family on
+       nuget.org. It lives here rather than in each .csproj because the icon is repository identity,
+       not per-package identity - unlike PackageId/Description, which stay with their project.
+       Non-packable projects ignore both the property and the item. -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)assets/icons/kicadsharp-icon.png"
+          Pack="true" PackagePath="icon.png" Visible="false" />
+  </ItemGroup>
 
 </Project>

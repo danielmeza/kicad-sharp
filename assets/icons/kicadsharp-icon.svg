@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- KiCadSharp. Deliberately the same shell as the SExpressions icon - 128x128, rx=22, the same
+       diagonal gradient and the same C# badge - so the two packages read as a set. The gradient runs
+       the other way (KiCad blue into C# purple) and the subject is a routed board instead of a
+       parenthesised form. Every glyph is a path or a rect: no <text>, so the raster is identical on
+       any machine regardless of installed fonts. -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2B5CAB;stop-opacity:1" />   <!-- KiCad blue -->
+      <stop offset="100%" style="stop-color:#68217A;stop-opacity:1" /> <!-- VS C# purple -->
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="128" height="128" rx="22" fill="url(#bg)"/>
+
+  <!-- Board grid - the quiet background element, matching the sibling's faint code lines -->
+  <g opacity="0.1" stroke="white" stroke-width="2" stroke-linecap="round">
+    <path d="M18,34 H110 M18,58 H110 M18,82 H110 M18,106 H110"/>
+    <path d="M34,18 V110 M58,18 V110 M82,18 V110 M106,18 V110"/>
+  </g>
+
+  <!-- Copper traces, routed with 45 degree bends the way KiCad does -->
+  <g fill="none" stroke="#F5B34A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30,42 H54 L74,22 H98"/>
+    <path d="M30,74 H46 L66,54 H98"/>
+  </g>
+
+  <!-- Through-hole pads at the trace terminations -->
+  <g>
+    <circle cx="30" cy="42" r="10" fill="#F5B34A"/><circle cx="30" cy="42" r="4" fill="#22143F"/>
+    <circle cx="98" cy="22" r="10" fill="#F5B34A"/><circle cx="98" cy="22" r="4" fill="#22143F"/>
+    <circle cx="30" cy="74" r="10" fill="#F5B34A"/><circle cx="30" cy="74" r="4" fill="#22143F"/>
+    <circle cx="98" cy="54" r="10" fill="#F5B34A"/><circle cx="98" cy="54" r="4" fill="#22143F"/>
+  </g>
+
+  <!-- C# badge, the shared family mark -->
+  <g transform="translate(90,92)">
+    <circle r="24" fill="#9CDCFE" stroke="white" stroke-width="3"/>
+    <!-- '#' built from rects so it never depends on a font being installed -->
+    <g fill="#1E1E1E">
+      <g transform="skewX(-10)">
+        <rect x="-9.5" y="-14" width="5" height="28" rx="2"/>
+        <rect x="4.5"  y="-14" width="5" height="28" rx="2"/>
+      </g>
+      <rect x="-14" y="-8.5" width="28" height="5" rx="2"/>
+      <rect x="-14" y="3.5"  width="28" height="5" rx="2"/>
+    </g>
+  </g>
+</svg>
