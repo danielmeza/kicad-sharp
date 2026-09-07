@@ -22,8 +22,8 @@ path, and validate that a file parses. Installs as `kicadsharp`.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" Version="2.0.11" />
-    <PackageReference Include="SExpressions" Version="$(SExpressionsVersion)" />
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="SExpressions" />
   </ItemGroup>
 
 </Project>
