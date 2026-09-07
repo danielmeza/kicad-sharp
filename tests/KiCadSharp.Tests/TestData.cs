@@ -19,6 +19,24 @@ public static class TestData
     /// <summary>A standalone KiCad 6+ <c>.kicad_mod</c>: the root token is <c>footprint</c>, not <c>module</c>.</summary>
     public static string Footprint => Path.Combine(Root, "LED_0603_1608Metric.kicad_mod");
 
+    /// <summary>A 29,733-byte placed-but-unrouted board: 7 footprints, 16 layers, one net, no copper.</summary>
+    public static string PowerInputBoard => Path.Combine(Root, "power-input.kicad_pcb");
+
+    /// <summary>
+    /// A 12,454-byte routed 4-layer board: 56 nets, 65 segments, 3 vias, a keepout zone and two
+    /// footprints. The only fixture here that has copper on it.
+    /// </summary>
+    public static string ProbeBoard => Path.Combine(Root, "probe-4layer.kicad_pcb");
+
+    /// <summary>
+    /// A 2,539-byte empty 4-layer template: the only fixture with a <c>setup</c>, a 13-layer
+    /// stackup and a title block.
+    /// </summary>
+    public static string StackupBoard => Path.Combine(Root, "orbion-4layer.kicad_pcb");
+
+    /// <summary>Every <c>.kicad_pcb</c> fixture, for the tests that must hold for all of them.</summary>
+    public static IEnumerable<string> Boards => new[] { PowerInputBoard, ProbeBoard, StackupBoard };
+
     /// <summary>The hierarchy that instantiates one child sheet twice, so every designator is used twice.</summary>
     public static string DuplicateRefsRoot => Path.Combine(Root, "duplicate-refs", "duplicate-refs.kicad_sch");
 

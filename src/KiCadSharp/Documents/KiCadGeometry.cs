@@ -119,8 +119,15 @@ namespace KiCadSharp.Documents
     }
 
     /// <summary>
-    /// A fill: <c>(fill (type none|outline|background|color) [(color r g b a)])</c>.
+    /// A fill, spelled two ways: <c>(fill (type none|outline|background|color) [(color r g b a)])</c>
+    /// in a symbol library, and a bare <c>(fill no)</c> / <c>(fill solid)</c> on the board and
+    /// footprint shapes KiCad 7 and later write.
     /// </summary>
+    /// <remarks>
+    /// Both are read, and a set writes back into whichever spelling the node already uses — a
+    /// <c>(fill no)</c> that came out of a <c>.kicad_pcb</c> must not grow a <c>(type ...)</c> child
+    /// it never had, and a symbol's <c>(fill (type none))</c> must not collapse into a bare value.
+    /// </remarks>
     public sealed class KiCadFill : KiCadNode
     {
         /// <summary>Creates a view over a <c>(fill ...)</c> node.</summary>
@@ -130,12 +137,31 @@ namespace KiCadSharp.Documents
         {
         }
 
-        /// <summary>Gets or sets the fill type.</summary>
+        /// <summary>Gets or sets the fill type, as the node spells it.</summary>
         public string Type
         {
-            get => ReadChild("type") ?? "none";
-            set => WriteChild("type", value, SQuoteStyle.Bare);
+            get => ReadChild("type") ?? Node.GetValue(0) ?? "none";
+
+            set
+            {
+                if (Node.GetChild("type") is null && Node.GetValue(0) is not null)
+                {
+                    WriteValue(0, value, SQuoteStyle.Bare);
+                    return;
+                }
+
+                WriteChild("type", value, SQuoteStyle.Bare);
+            }
         }
+
+        /// <summary>
+        /// True when the shape is filled at all. The two spellings disagree on the word for "not
+        /// filled" — <c>none</c> in a symbol, <c>no</c> on a board — so asking this is more reliable
+        /// than comparing <see cref="Type"/> against a literal.
+        /// </summary>
+        public bool IsFilled =>
+            !string.Equals(Type, "none", StringComparison.Ordinal)
+            && !string.Equals(Type, "no", StringComparison.Ordinal);
 
         /// <summary>Gets the colour components as written, or an empty list when there is no colour.</summary>
         public IReadOnlyList<string> Color
