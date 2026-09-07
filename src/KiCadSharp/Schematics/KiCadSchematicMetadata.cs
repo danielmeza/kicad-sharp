@@ -217,8 +217,15 @@ namespace KiCadSharp.Schematics
             set => value.Write(Require("at"), includeRotation: true);
         }
 
-        /// <summary>Gets the text rendering, creating an <c>(effects ...)</c> if there is none.</summary>
-        public KiCadFontEffects FontEffects => new(Require("effects"));
+        /// <summary>
+        /// Gets the text rendering, or <see langword="null"/> when the form carries no
+        /// <c>(effects ...)</c>. Reading it never adds one; use <see cref="RequireFontEffects"/>.
+        /// </summary>
+        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+
+        /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
 
         /// <summary>Gets or sets the pin's UUID.</summary>
         public string Uuid

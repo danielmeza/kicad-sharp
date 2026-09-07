@@ -117,7 +117,7 @@ public class SchematicViewTests
         Assert.Single(Occurrences(before, "\"Orbion RS485 field bus node\""));
 
         var schematic = KiCadSchematic.Load(TestData.Rs485Bridge);
-        schematic.TitleBlock.Title = "Orbion RS485 field bus node, rev B";
+        schematic.TitleBlock!.Title = "Orbion RS485 field bus node, rev B";
 
         var output = Path.Combine(TestData.NewScratchDirectory(), "orbion-rs485-bridge.kicad_sch");
         schematic.Save(output);
@@ -166,8 +166,8 @@ public class SchematicViewTests
         Assert.Equal(2, wire.Points.Count);
         Assert.Equal(new KiCadPosition(45.72, 43.18), wire.Start);
         Assert.Equal(new KiCadPosition(48.26, 43.18), wire.End);
-        Assert.Equal(0, wire.Stroke.Width);
-        Assert.Equal("default", wire.Stroke.Type);
+        Assert.Equal(0, wire.Stroke!.Width);
+        Assert.Equal("default", wire.Stroke!.Type);
         Assert.Equal("d56dec2a-7edc-584a-8176-2a565fbedb6a", wire.Uuid);
     }
 
@@ -178,8 +178,8 @@ public class SchematicViewTests
 
         Assert.Equal("JTAG_TMS", label.Text);
         Assert.Equal(new KiCadPosition(321.31, 38.1, 0), label.Position);
-        Assert.Equal(new KiCadSize(1.27, 1.27), label.FontEffects.Size);
-        Assert.False(label.FontEffects.Bold);
+        Assert.Equal(new KiCadSize(1.27, 1.27), label.FontEffects!.Size);
+        Assert.False(label.FontEffects!.Bold);
         Assert.Equal("196c28e7-92d5-5472-bb70-a7838bb30945", label.Uuid);
     }
 
@@ -203,8 +203,8 @@ public class SchematicViewTests
 
         Assert.Equal("+3V3 LDO", text.Text);
         Assert.Equal(new KiCadPosition(228.6, 24.77, 0), text.Position);
-        Assert.Equal(new KiCadSize(2.54, 2.54), text.FontEffects.Size);
-        Assert.True(text.FontEffects.Bold);
+        Assert.Equal(new KiCadSize(2.54, 2.54), text.FontEffects!.Size);
+        Assert.True(text.FontEffects!.Bold);
         Assert.True(text.ExcludeFromSim);
         Assert.Equal("3d151429-9a7a-5a94-8de1-e061cc744a42", text.Uuid);
     }
@@ -216,9 +216,9 @@ public class SchematicViewTests
 
         Assert.Equal(new KiCadPosition(226.06, 20.32), rectangle.Start);
         Assert.Equal(new KiCadPosition(287.02, 63.5), rectangle.End);
-        Assert.Equal(0.254, rectangle.Stroke.Width);
-        Assert.Equal("dash", rectangle.Stroke.Type);
-        Assert.Equal("none", rectangle.Fill.Type);
+        Assert.Equal(0.254, rectangle.Stroke!.Width);
+        Assert.Equal("dash", rectangle.Stroke!.Type);
+        Assert.Equal("none", rectangle.Fill!.Type);
 
         // The shared view does not model the uuid a sheet shape carries; it is still in the file.
         Assert.Equal("35a1bd8c-8357-5e11-9db6-0d9d1f6170ba", rectangle.Node.GetChildValue("uuid"));
@@ -227,7 +227,7 @@ public class SchematicViewTests
     [Fact]
     public void TitleBlock_ReadsTheOneFieldTheFileSetsAndNullsTheRest()
     {
-        var titleBlock = KiCadSchematic.Load(TestData.Rs485Bridge).TitleBlock;
+        var titleBlock = KiCadSchematic.Load(TestData.Rs485Bridge).TitleBlock!;
 
         Assert.Equal("Orbion RS485 field bus node", titleBlock.Title);
         Assert.Null(titleBlock.Date);
@@ -294,7 +294,7 @@ public class SchematicViewTests
         Assert.Equal(14, schematic.Symbols.Count);
         Assert.Equal(9, schematic.LibrarySymbols.Count);
         Assert.Equal("VIN", schematic.Labels[0].Text);
-        Assert.Equal("Protected DC power input", schematic.TitleBlock.Title);
+        Assert.Equal("Protected DC power input", schematic.TitleBlock!.Title);
         Assert.Equal(new KiCadPosition(27.94, 50.8), schematic.Wires[0].Start);
     }
 
@@ -307,9 +307,9 @@ public class SchematicViewTests
 
         schematic.Labels[0].Text = "JTAG_TMS_RENAMED";
         schematic.Junctions[0].Diameter = 0.9144;
-        schematic.TitleBlock.Revision = "B";
-        schematic.TitleBlock.Company = "Gasoleo Technology";
-        schematic.TitleBlock.SetComment(1, "Round-tripped by KiCadSharp");
+        schematic.TitleBlock!.Revision = "B";
+        schematic.TitleBlock!.Company = "Gasoleo Technology";
+        schematic.TitleBlock!.SetComment(1, "Round-tripped by KiCadSharp");
         schematic.SheetInstances[0].Page = "7";
         schematic.Symbols[0].ReferenceProperty = "J91";
 
@@ -320,11 +320,11 @@ public class SchematicViewTests
 
         Assert.Equal("JTAG_TMS_RENAMED", reloaded.Labels[0].Text);
         Assert.Equal(0.9144, reloaded.Junctions[0].Diameter);
-        Assert.Equal("B", reloaded.TitleBlock.Revision);
-        Assert.Equal("Gasoleo Technology", reloaded.TitleBlock.Company);
-        Assert.Equal("Orbion RS485 field bus node", reloaded.TitleBlock.Title);
-        Assert.Equal("Round-tripped by KiCadSharp", reloaded.TitleBlock.GetComment(1));
-        Assert.Equal(new[] { 1 }, reloaded.TitleBlock.CommentNumbers);
+        Assert.Equal("B", reloaded.TitleBlock!.Revision);
+        Assert.Equal("Gasoleo Technology", reloaded.TitleBlock!.Company);
+        Assert.Equal("Orbion RS485 field bus node", reloaded.TitleBlock!.Title);
+        Assert.Equal("Round-tripped by KiCadSharp", reloaded.TitleBlock!.GetComment(1));
+        Assert.Equal(new[] { 1 }, reloaded.TitleBlock!.CommentNumbers);
         Assert.Equal("7", reloaded.SheetInstances[0].Page);
         Assert.Equal("J91", reloaded.Symbols[0].ReferenceProperty);
 
@@ -342,7 +342,7 @@ public class SchematicViewTests
     [Fact]
     public void SetComment_AddsRemovesAndRewritesOneNumberedSlot()
     {
-        var titleBlock = KiCadSchematic.Load(TestData.Rs485Bridge).TitleBlock;
+        var titleBlock = KiCadSchematic.Load(TestData.Rs485Bridge).TitleBlock!;
 
         titleBlock.SetComment(4, "fourth");
         titleBlock.SetComment(1, "first");
@@ -382,13 +382,13 @@ public class SchematicViewTests
         var bus = Assert.Single(schematic.Buses);
         Assert.Equal(new KiCadPosition(101.6, 50.8), bus.Start);
         Assert.Equal(new KiCadPosition(127, 50.8), bus.End);
-        Assert.Equal(0.4, bus.Stroke.Width);
+        Assert.Equal(0.4, bus.Stroke!.Width);
         Assert.Equal("2a0f4a13-0000-4000-8000-000000000001", bus.Uuid);
 
         var entry = Assert.Single(schematic.BusEntries);
         Assert.Equal(new KiCadPosition(127, 50.8), entry.Position);
         Assert.Equal(new KiCadSize(2.54, 2.54), entry.Size);
-        Assert.Equal("default", entry.Stroke.Type);
+        Assert.Equal("default", entry.Stroke!.Type);
 
         var noConnect = Assert.Single(schematic.NoConnects);
         Assert.Equal(new KiCadPosition(60.96, 30.48), noConnect.Position);
@@ -428,9 +428,9 @@ public class SchematicViewTests
         Assert.Equal("Bench notes", box.Text);
         Assert.Equal(new KiCadPosition(20.32, 20.32, 0), box.Position);
         Assert.Equal(new KiCadSize(40.64, 15.24), box.Size);
-        Assert.Equal("solid", box.Stroke.Type);
-        Assert.Equal("none", box.Fill.Type);
-        Assert.Equal(new KiCadSize(1.27, 1.27), box.FontEffects.Size);
+        Assert.Equal("solid", box.Stroke!.Type);
+        Assert.Equal("none", box.Fill!.Type);
+        Assert.Equal(new KiCadSize(1.27, 1.27), box.FontEffects!.Size);
 
         var bezier = Assert.Single(schematic.Beziers);
         Assert.Equal(4, bezier.ControlPoints.Count);
@@ -476,7 +476,7 @@ public class SchematicViewTests
         Assert.Equal("SPI_CS", sheet.Pins[0].Name);
         Assert.Equal("input", sheet.Pins[0].Shape);
         Assert.Equal(new KiCadPosition(190.5, 38.1, 0), sheet.Pins[0].Position);
-        Assert.Equal(new KiCadSize(1.27, 1.27), sheet.Pins[0].FontEffects.Size);
+        Assert.Equal(new KiCadSize(1.27, 1.27), sheet.Pins[0].FontEffects!.Size);
         Assert.Equal("2a0f4a13-0000-4000-8000-000000000021", sheet.Pins[0].Uuid);
 
         Assert.Equal("IRQ", sheet.Pins[1].Name);
@@ -486,7 +486,7 @@ public class SchematicViewTests
     [Fact]
     public void RicherSheet_ReadsATitleBlockThatSetsEveryField()
     {
-        var titleBlock = KiCadSchematic.Parse(RicherSheet).TitleBlock;
+        var titleBlock = KiCadSchematic.Parse(RicherSheet).TitleBlock!;
 
         Assert.Equal("Everything sheet", titleBlock.Title);
         Assert.Equal("2026-09-07", titleBlock.Date);
@@ -535,18 +535,19 @@ public class SchematicViewTests
         _ = schematic.EmbeddedFonts;
 
         var titleBlock = schematic.TitleBlock;
-        _ = titleBlock.Title;
-        _ = titleBlock.Date;
-        _ = titleBlock.Revision;
-        _ = titleBlock.Company;
-        _ = titleBlock.CommentNumbers;
+        _ = titleBlock?.Title;
+        _ = titleBlock?.Date;
+        _ = titleBlock?.Revision;
+        _ = titleBlock?.Company;
+        _ = titleBlock?.CommentNumbers;
+        _ = titleBlock?.GetComment(1);
 
         foreach (var line in schematic.Wires.Cast<KiCadSchematicLine>().Concat(schematic.Buses))
         {
             _ = line.Points;
             _ = line.Start;
             _ = line.End;
-            _ = line.Stroke.Width;
+            _ = line.Stroke?.Width;
             _ = line.Uuid;
         }
 
@@ -554,7 +555,7 @@ public class SchematicViewTests
         {
             _ = entry.Position;
             _ = entry.Size;
-            _ = entry.Stroke.Type;
+            _ = entry.Stroke?.Type;
             _ = entry.Uuid;
         }
 
@@ -585,7 +586,7 @@ public class SchematicViewTests
         {
             _ = label.Text;
             _ = label.Position;
-            _ = label.FontEffects.Size;
+            _ = label.FontEffects?.Size;
             _ = label.Uuid;
         }
 
@@ -593,7 +594,7 @@ public class SchematicViewTests
         {
             _ = text.Text;
             _ = text.Position;
-            _ = text.FontEffects.Bold;
+            _ = text.FontEffects?.Bold;
             _ = text.ExcludeFromSim;
             _ = text.Uuid;
         }
@@ -603,31 +604,33 @@ public class SchematicViewTests
             _ = box.Text;
             _ = box.Position;
             _ = box.Size;
-            _ = box.Stroke.Width;
-            _ = box.Fill.Type;
-            _ = box.FontEffects.Size;
+            _ = box.Stroke?.Width;
+            _ = box.Fill?.Type;
+            _ = box.FontEffects?.Size;
             _ = box.Uuid;
         }
 
         foreach (var polyline in schematic.Polylines)
         {
             _ = polyline.Points;
-            _ = polyline.Stroke.Type;
+            _ = polyline.Stroke?.Type;
+            _ = polyline.Fill?.Type;
         }
 
         foreach (var rectangle in schematic.Rectangles)
         {
             _ = rectangle.Start;
             _ = rectangle.End;
-            _ = rectangle.Stroke.Width;
-            _ = rectangle.Fill.Type;
+            _ = rectangle.Stroke?.Width;
+            _ = rectangle.Fill?.Type;
         }
 
         foreach (var circle in schematic.Circles)
         {
             _ = circle.Center;
             _ = circle.Radius;
-            _ = circle.Fill.Type;
+            _ = circle.Stroke?.Width;
+            _ = circle.Fill?.Type;
         }
 
         foreach (var arc in schematic.Arcs)
@@ -635,13 +638,15 @@ public class SchematicViewTests
             _ = arc.Start;
             _ = arc.Mid;
             _ = arc.End;
-            _ = arc.Stroke.Width;
+            _ = arc.Stroke?.Width;
+            _ = arc.Fill?.Type;
         }
 
         foreach (var bezier in schematic.Beziers)
         {
             _ = bezier.ControlPoints;
-            _ = bezier.Stroke.Width;
+            _ = bezier.Stroke?.Width;
+            _ = bezier.Fill?.Type;
             _ = bezier.Uuid;
         }
 
@@ -664,6 +669,8 @@ public class SchematicViewTests
             {
                 _ = property.Key;
                 _ = property.Value;
+                _ = property.Position;
+                _ = property.FontEffects?.Size;
             }
         }
 
@@ -674,6 +681,11 @@ public class SchematicViewTests
             _ = librarySymbol.Pins.Count;
             _ = librarySymbol.GraphicalItems.Count;
             _ = librarySymbol.GetPropertyValue("Reference");
+            foreach (var item in librarySymbol.GraphicalItems)
+            {
+                _ = item.Stroke?.Width;
+                _ = item.Fill?.Type;
+            }
         }
 
         foreach (var sheet in schematic.Sheets)
@@ -686,7 +698,7 @@ public class SchematicViewTests
                 _ = pin.Name;
                 _ = pin.Shape;
                 _ = pin.Position;
-                _ = pin.FontEffects.Size;
+                _ = pin.FontEffects?.Size;
                 _ = pin.Uuid;
             }
         }

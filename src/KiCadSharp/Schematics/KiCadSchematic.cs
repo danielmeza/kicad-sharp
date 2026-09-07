@@ -78,10 +78,22 @@ namespace KiCadSharp.Schematics
         }
 
         /// <summary>
-        /// Gets the drawing-frame text, creating an empty <c>(title_block ...)</c> when the sheet has
-        /// none — which is also how you give a sheet its first title.
+        /// Gets the drawing-frame text, or <see langword="null"/> when the sheet has no
+        /// <c>(title_block ...)</c>.
         /// </summary>
-        public KiCadTitleBlock TitleBlock => new(Require("title_block"));
+        /// <remarks>
+        /// Reading this does not add the form. KiCad omits <c>(title_block ...)</c> entirely when
+        /// every field is empty — 30 of the 134 sheets KiCad 10 itself ships have none — so a getter
+        /// that created one would dirty a document nobody edited and put an empty
+        /// <c>(title_block)</c> into the next save. Use <see cref="RequireTitleBlock"/> to give a
+        /// sheet its first title.
+        /// </remarks>
+        public KiCadTitleBlock? TitleBlock =>
+            Node.GetChild("title_block") is { } node ? new KiCadTitleBlock(node) : null;
+
+        /// <summary>Gets the drawing-frame text, adding an empty <c>(title_block ...)</c> when the sheet has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadTitleBlock RequireTitleBlock() => new(Require("title_block"));
 
         /// <summary>Gets or sets whether the fonts the sheet uses are embedded in the file.</summary>
         public bool EmbeddedFonts
@@ -166,13 +178,29 @@ namespace KiCadSharp.Schematics
         /// <see cref="Symbols"/> is what is actually on the sheet — and the two lists cannot be
         /// confused because the cache is nested one level down.
         /// </remarks>
-        public KiCadNodeList<KiCadSymbol> LibrarySymbols => new(Require("lib_symbols"), "symbol", n => new KiCadSymbol(n));
+        public KiCadNodeList<KiCadSymbol> LibrarySymbols =>
+            new(Node.GetChild("lib_symbols"), "symbol", n => new KiCadSymbol(n));
+
+        /// <summary>Gets the symbol cache as a mutable list, adding the <c>(lib_symbols ...)</c> form when the file has none.</summary>
+        /// <returns>The live list.</returns>
+        public KiCadNodeList<KiCadSymbol> RequireLibrarySymbols() =>
+            new(Require("lib_symbols"), "symbol", n => new KiCadSymbol(n));
 
         /// <summary>
         /// Gets the page numbers this file assigns, one per hierarchical path. On a root sheet the
         /// list holds every path in the design; on a child sheet it holds only <c>"/"</c>.
         /// </summary>
+        /// <remarks>
+        /// A child sheet in a hierarchy carries no <c>(sheet_instances ...)</c> at all — 79 of the
+        /// 134 sheets KiCad 10 ships have none — so reading this must not create one. Use
+        /// <see cref="RequireSheetInstances"/> when you mean to write the page map.
+        /// </remarks>
         public KiCadNodeList<KiCadSheetInstance> SheetInstances =>
+            new(Node.GetChild("sheet_instances"), "path", n => new KiCadSheetInstance(n));
+
+        /// <summary>Gets the page map as a mutable list, adding the <c>(sheet_instances ...)</c> form when the file has none.</summary>
+        /// <returns>The live list.</returns>
+        public KiCadNodeList<KiCadSheetInstance> RequireSheetInstances() =>
             new(Require("sheet_instances"), "path", n => new KiCadSheetInstance(n));
 
         /// <summary>True when anything in the file has been changed since it was parsed.</summary>

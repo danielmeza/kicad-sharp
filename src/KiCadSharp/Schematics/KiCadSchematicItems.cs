@@ -70,8 +70,15 @@ namespace KiCadSharp.Schematics
             }
         }
 
-        /// <summary>Gets the stroke, creating a <c>(stroke ...)</c> child if there is none.</summary>
-        public KiCadStroke Stroke => new(Require("stroke"));
+        /// <summary>
+        /// Gets the stroke, or <see langword="null"/> when the form carries no <c>(stroke ...)</c>.
+        /// Reading it never adds one; use <see cref="RequireStroke"/> for that.
+        /// </summary>
+        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+
+        /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadStroke RequireStroke() => new(Require("stroke"));
 
         /// <summary>Gets or sets the segment's UUID, which is what the editor's undo history keys on.</summary>
         public string Uuid
@@ -164,8 +171,15 @@ namespace KiCadSharp.Schematics
             set => value.Write(Require("size"));
         }
 
-        /// <summary>Gets the stroke, creating a <c>(stroke ...)</c> child if there is none.</summary>
-        public KiCadStroke Stroke => new(Require("stroke"));
+        /// <summary>
+        /// Gets the stroke, or <see langword="null"/> when the form carries no <c>(stroke ...)</c>.
+        /// Reading it never adds one; use <see cref="RequireStroke"/> for that.
+        /// </summary>
+        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+
+        /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadStroke RequireStroke() => new(Require("stroke"));
 
         /// <summary>Gets or sets the entry's UUID.</summary>
         public string Uuid
@@ -287,8 +301,15 @@ namespace KiCadSharp.Schematics
             set => value.Write(Require("at"), includeRotation: true);
         }
 
-        /// <summary>Gets the text rendering, creating an <c>(effects ...)</c> if there is none.</summary>
-        public KiCadFontEffects FontEffects => new(Require("effects"));
+        /// <summary>
+        /// Gets the text rendering, or <see langword="null"/> when the form carries no
+        /// <c>(effects ...)</c>. Reading it never adds one; use <see cref="RequireFontEffects"/>.
+        /// </summary>
+        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+
+        /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
 
         /// <summary>Gets or sets the label's UUID.</summary>
         public string Uuid
@@ -469,8 +490,15 @@ namespace KiCadSharp.Schematics
             set => value.Write(Require("size"));
         }
 
-        /// <summary>Gets the text rendering, creating an <c>(effects ...)</c> if there is none.</summary>
-        public KiCadFontEffects FontEffects => new(Require("effects"));
+        /// <summary>
+        /// Gets the text rendering, or <see langword="null"/> when the form carries no
+        /// <c>(effects ...)</c>. Reading it never adds one; use <see cref="RequireFontEffects"/>.
+        /// </summary>
+        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+
+        /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
 
         /// <summary>Gets or sets the box's UUID.</summary>
         public string Uuid
