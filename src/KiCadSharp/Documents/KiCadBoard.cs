@@ -392,6 +392,16 @@ namespace KiCadSharp.Documents
         public KiCadNodeList<KiCadTitleBlockComment> Comments =>
             new(Node, "comment", n => new KiCadTitleBlockComment(n));
 
+        /// <summary>
+        /// The numbers of the comment lines the file actually carries, in document order. KiCad's
+        /// dialog offers nine slots and writes only the ones that were filled in.
+        /// </summary>
+        public IReadOnlyList<int> CommentNumbers =>
+            Node.GetChildren("comment")
+                .Select(c => c.TryGetValue<int>(0, out var number) ? number : 0)
+                .Where(number => number > 0)
+                .ToArray();
+
         /// <summary>Gets the text of the comment with the given number.</summary>
         /// <param name="number">The comment line, 1 to 9.</param>
         /// <returns>The text, or <see langword="null"/> when that line is blank.</returns>
@@ -400,12 +410,22 @@ namespace KiCadSharp.Documents
 
         /// <summary>Sets the text of a comment line, adding the line when it is not there yet.</summary>
         /// <param name="number">The comment line, 1 to 9.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>The comment.</returns>
-        public KiCadTitleBlockComment SetComment(int number, string text)
+        /// <param name="text">The text, or <see langword="null"/> to drop the line entirely.</param>
+        /// <returns>The comment, or <see langword="null"/> when the line was dropped.</returns>
+        public KiCadTitleBlockComment? SetComment(int number, string? text)
         {
-            ArgumentNullException.ThrowIfNull(text);
             var existing = Comments.FirstOrDefault(c => c.Number == number);
+
+            if (text is null)
+            {
+                if (existing is not null)
+                {
+                    Node.Children.Remove(existing.Node);
+                }
+
+                return null;
+            }
+
             if (existing is not null)
             {
                 existing.Text = text;
