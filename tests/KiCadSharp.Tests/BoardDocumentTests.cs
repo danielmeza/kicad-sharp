@@ -675,6 +675,11 @@ public class BoardDocumentTests
 
         var reloaded = KiCadBoard.Load(output);
         Assert.Equal("kicad-sharp-tests", reloaded.Generator);
+
+        // The layer table comes with it. Without one KiCad refuses the file outright — see
+        // BoardFormatTests.NewBoard_CarriesALayerTableKiCadWillAccept for the measured error.
+        Assert.Equal(16, reloaded.Layers.Count);
+        Assert.Equal(2, reloaded.Layers.Count(l => l.IsCopper));
         Assert.Equal(2, reloaded.Nets.Count);
         var reloadedSegment = Assert.Single(reloaded.Segments);
         Assert.Equal(new KiCadPosition(10, 0), reloadedSegment.End);
@@ -692,6 +697,8 @@ public class BoardDocumentTests
     /// its only job is to prove, through the byte-identical save that follows it, that reading a
     /// board does not change it.
     /// </summary>
+    internal static void ReadEverythingOn(KiCadBoard board) => ReadEverything(board);
+
     private static void ReadEverything(KiCadBoard board)
     {
         _ = board.Version;

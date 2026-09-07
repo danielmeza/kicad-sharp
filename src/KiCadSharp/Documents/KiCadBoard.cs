@@ -41,9 +41,44 @@ namespace KiCadSharp.Documents
         private readonly SDocument _document;
         private readonly SExpression _root;
 
+        /// <summary>
+        /// The layer table of a two-layer board, the rows and the ordinals KiCad itself writes.
+        /// </summary>
+        /// <remarks>
+        /// A board with an empty <c>(layers)</c> form is not a board: MEASURED against KiCad 10.0.6,
+        /// <c>kicad-cli pcb drc</c> refuses it with <c>Failed to load board: 0 is not a valid layer
+        /// count</c> and <c>pcbnew.LoadBoard</c> returns nothing at all. So a new board starts with a
+        /// table rather than with a placeholder, and a caller who wants four layers edits it.
+        /// </remarks>
+        private static readonly (int Ordinal, string Name, string Type, string? UserName)[] DefaultLayers =
+        [
+            (0, "F.Cu", "signal", null),
+            (2, "B.Cu", "signal", null),
+            (5, "F.SilkS", "user", "F.Silkscreen"),
+            (7, "B.SilkS", "user", "B.Silkscreen"),
+            (1, "F.Mask", "user", null),
+            (3, "B.Mask", "user", null),
+            (13, "F.Paste", "user", null),
+            (15, "B.Paste", "user", null),
+            (25, "Edge.Cuts", "user", null),
+            (27, "Margin", "user", null),
+            (31, "F.CrtYd", "user", "F.Courtyard"),
+            (29, "B.CrtYd", "user", "B.Courtyard"),
+            (35, "F.Fab", "user", null),
+            (33, "B.Fab", "user", null),
+            (19, "Cmts.User", "user", "User.Comments"),
+            (17, "Dwgs.User", "user", "User.Drawings"),
+        ];
+
         /// <summary>Creates a new, empty board with the forms KiCad expects at the top of the file.</summary>
         /// <param name="generator">The value of the <c>generator</c> token.</param>
-        /// <param name="version">The value of the <c>version</c> token; the default is KiCad 10's.</param>
+        /// <param name="version">
+        /// The value of the <c>version</c> token. The default, <c>20241229</c>, is the KiCad 9 board
+        /// format — the one this type writes, because it writes a <c>(net n "NAME")</c> table and
+        /// numbers the nets on copper. KiCad 10 stamps <c>20260206</c> and names them instead
+        /// (MEASURED: pcbnew 10.0.6 rewrites a 20241229 file as 20260206 with no net table at all),
+        /// so passing that here would claim a spelling this type does not produce. KiCad reads both.
+        /// </param>
         public KiCadBoard(string generator = "KiCadSharp", string version = "20241229")
         {
             _root = new SExpression(RootToken);
@@ -51,7 +86,13 @@ namespace KiCadSharp.Documents
             _root.CreateChild("generator").AddValue(generator, SQuoteStyle.Quoted);
             _root.CreateChild("general").CreateChild("thickness", "1.6");
             _root.CreateChild("paper").AddValue("A4", SQuoteStyle.Quoted);
-            _root.CreateChild("layers");
+
+            var layers = _root.CreateChild("layers");
+            foreach (var (ordinal, name, type, userName) in DefaultLayers)
+            {
+                layers.AddChild(new KiCadBoardLayer(ordinal, name, type, userName).Node);
+            }
+
             _document = new SDocument();
             _document.Add(_root);
         }
@@ -159,6 +200,13 @@ namespace KiCadSharp.Documents
                 : Array.Empty<KiCadBoardLayer>();
 
         /// <summary>Gets the net list, as a live view over the board's <c>net</c> children.</summary>
+        /// <remarks>
+        /// Empty on a KiCad 10 board, and correctly so: board format <c>20260206</c> has no net table
+        /// — copper, zones and pads each name their own net. MEASURED on a board saved by pcbnew
+        /// 10.0.6: zero <c>(net …)</c> forms at the top level. Read the net off the item there, through
+        /// <see cref="KiCadTrackItem.NetName"/>, <see cref="KiCadZone.NetName"/> or
+        /// <see cref="KiCadPad.Net"/>.
+        /// </remarks>
         public KiCadNodeList<KiCadNet> Nets => new(_root, "net", n => new KiCadNet(n));
 
         /// <summary>
@@ -739,8 +787,14 @@ namespace KiCadSharp.Documents
 
     /// <summary>A net: <c>(net 1 "GND")</c>.</summary>
     /// <remarks>
-    /// The code is the only thing copper points at — a <c>(segment … (net 1))</c> names the number,
-    /// never the name — so renaming a net is a one-place edit and renumbering one is not.
+    /// <para>
+    /// Up to KiCad 9 the code is the only thing copper points at — a <c>(segment … (net 1))</c> names
+    /// the number, never the name — so renaming a net is a one-place edit and renumbering one is not.
+    /// </para>
+    /// <para>
+    /// KiCad 10 turned that around: there is no table, and copper carries the name. A board in that
+    /// format has no <c>KiCadNet</c> in it at all; see <see cref="KiCadBoard.Nets"/>.
+    /// </para>
     /// </remarks>
     public sealed class KiCadNet : KiCadNode
     {
