@@ -1,0 +1,8551 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "989f999f-e12c-57f6-847d-6c04a4834161")
+	(paper "A3")
+	(title_block
+		(title "Orbion RS485 field bus node")
+	)
+	(lib_symbols
+	(symbol "orbion:+3V3"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "+3V3"
+				(at 0 3.556 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"+3V3\""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "+3V3_0_1"
+				(polyline
+					(pts
+						(xy -0.762 1.27) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "+3V3_1_1"
+				(pin power_in line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:+5V"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "+5V"
+				(at 0 3.556 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"+5V\""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "+5V_0_1"
+				(polyline
+					(pts
+						(xy -0.762 1.27) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "+5V_1_1"
+				(pin power_in line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:AMS1117-3.3"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at -3.81 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "AP1117-15"
+				(at 0 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" "Package_TO_SOT_SMD:SOT-223-3_TabPin2"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "http://www.diodes.com/datasheets/AP1117.pdf"
+				(at 2.54 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "1A Low Dropout regulator, positive, 1.5V fixed output, SOT-223"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "linear regulator ldo fixed positive obsolete"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "SOT-223-3_TabPin2"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "AMS1117-3.3_0_1"
+				(rectangle
+					(start -5.08 -5.08)
+					(end 5.08 1.905)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "AMS1117-3.3_1_1"
+				(pin power_in line
+					(at 0 -7.62 90)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_out line
+					(at 7.62 0 180)
+					(length 2.54)
+					(name "VO"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -7.62 0 0)
+					(length 2.54)
+					(name "VI"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:AP63205WU"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at -7.62 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "AP63200WU"
+				(at 2.54 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Package_TO_SOT_SMD:TSOT-23-6"
+				(at 0 -22.86 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "https://www.diodes.com/assets/Datasheets/AP63200-AP63201-AP63203-AP63205.pdf"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "2A, 500kHz Buck DC/DC Converter, adjustable output voltage, TSOT-23-6"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "2A Buck DC/DC"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "TSOT-23-6"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "AP63205WU_0_1"
+				(rectangle
+					(start -7.62 5.08)
+					(end 7.62 -5.08)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "AP63205WU_1_1"
+				(pin input line
+					(at 10.16 -2.54 180)
+					(length 2.54)
+					(name "FB"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 -2.54 0)
+					(length 2.54)
+					(name "EN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -10.16 2.54 0)
+					(length 2.54)
+					(name "IN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 -7.62 90)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at 10.16 2.54 180)
+					(length 2.54)
+					(name "SW"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10.16 0 180)
+					(length 2.54)
+					(name "BST"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:C_Polarized"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.254)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "C"
+				(at 0.635 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "C_Polarized"
+				(at 0.635 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at 0.9652 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Polarized capacitor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "cap capacitor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "CP_Elec_6.3x7.7"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "C_Polarized_0_1"
+				(rectangle
+					(start -2.286 0.508)
+					(end 2.286 1.016)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 2.286) (xy -0.762 2.286)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 2.794) (xy -1.27 1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 2.286 -0.508)
+					(end -2.286 -1.016)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+			)
+			(symbol "C_Polarized_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 2.794)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 2.794)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:C_Small"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.254)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "C"
+				(at 0.254 1.778 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "C_Small"
+				(at 0.254 -2.032 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Unpolarized capacitor, small symbol"
+				(at 0 -10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "capacitor cap"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "C_0402_1005Metric C_0805_2012Metric C_1210_3225Metric"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "C_Small_0_1"
+				(polyline
+					(pts
+						(xy -1.524 0.508) (xy 1.524 0.508)
+					)
+					(stroke
+						(width 0.3048)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.524 -0.508) (xy 1.524 -0.508)
+					)
+					(stroke
+						(width 0.3048)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "C_Small_1_1"
+				(pin passive line
+					(at 0 2.54 270)
+					(length 2.032)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -2.54 90)
+					(length 2.032)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:Conn_01x02"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x02"
+				(at 0 -5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_01x02_1_1"
+				(rectangle
+					(start -1.27 1.27)
+					(end 1.27 -3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(rectangle
+					(start -1.27 0.127)
+					(end 0 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -2.413)
+					(end 0 -2.667)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:Conn_02x05_Odd_Even"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 1.27 7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_02x05_Odd_Even"
+				(at 1.27 -7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "PinHeader_2x05_P1.27mm_Vertical"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_02x05_Odd_Even_1_1"
+				(rectangle
+					(start -1.27 6.35)
+					(end 3.81 -6.35)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(rectangle
+					(start -1.27 5.207)
+					(end 0 4.953)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 2.667)
+					(end 0 2.413)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 0.127)
+					(end 0 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -2.413)
+					(end 0 -2.667)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -4.953)
+					(end 0 -5.207)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 3.81 5.207)
+					(end 2.54 4.953)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 3.81 2.667)
+					(end 2.54 2.413)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 3.81 0.127)
+					(end 2.54 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 3.81 -2.413)
+					(end 2.54 -2.667)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 3.81 -4.953)
+					(end 2.54 -5.207)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 5.08 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 7.62 5.08 180)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 2.54 0)
+					(length 3.81)
+					(name "Pin_3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 7.62 2.54 180)
+					(length 3.81)
+					(name "Pin_4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 7.62 0 180)
+					(length 3.81)
+					(name "Pin_6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 7.62 -2.54 180)
+					(length 3.81)
+					(name "Pin_8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -5.08 0)
+					(length 3.81)
+					(name "Pin_9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 7.62 -5.08 180)
+					(length 3.81)
+					(name "Pin_10"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "10"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:D_TVS"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "D_TVS"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Bidirectional transient-voltage-suppression diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "diode TVS thyrector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "D_SMA"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "D_TVS_0_1"
+				(polyline
+					(pts
+						(xy -2.54 1.27) (xy -2.54 -1.27) (xy 2.54 1.27) (xy 2.54 -1.27) (xy -2.54 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.508 1.27) (xy 0 1.27) (xy 0 -1.27) (xy -0.508 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_TVS_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "A1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:D_Zener"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "D_Zener"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Zener diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "D_SOD-123"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "D_Zener_0_1"
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy -1.27 1.27) (xy -0.762 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.27) (xy 1.27 1.27) (xy -1.27 0) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_Zener_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:GND"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "GND"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "GND_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "GND_1_1"
+				(pin power_in line
+					(at 0 0 270)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:L"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "L"
+				(at -1.27 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "L"
+				(at 1.905 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Inductor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "inductor choke coil reactor magnetic"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "L_Sunlord_SWPA6045S"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "L_0_1"
+				(arc
+					(start 0 2.54)
+					(mid 0.6323 1.905)
+					(end 0 1.27)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 1.27)
+					(mid 0.6323 0.635)
+					(end 0 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 0)
+					(mid 0.6323 -0.635)
+					(end 0 -1.27)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 -1.27)
+					(mid 0.6323 -1.905)
+					(end 0 -2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "L_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 1.27)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 1.27)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:LED"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "LED"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Light emitting diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Sim.Pins" "1=K 2=A"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "LED diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "LED_0603_1608Metric"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "LED_0_1"
+				(polyline
+					(pts
+						(xy -3.048 -0.762) (xy -4.572 -2.286) (xy -3.81 -2.286) (xy -4.572 -2.286) (xy -4.572 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 -0.762) (xy -3.302 -2.286) (xy -2.54 -2.286) (xy -3.302 -2.286) (xy -3.302 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy -1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.27) (xy 1.27 1.27) (xy -1.27 0) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "LED_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:PWR_FLAG"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#FLG"
+				(at 0 1.905 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "PWR_FLAG"
+				(at 0 3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Special symbol for telling ERC where power comes from"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "flag power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "PWR_FLAG_0_0"
+				(pin power_out line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(symbol "PWR_FLAG_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 1.27) (xy -1.016 1.905) (xy 0 2.54) (xy 1.016 1.905) (xy 0 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:Polyfuse"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "F"
+				(at -2.54 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Polyfuse"
+				(at 2.54 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 1.27 -5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Resettable fuse, polymeric positive temperature coefficient"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "resettable fuse PTC PPTC polyfuse polyswitch"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Fuse_1812_4532Metric"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Polyfuse_0_1"
+				(polyline
+					(pts
+						(xy -1.524 2.54) (xy -1.524 1.524) (xy 1.524 -1.524) (xy 1.524 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -0.762 2.54)
+					(end 0.762 -2.54)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Polyfuse_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 1.27)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 1.27)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:Q_PMOS"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "Q"
+				(at 5.08 1.27 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "Q_PMOS"
+				(at 5.08 -1.27 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "P-MOSFET transistor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "PMOS P-MOS"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Q_PMOS_0_1"
+				(polyline
+					(pts
+						(xy 0.254 1.905) (xy 0.254 -1.905)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.254 0) (xy -2.54 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 2.286) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 1.778) (xy 3.302 1.778) (xy 3.302 -1.778) (xy 0.762 -1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 0.508) (xy 0.762 -0.508)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 -1.27) (xy 0.762 -2.286)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 1.651 0)
+					(radius 2.794)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.286 0) (xy 1.27 0.381) (xy 1.27 -0.381) (xy 2.286 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 2.54) (xy 2.54 1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 2.54 1.778)
+					(radius 0.254)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(circle
+					(center 2.54 -1.778)
+					(radius 0.254)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 -2.54) (xy 2.54 0) (xy 0.762 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.921 -0.381) (xy 3.683 -0.381)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 3.302 -0.381) (xy 2.921 0.254) (xy 3.683 0.254) (xy 3.302 -0.381)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Q_PMOS_1_1"
+				(pin passive line
+					(at 2.54 5.08 270)
+					(length 2.54)
+					(name "D"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "D"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "G"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "G"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -5.08 90)
+					(length 2.54)
+					(name "S"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "S"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:R"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "R"
+				(at 2.032 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "R"
+				(at 0 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at -1.778 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Resistor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "R res resistor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "R_0402_1005Metric R_0805_2012Metric"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "R_0_1"
+				(rectangle
+					(start -1.016 -2.54)
+					(end 1.016 2.54)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "R_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 1.27)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 1.27)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:SN65HVD1781"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at -7.62 12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "SN65HVD11HD"
+				(at 2.54 12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
+				(at 0 22.86 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "http://www.ti.com/lit/ds/symlink/sn65hvd11-ht.pdf"
+				(at 0 25.4 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "3.3V, RS-485 Transceiver, SOIC-8"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "rs485 transceiver"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "SOIC-8_3.9x4.9mm_P1.27mm"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "SN65HVD1781_0_1"
+				(rectangle
+					(start -7.62 10.16)
+					(end 7.62 -10.16)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(polyline
+					(pts
+						(xy -4.064 5.08) (xy -1.27 5.08)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -4.064 -2.54) (xy -1.27 -2.54) (xy -1.27 -3.175)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -4.064 -5.08) (xy -1.905 -5.08)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.905 -3.175) (xy -1.905 -5.715) (xy 0.635 -4.445) (xy -1.905 -3.175)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 5.08) (xy 1.27 6.35) (xy 1.27 3.81) (xy -1.27 5.08)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -3.2004) (xy -1.27 -3.4544)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.508 -5.08) (xy 3.81 -5.08) (xy 3.81 -2.54) (xy 5.588 -2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center -0.3048 -3.683)
+					(radius 0.3556)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(circle
+					(center -0.0254 4.0386)
+					(radius 0.3556)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 3.81) (xy 0 2.54) (xy -4.064 2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 5.715) (xy 3.81 5.715) (xy 3.81 -2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 1.27 3.175)
+					(end 1.27 3.175)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 1.778 4.318)
+					(radius 0.3556)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.032 4.318) (xy 4.572 4.318) (xy 4.572 2.54) (xy 5.588 2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 4.318) (xy 2.54 -3.556) (xy -0.254 -3.556)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "SN65HVD1781_1_1"
+				(pin output line
+					(at -10.16 5.08 0)
+					(length 2.54)
+					(name "R"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 2.54 0)
+					(length 2.54)
+					(name "~{RE}"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 -2.54 0)
+					(length 2.54)
+					(name "DE"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 -5.08 0)
+					(length 2.54)
+					(name "D"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 -12.7 90)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 10.16 -2.54 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 10.16 2.54 180)
+					(length 2.54)
+					(name "B"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 12.7 270)
+					(length 2.54)
+					(name "VCC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	(symbol "orbion:TestPoint"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.762)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "TP"
+				(at 0 6.858 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TestPoint"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "TestPoint_Pad_D1.5mm"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "TestPoint_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(bus_alias "I2C0"
+		(members
+			"I2C0_SCL"
+			"I2C0_SDA"
+		)
+	)
+	(bus_alias "SPI1"
+		(members
+			"SPI1_SCK"
+			"SPI1_MOSI"
+			"SPI1_MISO"
+			"SPI1_CS_N"
+		)
+	)
+	(bus_alias "UART0"
+		(members
+			"UART0_TX"
+			"UART0_RX"
+		)
+	)
+	(bus_alias "DBG"
+		(members
+			"JTAG_TMS"
+			"JTAG_TCK"
+			"JTAG_TDO"
+			"JTAG_TDI"
+			"RESET_N"
+		)
+	)
+	(rectangle
+		(start 226.06 20.32)
+		(end 287.02 63.5)
+		(stroke (width 0.254) (type dash))
+		(fill (type none))
+		(uuid "35a1bd8c-8357-5e11-9db6-0d9d1f6170ba")
+	)
+	(text "+3V3 LDO"
+		(exclude_from_sim yes)
+		(at 228.6 24.77 0)
+		(effects (font (size 2.54 2.54) (thickness 0.508) (bold yes)) (justify left bottom))
+		(uuid "3d151429-9a7a-5a94-8de1-e061cc744a42")
+	)
+	(rectangle
+		(start 119.38 20.32)
+		(end 220.98 68.58)
+		(stroke (width 0.254) (type dash))
+		(fill (type none))
+		(uuid "7d0e2edd-3b61-51b7-b788-2844f68572e4")
+	)
+	(text "+5 V BUCK"
+		(exclude_from_sim yes)
+		(at 121.92 24.77 0)
+		(effects (font (size 2.54 2.54) (thickness 0.508) (bold yes)) (justify left bottom))
+		(uuid "b0460aa7-0794-55d8-a2a3-5179ade00a3f")
+	)
+	(rectangle
+		(start 91.44 86.36)
+		(end 157.48 119.38)
+		(stroke (width 0.254) (type dash))
+		(fill (type none))
+		(uuid "a1dbb518-a372-564f-a687-c720f0f2f54e")
+	)
+	(text "CONSOLE  UART0"
+		(exclude_from_sim yes)
+		(at 93.98 90.81 0)
+		(effects (font (size 2.54 2.54) (thickness 0.508) (bold yes)) (justify left bottom))
+		(uuid "065455fc-d26a-5ac2-a98f-8c917a4740a9")
+	)
+	(rectangle
+		(start 294.64 20.32)
+		(end 345.44 58.42)
+		(stroke (width 0.254) (type dash))
+		(fill (type none))
+		(uuid "7d675cba-2ba7-55a7-886a-1dfa372406bb")
+	)
+	(text "DEBUG  ARM 10-PIN"
+		(exclude_from_sim yes)
+		(at 297.18 24.77 0)
+		(effects (font (size 2.54 2.54) (thickness 0.508) (bold yes)) (justify left bottom))
+		(uuid "346d9e70-1c3e-5ce4-9d6c-6bdd84fac47f")
+	)
+	(rectangle
+		(start 17.78 20.32)
+		(end 111.76 78.74)
+		(stroke (width 0.254) (type dash))
+		(fill (type none))
+		(uuid "4674db1b-faff-50d2-9f4d-2835a567770e")
+	)
+	(text "POWER INPUT  12-24 V"
+		(exclude_from_sim yes)
+		(at 20.32 24.77 0)
+		(effects (font (size 2.54 2.54) (thickness 0.508) (bold yes)) (justify left bottom))
+		(uuid "2a0d6c46-8a21-59d4-b1d0-e300e6239297")
+	)
+	(rectangle
+		(start 17.78 86.36)
+		(end 83.82 119.38)
+		(stroke (width 0.254) (type dash))
+		(fill (type none))
+		(uuid "5f90cdec-2d5c-5e0f-a82f-2e5f534ceb5b")
+	)
+	(text "RAIL TEST POINTS"
+		(exclude_from_sim yes)
+		(at 20.32 90.81 0)
+		(effects (font (size 2.54 2.54) (thickness 0.508) (bold yes)) (justify left bottom))
+		(uuid "3669f33b-4a0f-55fc-a46e-2b2df38f696f")
+	)
+	(rectangle
+		(start 233.68 83.82)
+		(end 330.2 147.32)
+		(stroke (width 0.254) (type dash))
+		(fill (type none))
+		(uuid "d417e38c-8b8c-505c-aa5c-fc8b79ab33e9")
+	)
+	(text "RS-485 NODE"
+		(exclude_from_sim yes)
+		(at 236.22 88.27 0)
+		(effects (font (size 2.54 2.54) (thickness 0.508) (bold yes)) (justify left bottom))
+		(uuid "9d7e5eac-ea2b-5813-ae18-f727ec3a3ced")
+	)
+	(rectangle
+		(start 165.1 86.36)
+		(end 226.06 144.78)
+		(stroke (width 0.254) (type dash))
+		(fill (type none))
+		(uuid "e0bc566f-14ce-559d-98f9-6602e2e760eb")
+	)
+	(text "STATUS LEDS"
+		(exclude_from_sim yes)
+		(at 167.64 90.81 0)
+		(effects (font (size 2.54 2.54) (thickness 0.508) (bold yes)) (justify left bottom))
+		(uuid "a72d6919-e297-52fc-8a65-98a0a623db42")
+	)
+	(symbol
+		(lib_id "orbion:Conn_01x02")
+		(at 40.64 43.18 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6d70ad73-5c0c-5e38-9143-2867680a6188")
+		(property "Reference" "J90"
+			(at 34.93 38.46 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "VIN 12-24V 5.08mm"
+			(at 34.93 40.36 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
+			(at 40.64 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 40.64 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 40.64 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "1725656"
+			(at 40.64 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Phoenix Contact"
+			(at 40.64 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C395909"
+			(at 40.64 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "970bf755-48c0-50d4-8d52-8d4f22e573f5")
+		)
+		(pin "2"
+			(uuid "4814f7c8-3201-5e03-bba9-6451e4e8136d")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "J90")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:Polyfuse")
+		(at 66.04 43.18 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "52ad22ee-655a-5a4c-8d1b-af92b981d0b3")
+		(property "Reference" "F1"
+			(at 66.04 38.21 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "1.1A hold"
+			(at 66.04 40.11 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:Fuse_1812_4532Metric"
+			(at 66.04 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 66.04 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 66.04 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "MF-MSMF110-2"
+			(at 66.04 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C79561"
+			(at 66.04 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "f05135a9-74a3-5bc6-b6fd-ca0ba7afcc1c")
+		)
+		(pin "2"
+			(uuid "b627da1d-5586-5118-a034-59b2386eb684")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "F1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:Q_PMOS")
+		(at 83.82 45.72 270)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "0ddf36c4-98d1-5db4-9cc3-2790ee12aa2e")
+		(property "Reference" "Q90"
+			(at 83.82 37.82 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "PMOS 60V"
+			(at 83.82 39.73 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:SOT-23"
+			(at 83.82 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 83.82 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 83.82 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "SI2323DDS-T1-GE3"
+			(at 83.82 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C145479"
+			(at 83.82 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "D"
+			(uuid "bfaf421b-3bbf-5a40-97a4-6a8a4327b3e7")
+		)
+		(pin "G"
+			(uuid "fd75a5e1-84e2-56c7-a2cf-1d30a7af831b")
+		)
+		(pin "S"
+			(uuid "ca90bf51-1d49-5eff-9767-1fbd2bf2243b")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "Q90")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:R")
+		(at 83.82 60.96 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "013b4983-bab5-5382-b3a9-9e11ea354c2d")
+		(property "Reference" "R90"
+			(at 87.63 53.7 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100k"
+			(at 87.63 55.6 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:R_0402_1005Metric"
+			(at 83.82 60.96 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 83.82 60.96 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 83.82 60.96 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "RC0402FR-07100KL"
+			(at 83.82 60.96 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C25741"
+			(at 83.82 60.96 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "34b7d708-479e-5da0-b6e9-208aa2033585")
+		)
+		(pin "2"
+			(uuid "982b0ef7-9093-5a60-a050-d4f432caf6dd")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "R90")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:D_Zener")
+		(at 73.66 60.96 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d771da96-c8af-5b79-8340-53dd098b404e")
+		(property "Reference" "D90"
+			(at 69.85 53.7 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "12V"
+			(at 69.85 55.6 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:D_SOD-123"
+			(at 73.66 60.96 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 73.66 60.96 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 73.66 60.96 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "MMSZ5242B-7-F"
+			(at 73.66 60.96 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C8062"
+			(at 73.66 60.96 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "40b8b39d-aa06-5f43-8aa9-83b0c109e628")
+		)
+		(pin "2"
+			(uuid "d1ccbe19-cc86-57f0-a392-9802ca691387")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "D90")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:D_TVS")
+		(at 55.88 55.88 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "fb31930f-fa29-5d1b-b9df-55b5be4ebc86")
+		(property "Reference" "D91"
+			(at 63.5 48.62 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "SMAJ33A"
+			(at 63.5 50.52 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:D_SMA"
+			(at 55.88 55.88 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 55.88 55.88 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 55.88 55.88 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "SMAJ33A"
+			(at 55.88 55.88 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C57541"
+			(at 55.88 55.88 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "b5f2088b-95e7-5669-bb29-38c8ca6b0134")
+		)
+		(pin "2"
+			(uuid "66c27f70-14d0-55a9-963b-b06aa47e6166")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "D91")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:C_Polarized")
+		(at 93.98 49.53 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "66d2fc74-7cbf-54cd-9243-e488aa95ee5c")
+		(property "Reference" "C90"
+			(at 101.6 42.27 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100u 50V"
+			(at 101.6 44.17 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:CP_Elec_6.3x7.7"
+			(at 93.98 49.53 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 93.98 49.53 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 93.98 49.53 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "EEE-FK1H101P"
+			(at 93.98 49.53 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C2914154"
+			(at 93.98 49.53 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "fb86fe64-cfd8-5736-9756-66dabfe0986e")
+		)
+		(pin "2"
+			(uuid "d5940728-06a6-5448-b540-67ba56b06411")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "C90")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:PWR_FLAG")
+		(at 101.6 38.1 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f58629dc-1c8d-548e-b56d-d5eddd3d4590")
+		(property "Reference" "#FLG1"
+			(at 101.6 38.1 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "PWR_FLAG"
+			(at 101.6 32.11 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 101.6 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 101.6 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 101.6 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "7fa345bc-7970-5046-bb9d-7edbcb82c137")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#FLG1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:PWR_FLAG")
+		(at 40.64 53.34 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "3eaad6ea-45c7-5b61-b04e-b5b8983da4f9")
+		(property "Reference" "#FLG2"
+			(at 40.64 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "PWR_FLAG"
+			(at 48.26 54.89 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 40.64 53.34 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 40.64 53.34 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 40.64 53.34 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "738f41bb-0272-59a2-93f3-518c5d90f041")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#FLG2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:AP63205WU")
+		(at 156.21 45.72 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "e96d01f6-ec0c-53e6-b073-7c5acda6602d")
+		(property "Reference" "U91"
+			(at 156.21 37.19 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "AP63205WU-7"
+			(at 156.21 39.09 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TSOT-23-6"
+			(at 156.21 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 156.21 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 156.21 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "AP63205WU-7"
+			(at 156.21 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Diodes Incorporated"
+			(at 156.21 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C2071056"
+			(at 156.21 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "b64eac80-f3ae-56a7-ad20-467173229fb4")
+		)
+		(pin "2"
+			(uuid "e085dab0-3831-5310-b214-797acb3fd59c")
+		)
+		(pin "3"
+			(uuid "08f066a2-4b55-5410-bb18-4e257f04c90c")
+		)
+		(pin "4"
+			(uuid "cf6f9f51-1506-592e-88b7-ba0bba27cbce")
+		)
+		(pin "5"
+			(uuid "df3cbe36-1b3f-5163-bfa0-899488b9f269")
+		)
+		(pin "6"
+			(uuid "4ed78afb-34ca-51dc-826e-d28fac2afcc9")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "U91")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:C_Small")
+		(at 135.89 46.99 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f7cdc738-e31b-5d7d-8348-0ba7165c994a")
+		(property "Reference" "C93"
+			(at 128.27 41.0 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "10u 50V"
+			(at 128.27 42.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:C_1210_3225Metric"
+			(at 135.89 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 135.89 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 135.89 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "CL32B106KBJNNNE"
+			(at 135.89 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Samsung"
+			(at 135.89 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C138687"
+			(at 135.89 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "177a8af2-af90-5fdb-8473-9ce485f8e6df")
+		)
+		(pin "2"
+			(uuid "aff5495b-28fe-5f6c-8093-35e957d17f94")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "C93")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:C_Small")
+		(at 176.53 45.72 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d7f8133b-cd66-533e-931a-f452422413d7")
+		(property "Reference" "C95"
+			(at 176.53 48.79 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100n"
+			(at 176.53 50.69 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:C_0402_1005Metric"
+			(at 176.53 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 176.53 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 176.53 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "CL05B104KO5NNNC"
+			(at 176.53 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Samsung"
+			(at 176.53 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C1525"
+			(at 176.53 45.72 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "f49c5283-4519-52f8-a6d2-f7ef97192320")
+		)
+		(pin "2"
+			(uuid "77476b81-1ad6-55f0-94cd-6e2ed215a21a")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "C95")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:L")
+		(at 189.23 43.18 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "c9f23c13-5699-584f-8e55-bb93320236c1")
+		(property "Reference" "L90"
+			(at 189.23 39.1 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "4u7"
+			(at 189.23 41.0 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:L_Sunlord_SWPA6045S"
+			(at 189.23 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 189.23 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 189.23 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "SWPA6045S4R7MT"
+			(at 189.23 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Sunlord"
+			(at 189.23 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C78804"
+			(at 189.23 43.18 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "8d94efbd-7d04-50cd-a009-e3066cf1d826")
+		)
+		(pin "2"
+			(uuid "f4ecba70-7f15-5db1-8f17-9f378d4441c1")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "L90")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:C_Small")
+		(at 203.2 46.99 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "eecdadb8-d07a-54a3-9d42-8bbcb02c1963")
+		(property "Reference" "C94"
+			(at 210.82 51.08 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "22u 25V"
+			(at 210.82 52.98 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:C_0805_2012Metric"
+			(at 203.2 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 203.2 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 203.2 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "CL21A226MAQNNNE"
+			(at 203.2 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Samsung"
+			(at 203.2 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C45783"
+			(at 203.2 46.99 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "736b5bed-b47a-5c7f-8b1c-152e1e9a64d1")
+		)
+		(pin "2"
+			(uuid "0a7542b0-7812-50a1-8c32-d0793657213f")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "C94")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:PWR_FLAG")
+		(at 210.82 38.1 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "2f08a116-d7f2-5796-a910-225f89ae9512")
+		(property "Reference" "#FLG3"
+			(at 210.82 38.1 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "PWR_FLAG"
+			(at 210.82 32.11 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 210.82 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 210.82 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 210.82 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "7b44fe72-e0d1-548a-aab3-2142ece8dfe0")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#FLG3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:AMS1117-3.3")
+		(at 256.54 38.1 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "7a08add4-8147-5f34-aec5-23485ac19f14")
+		(property "Reference" "U90"
+			(at 256.54 32.74 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "AMS1117-3.3"
+			(at 256.54 34.65 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:SOT-223-3_TabPin2"
+			(at 256.54 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 256.54 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 256.54 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "AMS1117-3.3"
+			(at 256.54 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C6186"
+			(at 256.54 38.1 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "a877454a-8913-51ba-9b5d-92db8bdce2f4")
+		)
+		(pin "2"
+			(uuid "c3cc57ba-b957-5e1a-93d0-083d0d8cb345")
+		)
+		(pin "3"
+			(uuid "cd501018-3c87-5389-bc8a-999feac1f83a")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "U90")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:C_Small")
+		(at 243.84 45.72 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "dec224c2-b062-570d-bd16-c854a213d1a8")
+		(property "Reference" "C91"
+			(at 236.22 39.73 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "10u 25V"
+			(at 236.22 41.63 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:C_0805_2012Metric"
+			(at 243.84 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 243.84 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 243.84 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "CL21A106KAYNNNE"
+			(at 243.84 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Samsung"
+			(at 243.84 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C15850"
+			(at 243.84 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "d222fa92-6f1c-5940-bb50-9ad152e35abe")
+		)
+		(pin "2"
+			(uuid "5299cc3f-e9bc-52d8-a330-d27856ca1dd3")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "C91")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:C_Small")
+		(at 269.24 45.72 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "639ec4b7-1695-5180-a819-d36b1f470f6f")
+		(property "Reference" "C92"
+			(at 276.86 39.73 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "22u 25V"
+			(at 276.86 41.63 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:C_0805_2012Metric"
+			(at 269.24 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 269.24 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 269.24 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "CL21A226MAQNNNE"
+			(at 269.24 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Samsung"
+			(at 269.24 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C45783"
+			(at 269.24 45.72 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "f38e5d3b-3fc2-5599-b7a8-ef01fb3bdec3")
+		)
+		(pin "2"
+			(uuid "bc251b07-0a22-5262-8834-03155902907d")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "C92")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:Conn_02x05_Odd_Even")
+		(at 311.15 43.18 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "15a60011-4453-5731-a591-3b63bf097d4d")
+		(property "Reference" "J91"
+			(at 312.42 51.08 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "DBG 2x5 1.27mm"
+			(at 312.42 52.98 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:PinHeader_2x05_P1.27mm_Vertical"
+			(at 311.15 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 311.15 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 311.15 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "FTSH-105-01-L-DV-K"
+			(at 311.15 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C2962228"
+			(at 311.15 43.18 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "3407a42b-8b52-570b-b9ae-39e28737ea1b")
+		)
+		(pin "2"
+			(uuid "16c16652-cb57-50c2-92e9-20fc709884e9")
+		)
+		(pin "3"
+			(uuid "96c0fe3e-73a1-5e63-a6c7-36982c71bd8c")
+		)
+		(pin "4"
+			(uuid "cbb665ec-7268-55e0-bc4f-0e43954e3c96")
+		)
+		(pin "5"
+			(uuid "1522f8f9-78a0-5bc4-801a-b84e3d12ca41")
+		)
+		(pin "6"
+			(uuid "9726d34c-00a0-5911-838c-ece417f8a953")
+		)
+		(pin "7"
+			(uuid "c5d34d8b-9bcb-553d-8170-618554b02521")
+		)
+		(pin "8"
+			(uuid "f0727032-9e14-5df8-861c-2c620f7ae449")
+		)
+		(pin "9"
+			(uuid "b869f7b8-ff17-564f-9c69-73df4f400755")
+		)
+		(pin "10"
+			(uuid "6a1bd9c4-3aa0-5027-8512-ba13994c9899")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "J91")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 25.4 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "9d87794f-9f98-525c-9a43-271b381e2d73")
+		(property "Reference" "TP1"
+			(at 25.4 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "VIN"
+			(at 25.4 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 25.4 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 25.4 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 25.4 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "8f423143-5e25-5083-93ba-7c1b70e8816a")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 38.1 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "fda3a537-3559-570c-bce7-3977d7b7a4bd")
+		(property "Reference" "TP2"
+			(at 38.1 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "+5V"
+			(at 38.1 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 38.1 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 38.1 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 38.1 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "64993267-9653-56b6-83b4-74fba5d49d20")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 50.8 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "04c3259a-2246-580d-adb8-bf26a65a7cd7")
+		(property "Reference" "TP3"
+			(at 50.8 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "+3V3"
+			(at 50.8 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 50.8 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 50.8 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 50.8 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "ce49a7d6-05f2-5c85-a75b-8ebd36e1a811")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 63.5 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d51a1938-7426-5c5a-a703-7e93f4559905")
+		(property "Reference" "TP4"
+			(at 63.5 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "GND"
+			(at 63.5 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 63.5 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 63.5 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 63.5 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "1d6ed8c8-cd66-5a0e-823b-e4521ceb0aea")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 76.2 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "627ee37d-1fb5-51c0-95be-ec28449b4636")
+		(property "Reference" "TP5"
+			(at 76.2 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "GND"
+			(at 76.2 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 76.2 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 76.2 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 76.2 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "1c75bfbd-6e77-5a2a-aea7-c21a26a515c9")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 100.33 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "cf7432a3-a4c0-5669-8116-5dfe535fc1ce")
+		(property "Reference" "TP6"
+			(at 100.33 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "UART0_TX"
+			(at 100.33 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 100.33 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 100.33 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 100.33 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "bdf2e0d2-71aa-55e9-97c1-ebbe6dd7603f")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 113.03 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "a5a7c1f2-3b6f-5682-8d42-cd259ef63858")
+		(property "Reference" "TP7"
+			(at 113.03 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "GND"
+			(at 113.03 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 113.03 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 113.03 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 113.03 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "4af291c0-964e-5988-9132-bf5aeffee044")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 125.73 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "29b56704-4f34-55ca-a970-e58f2c699744")
+		(property "Reference" "TP8"
+			(at 125.73 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "UART0_RX"
+			(at 125.73 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 125.73 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 125.73 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 125.73 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "b2be4f8b-dcc3-5458-a5c6-e968493b9ef5")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 138.43 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "a49e76d1-549e-548c-962e-4a6e84c2426d")
+		(property "Reference" "TP9"
+			(at 138.43 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "IO0"
+			(at 138.43 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 138.43 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 138.43 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 138.43 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "d79b5942-173f-534b-9eaf-75825f608739")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP9")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:TestPoint")
+		(at 151.13 105.41 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "1b95672a-e728-579d-9d68-b54ff1048299")
+		(property "Reference" "TP10"
+			(at 151.13 97.9 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "GND"
+			(at 151.13 99.8 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:TestPoint_Pad_D1.5mm"
+			(at 151.13 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 151.13 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 151.13 105.41 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "9e545acd-04c3-53d1-b780-22f26024c798")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "TP10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:LED")
+		(at 172.72 110.49 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "779f51f4-519c-57d9-8e69-8aa47b5e34f4")
+		(property "Reference" "D92"
+			(at 177.04 103.23 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "green"
+			(at 177.04 105.13 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:LED_0603_1608Metric"
+			(at 172.72 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 172.72 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 172.72 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "KP-1608SGC"
+			(at 172.72 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Kingbright"
+			(at 172.72 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C72043"
+			(at 172.72 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "af1ad490-d308-5223-a7d0-8c746a21202b")
+		)
+		(pin "2"
+			(uuid "ae8b8a4c-b878-5eb8-95bc-7e1b476cdc0a")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "D92")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:R")
+		(at 172.72 125.73 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "647d8325-1043-5355-84cc-e157b95c6e80")
+		(property "Reference" "R91"
+			(at 176.53 118.47 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "680"
+			(at 176.53 120.37 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:R_0402_1005Metric"
+			(at 172.72 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 172.72 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 172.72 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "RC0402FR-07680RL"
+			(at 172.72 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C25087"
+			(at 172.72 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "fff9bcc7-6cf3-5de2-83a2-16202507a4f5")
+		)
+		(pin "2"
+			(uuid "9d431137-971b-592a-a074-eba9049f4308")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "R91")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:LED")
+		(at 193.04 110.49 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6e63eccc-d89b-5f5a-ade0-9af215dd6135")
+		(property "Reference" "D93"
+			(at 197.36 116.61 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "yellow"
+			(at 197.36 118.51 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:LED_0603_1608Metric"
+			(at 193.04 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 193.04 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 193.04 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "KP-1608SYCK"
+			(at 193.04 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Kingbright"
+			(at 193.04 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C598267"
+			(at 193.04 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "bd0647c4-fed1-54a6-a6a4-1724f65a66c1")
+		)
+		(pin "2"
+			(uuid "3ac07bf3-77b4-5920-a39c-899cca60a83e")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "D93")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:R")
+		(at 193.04 125.73 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "9f5ace7c-d84e-5c01-a38c-7b818c306c49")
+		(property "Reference" "R92"
+			(at 196.85 131.09 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "680"
+			(at 196.85 132.99 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:R_0402_1005Metric"
+			(at 193.04 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 193.04 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 193.04 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "RC0402FR-07680RL"
+			(at 193.04 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C25087"
+			(at 193.04 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "a0e2d63a-d989-5443-a432-b8c90c1c21e7")
+		)
+		(pin "2"
+			(uuid "cb52003b-83b1-530d-8b9a-e90ed2f732ec")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "R92")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:LED")
+		(at 213.36 110.49 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "60d2c5c6-016d-56da-be6e-9e1e82eb41a6")
+		(property "Reference" "D94"
+			(at 217.68 116.61 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "red"
+			(at 217.68 118.51 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:LED_0603_1608Metric"
+			(at 213.36 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 213.36 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 213.36 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "KP-1608SURCK"
+			(at 213.36 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Kingbright"
+			(at 213.36 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C72037"
+			(at 213.36 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "05fbb23d-7290-5b15-b6cf-305e853618dc")
+		)
+		(pin "2"
+			(uuid "cd114a4d-90d0-58c0-943a-d49bfd06fbe5")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "D94")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:R")
+		(at 213.36 125.73 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "65724f14-a6e1-5c76-8065-5699ef797029")
+		(property "Reference" "R93"
+			(at 217.17 131.09 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "680"
+			(at 217.17 132.99 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:R_0402_1005Metric"
+			(at 213.36 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 213.36 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 213.36 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "RC0402FR-07680RL"
+			(at 213.36 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C25087"
+			(at 213.36 125.73 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "52937b5a-ef71-584b-9c2f-7f9a61593b7d")
+		)
+		(pin "2"
+			(uuid "ffc38363-3f58-5648-a489-88f503f156e2")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "R93")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:SN65HVD1781")
+		(at 273.05 118.11 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "918ca43f-1648-52b9-8869-1bcf1a598088")
+		(property "Reference" "U1"
+			(at 280.67 101.96 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "SN65HVD1781"
+			(at 280.67 103.86 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:SOIC-8_3.9x4.9mm_P1.27mm"
+			(at 273.05 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 273.05 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 273.05 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "SN65HVD1781DR"
+			(at 273.05 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Manufacturer" "Texas Instruments"
+			(at 273.05 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C132242"
+			(at 273.05 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "a5a896db-64eb-5ec9-9298-444c7989a85a")
+		)
+		(pin "2"
+			(uuid "c49fdcea-ee81-5509-b8d4-d8242394518c")
+		)
+		(pin "3"
+			(uuid "819f5c13-8558-5616-bd32-5fd5884d903e")
+		)
+		(pin "4"
+			(uuid "cdc2451d-f90e-52b1-a3b3-b05e853d6ea1")
+		)
+		(pin "5"
+			(uuid "f6d84a83-8bb2-5fbb-a673-45c8416a6885")
+		)
+		(pin "6"
+			(uuid "7a538c96-4819-5d0e-8ac4-bd5bede49cdc")
+		)
+		(pin "7"
+			(uuid "5a7e9db4-eefa-54f7-944a-8674cc9b3bb8")
+		)
+		(pin "8"
+			(uuid "bd4c87aa-9c80-5aec-ac10-e2bf187e7720")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "U1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:R")
+		(at 246.38 120.65 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "913187d7-1e17-5692-b585-e6884fca69ed")
+		(property "Reference" "R2"
+			(at 246.38 116.18 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100k"
+			(at 246.38 118.08 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:R_0402_1005Metric"
+			(at 246.38 120.65 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 246.38 120.65 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 246.38 120.65 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "RC0402FR-07100KL"
+			(at 246.38 120.65 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C25741"
+			(at 246.38 120.65 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "8ca52cec-801a-587b-bec1-42c20ee0fb19")
+		)
+		(pin "2"
+			(uuid "38b06063-8030-52be-9597-d0d4358fe779")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "R2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:R")
+		(at 293.37 118.11 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d0dd175d-10e9-5c14-bbb6-9df3c716a213")
+		(property "Reference" "R1"
+			(at 297.18 110.85 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "120"
+			(at 297.18 112.75 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:R_0805_2012Metric"
+			(at 293.37 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 293.37 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 293.37 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "RC0805FR-07120RL"
+			(at 293.37 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C17909"
+			(at 293.37 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "DNP" "fit on end nodes only"
+			(at 293.37 118.11 0)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "eb7c4d4d-0363-5f5a-92f6-0162b6d9fe3d")
+		)
+		(pin "2"
+			(uuid "506d8d45-8597-5a8e-b2c4-da9e9d1c6985")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "R1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:D_TVS")
+		(at 306.07 129.54 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "59a58176-0e77-5edb-af94-93090329b7ff")
+		(property "Reference" "D1"
+			(at 309.88 122.28 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "SM712"
+			(at 309.88 124.18 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:D_SMA"
+			(at 306.07 129.54 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 306.07 129.54 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 306.07 129.54 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "SM712-02HTG"
+			(at 306.07 129.54 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C154309"
+			(at 306.07 129.54 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "66cce74c-7dc9-5eb0-81a6-08178d43cb43")
+		)
+		(pin "2"
+			(uuid "2640da73-2182-535f-8dab-8909bab42541")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "D1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:D_TVS")
+		(at 318.77 110.49 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6742be80-abf5-58ed-a6c1-888287afcd3a")
+		(property "Reference" "D2"
+			(at 322.58 103.23 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "SM712"
+			(at 322.58 105.13 90)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "orbion:D_SMA"
+			(at 318.77 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Datasheet" "~"
+			(at 318.77 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "Description" ""
+			(at 318.77 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "MPN" "SM712-02HTG"
+			(at 318.77 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(property "LCSC" "C154309"
+			(at 318.77 110.49 90)
+			(effects (font (size 1.27 1.27)) (justify left) (hide yes))
+		)
+		(pin "1"
+			(uuid "1303acd3-35ac-5cf3-8589-4f1a06b9f7ad")
+		)
+		(pin "2"
+			(uuid "d87a680a-85c8-5827-adfd-197ff32019b2")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "D2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 40.64 58.42 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "e9283241-8d9f-58b4-b671-fa6256df6fbc")
+		(property "Reference" "#PWR001"
+			(at 40.64 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 40.64 62.23 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 40.64 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 40.64 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 40.64 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "405612e3-16fc-544c-9930-2d42b95c26f6")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR001")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+5V")
+		(at 210.82 43.18 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d3abaf0e-2fce-5cf7-969d-a91dc4959bf6")
+		(property "Reference" "#PWR002"
+			(at 210.82 43.18 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+5V"
+			(at 210.82 46.74 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 210.82 43.18 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 210.82 43.18 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 210.82 43.18 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "431163cd-e3c6-51d4-982a-499cc0b636be")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR002")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 93.98 58.42 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "a1aba45e-2da1-53f5-aef1-26dec660f98b")
+		(property "Reference" "#PWR003"
+			(at 93.98 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 93.98 62.23 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 93.98 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 93.98 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 93.98 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "584ef771-6b41-54be-b2fc-2714ec2eb126")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR003")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 243.84 53.34 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "8f47b4c7-7c1b-5705-952a-1d14160bd6f5")
+		(property "Reference" "#PWR004"
+			(at 243.84 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 243.84 57.15 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 243.84 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 243.84 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 243.84 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "60194dec-b46f-55b4-94c8-72a5345caa7e")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR004")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 269.24 53.34 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "0d0c1f54-bd61-5233-8cf6-4faa850b0dcd")
+		(property "Reference" "#PWR005"
+			(at 269.24 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 269.24 57.15 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 269.24 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 269.24 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 269.24 53.34 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "1a03d263-145d-550b-94be-b50b59b5baf9")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR005")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 135.89 54.61 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "27ba5f07-234d-55b9-8dda-5d28d8bce13f")
+		(property "Reference" "#PWR006"
+			(at 135.89 54.61 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 135.89 58.42 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 135.89 54.61 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 135.89 54.61 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 135.89 54.61 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "936dbda3-1724-5776-9351-de2daabc3cb0")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR006")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+5V")
+		(at 203.2 39.37 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "90bd4de4-dde7-5712-bd54-133088165917")
+		(property "Reference" "#PWR007"
+			(at 203.2 39.37 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+5V"
+			(at 203.2 35.81 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 203.2 39.37 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 203.2 39.37 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 203.2 39.37 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "beea77b9-767d-5256-a9cf-9da4702fb47b")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR007")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 203.2 54.61 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "cc4636b7-c74d-52e2-8581-408f14e55fa9")
+		(property "Reference" "#PWR008"
+			(at 203.2 54.61 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 203.2 58.42 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 203.2 54.61 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 203.2 54.61 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 203.2 54.61 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "071aed34-7280-5d32-8b74-d1897b5b0b58")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR008")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 306.07 138.43 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "c1cb2721-19be-5cec-baf7-74a0c6e1e061")
+		(property "Reference" "#PWR009"
+			(at 306.07 138.43 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 306.07 142.24 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 306.07 138.43 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 306.07 138.43 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 306.07 138.43 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "2d4c3d14-db7a-52ff-841c-d0e125a48f6b")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR009")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 318.77 119.38 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "81a72ce9-683a-5c87-a85b-bbba3f279813")
+		(property "Reference" "#PWR010"
+			(at 318.77 119.38 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 318.77 123.19 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 318.77 119.38 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 318.77 119.38 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 318.77 119.38 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "3d46d28a-9e86-5e05-8989-6bbed1dc3d4c")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR010")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 55.88 64.77 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "5a2f6e10-fcf4-5d5b-9827-5e78b8f46c0e")
+		(property "Reference" "#PWR011"
+			(at 55.88 64.77 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 55.88 68.58 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 55.88 64.77 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 55.88 64.77 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 55.88 64.77 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "7c811f7a-6c30-5fd7-afa5-2dcafb0d3afa")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR011")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+3V3")
+		(at 172.72 101.6 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "20dae62a-5b8b-57da-b633-b781a50f6986")
+		(property "Reference" "#PWR012"
+			(at 172.72 101.6 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+3V3"
+			(at 172.72 98.04 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 172.72 101.6 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 172.72 101.6 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 172.72 101.6 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "6869dd81-20ad-55a2-b3a8-b91c0c5a9aad")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR012")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 48.26 48.26 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f4f049c9-8216-5a2c-9364-499aad66021d")
+		(property "Reference" "#PWR013"
+			(at 48.26 48.26 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 48.26 52.07 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 48.26 48.26 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 48.26 48.26 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 48.26 48.26 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "f1d5f540-ae37-55ac-ad2a-7164a20dec5c")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR013")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+3V3")
+		(at 303.53 35.56 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "ebeb33c9-b8cb-5b88-a86d-feb17209d3a4")
+		(property "Reference" "#PWR014"
+			(at 303.53 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+3V3"
+			(at 303.53 32.0 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 303.53 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 303.53 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 303.53 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "714a86b1-7fff-5e13-8f68-2f8c6ff0bafd")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR014")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 300.99 43.18 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "8aa05552-6164-5724-923d-da722f7ac474")
+		(property "Reference" "#PWR015"
+			(at 300.99 43.18 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 300.99 46.99 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 300.99 43.18 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 300.99 43.18 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 300.99 43.18 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "1a519407-58da-5644-bbe0-32262406f1bb")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR015")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+5V")
+		(at 195.58 40.64 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "87da9136-75d1-56ea-a48e-0457e7f8870b")
+		(property "Reference" "#PWR016"
+			(at 195.58 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+5V"
+			(at 195.58 37.08 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 195.58 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 195.58 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 195.58 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "d009d91b-6567-5995-abc1-caa3b49a5875")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR016")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 240.03 123.19 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "647cb378-083e-554b-8d6c-c59ffa754803")
+		(property "Reference" "#PWR017"
+			(at 240.03 123.19 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 240.03 127.0 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 240.03 123.19 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 240.03 123.19 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 240.03 123.19 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "64d40061-7ffc-5e27-a4be-e887361b9c84")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR017")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 83.82 69.85 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "75461611-321c-5288-a0c3-7736da3d1a78")
+		(property "Reference" "#PWR018"
+			(at 83.82 69.85 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 83.82 73.66 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 83.82 69.85 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 83.82 69.85 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 83.82 69.85 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "dba3f985-f001-556c-90af-554cdc7b09ef")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR018")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 172.72 134.62 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f53a4e9e-d2fd-5ee5-ba73-2bdd2e222a53")
+		(property "Reference" "#PWR019"
+			(at 172.72 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 172.72 138.43 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 172.72 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 172.72 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 172.72 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "5d348273-20ed-5304-b276-e5a8f114f72d")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR019")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 193.04 134.62 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "c25de696-efce-50a6-be09-06f5c867b434")
+		(property "Reference" "#PWR020"
+			(at 193.04 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 193.04 138.43 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 193.04 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 193.04 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 193.04 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "da1c8ae9-35fb-567d-a343-ee65c5aa5bbe")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR020")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 213.36 134.62 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "1ff15f47-9bc8-5afa-ba70-e7884473c6b7")
+		(property "Reference" "#PWR021"
+			(at 213.36 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 213.36 138.43 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 213.36 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 213.36 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 213.36 134.62 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "3151e4da-eeff-555e-bceb-66a3dfcd47f3")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR021")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 151.13 110.49 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f67934c2-98bf-5525-a3f6-84fad15f0c36")
+		(property "Reference" "#PWR022"
+			(at 151.13 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 151.13 114.3 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 151.13 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 151.13 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 151.13 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "0326047f-11e4-5f5a-b7e4-92833dfcff7f")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR022")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+5V")
+		(at 38.1 110.49 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "b6b0d6fc-8de3-53ff-b130-1f328edb4024")
+		(property "Reference" "#PWR023"
+			(at 38.1 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+5V"
+			(at 38.1 114.05 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 38.1 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 38.1 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 38.1 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "ba777ea2-8d68-5b25-94e1-4aefbb381879")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR023")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+3V3")
+		(at 50.8 110.49 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "56b455e7-b75d-511e-aa52-56db68518b3a")
+		(property "Reference" "#PWR024"
+			(at 50.8 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+3V3"
+			(at 50.8 114.05 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 50.8 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 50.8 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 50.8 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "f93c2507-2915-5a0d-be3d-45a3c2152cf9")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR024")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 63.5 110.49 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "2ec523ca-5e5c-5dfa-9f0b-7756cb844a97")
+		(property "Reference" "#PWR025"
+			(at 63.5 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 63.5 114.3 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 63.5 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 63.5 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 63.5 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "08cfef61-3163-5ee1-ba44-387619055667")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR025")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 76.2 110.49 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "1ad318e0-e7db-52db-b65e-efd693cab630")
+		(property "Reference" "#PWR026"
+			(at 76.2 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 76.2 114.3 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 76.2 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 76.2 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 76.2 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "e1188b0e-2645-5a25-bea2-baa88d2e011a")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR026")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 113.03 110.49 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "a859aaaa-9fa5-5373-8468-c244793e81ba")
+		(property "Reference" "#PWR027"
+			(at 113.03 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 113.03 114.3 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 113.03 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 113.03 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 113.03 110.49 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "a9908c6d-06bd-5648-9586-2464c835581d")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR027")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 273.05 135.89 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "5da5bf47-cbbe-574f-a7af-9d3855f7e852")
+		(property "Reference" "#PWR028"
+			(at 273.05 135.89 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 273.05 139.7 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 273.05 135.89 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 273.05 135.89 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 273.05 135.89 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "467f2514-01c5-5022-89fc-97019fdb47ac")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR028")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+3V3")
+		(at 273.05 100.33 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "b91e290e-1754-580c-a2c4-1f03c0ce13df")
+		(property "Reference" "#PWR029"
+			(at 273.05 100.33 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+3V3"
+			(at 273.05 96.77 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 273.05 100.33 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 273.05 100.33 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 273.05 100.33 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "070307d3-d8c1-5cde-835f-e4b8addae4f4")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR029")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 256.54 50.8 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "e0ecf24e-f5d6-5ec4-bca6-dfac9ad60f4e")
+		(property "Reference" "#PWR030"
+			(at 256.54 50.8 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 256.54 54.61 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 256.54 50.8 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 256.54 50.8 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 256.54 50.8 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "56ea110c-56e5-50fe-a1d0-0761b6d94085")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR030")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+3V3")
+		(at 266.7 35.56 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "93a960d8-c7d1-5383-9d1f-a70b1b16a229")
+		(property "Reference" "#PWR031"
+			(at 266.7 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+3V3"
+			(at 266.7 32.0 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 266.7 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 266.7 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 266.7 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "8a210a38-f333-54ce-be32-44a67979da74")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR031")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+5V")
+		(at 246.38 35.56 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "26f78db7-f522-5576-a4b9-1d967430d170")
+		(property "Reference" "#PWR032"
+			(at 246.38 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+5V"
+			(at 246.38 32.0 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 246.38 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 246.38 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 246.38 35.56 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "48d0db35-8dda-5177-ad6b-f36320d63398")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR032")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:+5V")
+		(at 171.45 50.8 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "7580f72b-e50b-5817-bfcc-655b057b8b33")
+		(property "Reference" "#PWR033"
+			(at 171.45 50.8 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "+5V"
+			(at 171.45 54.36 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 171.45 50.8 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 171.45 50.8 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 171.45 50.8 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "76391b26-7a00-5e46-ae13-76f3df06aeb8")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR033")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "orbion:GND")
+		(at 156.21 58.42 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "af787499-c4d5-5107-a6be-19aca7ba50fa")
+		(property "Reference" "#PWR034"
+			(at 156.21 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Value" "GND"
+			(at 156.21 62.23 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" ""
+			(at 156.21 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 156.21 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Description" ""
+			(at 156.21 58.42 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "dd0a481b-17ec-5b1c-a3d1-9835e2a0e90c")
+		)
+		(instances
+			(project "orbion-rs485-bridge"
+				(path "/989f999f-e12c-57f6-847d-6c04a4834161"
+					(reference "#PWR034")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 45.72 43.18) (xy 48.26 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d56dec2a-7edc-584a-8176-2a565fbedb6a")
+	)
+	(wire
+		(pts
+			(xy 45.72 45.72) (xy 48.26 45.72)
+		)
+		(stroke (width 0) (type default))
+		(uuid "79d2dba3-b240-5bc8-b619-48636711046a")
+	)
+	(wire
+		(pts
+			(xy 48.26 45.72) (xy 48.26 48.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "609175ff-5602-5c63-bf8d-7cbc312b717a")
+	)
+	(wire
+		(pts
+			(xy 62.23 43.18) (xy 59.69 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9964eea3-69ac-52fb-8d78-98fb83aafa64")
+	)
+	(wire
+		(pts
+			(xy 69.85 43.18) (xy 72.39 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "885e6163-3b1f-544a-8d6c-8916661c2f44")
+	)
+	(wire
+		(pts
+			(xy 88.9 43.18) (xy 91.44 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2e1ac9d0-ab73-53af-a8d4-8706cdffac2b")
+	)
+	(wire
+		(pts
+			(xy 83.82 50.8) (xy 83.82 53.34)
+		)
+		(stroke (width 0) (type default))
+		(uuid "0414ee82-5d54-5b17-9354-02bf7a39687c")
+	)
+	(wire
+		(pts
+			(xy 78.74 43.18) (xy 76.2 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "28f33188-640c-54ec-880b-15ba99f2b316")
+	)
+	(wire
+		(pts
+			(xy 83.82 57.15) (xy 83.82 54.61)
+		)
+		(stroke (width 0) (type default))
+		(uuid "acc864f8-9b93-5552-9b54-0abf05d4e427")
+	)
+	(wire
+		(pts
+			(xy 83.82 64.77) (xy 83.82 67.31)
+		)
+		(stroke (width 0) (type default))
+		(uuid "fa2e9f7d-5ee3-531e-984c-a6a43887338c")
+	)
+	(wire
+		(pts
+			(xy 83.82 67.31) (xy 83.82 69.85)
+		)
+		(stroke (width 0) (type default))
+		(uuid "b062f5b6-817b-5eff-914e-1cd9798231fe")
+	)
+	(wire
+		(pts
+			(xy 73.66 57.15) (xy 73.66 54.61)
+		)
+		(stroke (width 0) (type default))
+		(uuid "ff795624-23bb-5a99-a8bf-9f9eeb87c622")
+	)
+	(wire
+		(pts
+			(xy 73.66 64.77) (xy 73.66 67.31)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a8791070-44e3-526e-883a-2c3e7e44da8e")
+	)
+	(wire
+		(pts
+			(xy 55.88 52.07) (xy 55.88 49.53)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e8444b0e-7f89-5898-bbde-d08ee691259c")
+	)
+	(wire
+		(pts
+			(xy 55.88 59.69) (xy 55.88 62.23)
+		)
+		(stroke (width 0) (type default))
+		(uuid "ae2ffd47-8cf9-5af6-8061-1482bd509e0e")
+	)
+	(wire
+		(pts
+			(xy 55.88 62.23) (xy 55.88 64.77)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e4bdf8b6-1f4d-50d5-af67-4b3c0c51c17e")
+	)
+	(wire
+		(pts
+			(xy 93.98 45.72) (xy 93.98 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4ee22975-ca53-502d-81df-1da30eb50c62")
+	)
+	(wire
+		(pts
+			(xy 93.98 53.34) (xy 93.98 55.88)
+		)
+		(stroke (width 0) (type default))
+		(uuid "85eee036-bad9-50ef-a190-38250c1ab0ae")
+	)
+	(wire
+		(pts
+			(xy 93.98 55.88) (xy 93.98 58.42)
+		)
+		(stroke (width 0) (type default))
+		(uuid "409db2b7-8996-56dc-8bf3-e31b1fbe3587")
+	)
+	(wire
+		(pts
+			(xy 101.6 38.1) (xy 101.6 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4d0e3000-5274-5ed9-9732-24c59e3940a2")
+	)
+	(wire
+		(pts
+			(xy 40.64 53.34) (xy 40.64 55.88)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9de460e5-0f15-5e72-976a-f11844e448e4")
+	)
+	(wire
+		(pts
+			(xy 40.64 55.88) (xy 40.64 58.42)
+		)
+		(stroke (width 0) (type default))
+		(uuid "02f68630-fe1b-550a-9018-222989900ef8")
+	)
+	(wire
+		(pts
+			(xy 166.37 48.26) (xy 168.91 48.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "90692768-cb20-5e87-aab9-1465a065482f")
+	)
+	(wire
+		(pts
+			(xy 168.91 48.26) (xy 171.45 48.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e9dff665-f3ee-55b0-a0d7-702dc96d355b")
+	)
+	(wire
+		(pts
+			(xy 171.45 48.26) (xy 171.45 50.8)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e2fda3bf-ee77-5b11-9926-8dd3c6cd0717")
+	)
+	(wire
+		(pts
+			(xy 146.05 48.26) (xy 143.51 48.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2b382694-3f75-52c3-b530-2ad9f2ecd853")
+	)
+	(wire
+		(pts
+			(xy 146.05 43.18) (xy 143.51 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "0a2a40fb-5c7d-5992-9d06-8b9a593eb0f0")
+	)
+	(wire
+		(pts
+			(xy 156.21 53.34) (xy 156.21 55.88)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d0854304-d97d-5c22-a546-a97986b23ac3")
+	)
+	(wire
+		(pts
+			(xy 156.21 55.88) (xy 156.21 58.42)
+		)
+		(stroke (width 0) (type default))
+		(uuid "f1c74af9-456c-51be-bfa3-e425150387ad")
+	)
+	(wire
+		(pts
+			(xy 166.37 43.18) (xy 168.91 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a8cc2072-32d1-5ebc-bc9b-81b4c7792741")
+	)
+	(wire
+		(pts
+			(xy 166.37 45.72) (xy 168.91 45.72)
+		)
+		(stroke (width 0) (type default))
+		(uuid "c68f2010-f724-5cb1-be21-df8baf059f93")
+	)
+	(wire
+		(pts
+			(xy 135.89 44.45) (xy 135.89 41.91)
+		)
+		(stroke (width 0) (type default))
+		(uuid "8aabf29e-026f-5957-b3b8-3347c0dad511")
+	)
+	(wire
+		(pts
+			(xy 135.89 49.53) (xy 135.89 52.07)
+		)
+		(stroke (width 0) (type default))
+		(uuid "dd91347a-8948-5880-9700-7d986e6b4ef5")
+	)
+	(wire
+		(pts
+			(xy 135.89 52.07) (xy 135.89 54.61)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2695f9b4-9b29-5cd8-9440-be9bbe40e5f8")
+	)
+	(wire
+		(pts
+			(xy 173.99 45.72) (xy 171.45 45.72)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3612d4a2-311b-5166-b6c8-6d2ff0b2d254")
+	)
+	(wire
+		(pts
+			(xy 179.07 45.72) (xy 181.61 45.72)
+		)
+		(stroke (width 0) (type default))
+		(uuid "86ddec7e-241d-58d7-b5c7-ade4272daeb5")
+	)
+	(wire
+		(pts
+			(xy 185.42 43.18) (xy 182.88 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3b7fa772-b304-5b44-b596-2de6e968e180")
+	)
+	(wire
+		(pts
+			(xy 193.04 43.18) (xy 195.58 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "424f31fa-e03d-5c26-b71b-684ac1d0e504")
+	)
+	(wire
+		(pts
+			(xy 195.58 43.18) (xy 195.58 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2e6ce180-b99d-5d5e-9d1e-fed9d1ffd9a3")
+	)
+	(wire
+		(pts
+			(xy 203.2 44.45) (xy 203.2 41.91)
+		)
+		(stroke (width 0) (type default))
+		(uuid "251768aa-a942-5fc9-94c7-22d8694ef597")
+	)
+	(wire
+		(pts
+			(xy 203.2 41.91) (xy 203.2 39.37)
+		)
+		(stroke (width 0) (type default))
+		(uuid "69893693-8b49-5fc1-9304-8833c9eb1af0")
+	)
+	(wire
+		(pts
+			(xy 203.2 49.53) (xy 203.2 52.07)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4aa97572-7947-5b77-9d41-340e81856905")
+	)
+	(wire
+		(pts
+			(xy 203.2 52.07) (xy 203.2 54.61)
+		)
+		(stroke (width 0) (type default))
+		(uuid "5facafed-f7a2-5358-977b-4f78005273bf")
+	)
+	(wire
+		(pts
+			(xy 210.82 38.1) (xy 210.82 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4d28e522-1025-5906-a72b-a370e919ea04")
+	)
+	(wire
+		(pts
+			(xy 210.82 40.64) (xy 210.82 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a20cee42-b870-5587-9d58-4e721fee871a")
+	)
+	(wire
+		(pts
+			(xy 256.54 45.72) (xy 256.54 48.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "c77cf1b0-1378-507e-9676-cd004e55e120")
+	)
+	(wire
+		(pts
+			(xy 256.54 48.26) (xy 256.54 50.8)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9ee8496c-5bba-5e75-8d2a-40bed5d3fffc")
+	)
+	(wire
+		(pts
+			(xy 264.16 38.1) (xy 266.7 38.1)
+		)
+		(stroke (width 0) (type default))
+		(uuid "496adb30-1ff5-5924-a275-93531f957f13")
+	)
+	(wire
+		(pts
+			(xy 266.7 38.1) (xy 266.7 35.56)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2671b11e-07a1-5809-905f-4f2ea9896d19")
+	)
+	(wire
+		(pts
+			(xy 248.92 38.1) (xy 246.38 38.1)
+		)
+		(stroke (width 0) (type default))
+		(uuid "6c70f694-fbf8-5d93-9c2e-64a0fa75b4cb")
+	)
+	(wire
+		(pts
+			(xy 246.38 38.1) (xy 246.38 35.56)
+		)
+		(stroke (width 0) (type default))
+		(uuid "aa53eb16-21a9-5cdb-8495-dc857cb29ff4")
+	)
+	(wire
+		(pts
+			(xy 243.84 43.18) (xy 243.84 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "6cb691b5-ef51-5701-b679-5bbe840d3a72")
+	)
+	(wire
+		(pts
+			(xy 243.84 48.26) (xy 243.84 50.8)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2e0c0c80-79f7-55da-88bd-1ff85934afd8")
+	)
+	(wire
+		(pts
+			(xy 243.84 50.8) (xy 243.84 53.34)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d4f40d53-8ec8-5209-bd6e-917f0fd4db91")
+	)
+	(wire
+		(pts
+			(xy 269.24 43.18) (xy 269.24 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "186559a6-2473-58be-bef0-ac8c10f6cb4b")
+	)
+	(wire
+		(pts
+			(xy 269.24 48.26) (xy 269.24 50.8)
+		)
+		(stroke (width 0) (type default))
+		(uuid "48c507a0-6528-50bd-89b1-9758214ab63a")
+	)
+	(wire
+		(pts
+			(xy 269.24 50.8) (xy 269.24 53.34)
+		)
+		(stroke (width 0) (type default))
+		(uuid "42b97e84-9294-5661-8cd9-e2bf3c4b355e")
+	)
+	(wire
+		(pts
+			(xy 306.07 38.1) (xy 303.53 38.1)
+		)
+		(stroke (width 0) (type default))
+		(uuid "37f65c92-bfd1-5425-a86e-6731d01c3e23")
+	)
+	(wire
+		(pts
+			(xy 303.53 38.1) (xy 303.53 35.56)
+		)
+		(stroke (width 0) (type default))
+		(uuid "8a22710b-f7c0-5daa-b5a7-02aa52a72902")
+	)
+	(wire
+		(pts
+			(xy 318.77 38.1) (xy 321.31 38.1)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9339ec2f-cb63-58db-8920-24279024ad24")
+	)
+	(label "JTAG_TMS"
+		(at 321.31 38.1 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "196c28e7-92d5-5472-bb70-a7838bb30945")
+	)
+	(wire
+		(pts
+			(xy 306.07 40.64) (xy 303.53 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "49a77209-1482-5521-97ec-28df55a8379f")
+	)
+	(wire
+		(pts
+			(xy 303.53 40.64) (xy 300.99 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "5af27ec6-707e-5d6d-a9d6-87c8b6c7ba88")
+	)
+	(wire
+		(pts
+			(xy 300.99 40.64) (xy 300.99 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "257d5e63-7e0c-579d-bde8-a2ce82751674")
+	)
+	(wire
+		(pts
+			(xy 318.77 40.64) (xy 321.31 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "382d00ec-482d-502a-9208-1e1c20d46f7c")
+	)
+	(label "JTAG_TCK"
+		(at 321.31 40.64 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "dbc69b33-72fe-5ba8-9c13-f6158f5f0660")
+	)
+	(wire
+		(pts
+			(xy 306.07 43.18) (xy 303.53 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e8b1aed9-7a2c-5b0d-94b9-eac134521eaf")
+	)
+	(wire
+		(pts
+			(xy 318.77 43.18) (xy 321.31 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "f873e133-2d65-5eb5-9eeb-2a07bb647486")
+	)
+	(label "JTAG_TDO"
+		(at 321.31 43.18 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "acabbe9e-46e4-5582-a3f6-93bd2964364c")
+	)
+	(wire
+		(pts
+			(xy 318.77 45.72) (xy 321.31 45.72)
+		)
+		(stroke (width 0) (type default))
+		(uuid "c754e8a0-c5c9-5cc9-8f88-183e656107d6")
+	)
+	(label "JTAG_TDI"
+		(at 321.31 45.72 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "d8812e8b-248d-52da-9f2c-cced463bc448")
+	)
+	(wire
+		(pts
+			(xy 306.07 48.26) (xy 303.53 48.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "5fb74a54-c443-556d-a14a-d2801467dfbb")
+	)
+	(wire
+		(pts
+			(xy 318.77 48.26) (xy 321.31 48.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "6838ea9b-6ee0-55f6-9c7a-28b5d7c4bcc5")
+	)
+	(label "RESET_N"
+		(at 321.31 48.26 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "cc96aa90-9552-57a0-aaef-41b9d1578f02")
+	)
+	(wire
+		(pts
+			(xy 25.4 105.41) (xy 25.4 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "be911af2-c880-5919-b288-e5c63f727a6e")
+	)
+	(label "VIN"
+		(at 25.4 107.95 0)
+		(effects (font (size 1.27 1.27)) (justify top))
+		(uuid "01e60b3d-2009-5873-82d5-21fc84755210")
+	)
+	(wire
+		(pts
+			(xy 38.1 105.41) (xy 38.1 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9edcf64b-84ae-5b48-94f9-af6d12ac01a9")
+	)
+	(wire
+		(pts
+			(xy 38.1 107.95) (xy 38.1 110.49)
+		)
+		(stroke (width 0) (type default))
+		(uuid "ef24ae68-4e7d-5aa8-8f3a-9cbb1cc7d3be")
+	)
+	(wire
+		(pts
+			(xy 50.8 105.41) (xy 50.8 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "040c2d70-dd8c-57ea-ba22-5600e86915b6")
+	)
+	(wire
+		(pts
+			(xy 50.8 107.95) (xy 50.8 110.49)
+		)
+		(stroke (width 0) (type default))
+		(uuid "46b9a956-bc1a-51ba-8d1d-094b38117824")
+	)
+	(wire
+		(pts
+			(xy 63.5 105.41) (xy 63.5 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e61b67a4-960c-562f-be65-d31d6b064914")
+	)
+	(wire
+		(pts
+			(xy 63.5 107.95) (xy 63.5 110.49)
+		)
+		(stroke (width 0) (type default))
+		(uuid "7dad9fdd-8cd9-501e-8838-aeadf4c12fd3")
+	)
+	(wire
+		(pts
+			(xy 76.2 105.41) (xy 76.2 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "eae838b7-f38c-56f0-beeb-1bf2abe36b60")
+	)
+	(wire
+		(pts
+			(xy 76.2 107.95) (xy 76.2 110.49)
+		)
+		(stroke (width 0) (type default))
+		(uuid "bd4a20eb-fc1d-5bb0-80e8-383e125ba7e8")
+	)
+	(wire
+		(pts
+			(xy 100.33 105.41) (xy 100.33 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "c72ddb04-ea2e-58a6-8162-d9b9a92cebf4")
+	)
+	(label "UART0_TX"
+		(at 100.33 107.95 0)
+		(effects (font (size 1.27 1.27)) (justify top))
+		(uuid "a9e8618c-790b-5b1a-936c-76ca5bf510f7")
+	)
+	(wire
+		(pts
+			(xy 113.03 105.41) (xy 113.03 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "7f940c49-f2b8-5a68-a210-aec17dffacc9")
+	)
+	(wire
+		(pts
+			(xy 113.03 107.95) (xy 113.03 110.49)
+		)
+		(stroke (width 0) (type default))
+		(uuid "52f5a146-7f1a-521d-8acc-faaf7863aeea")
+	)
+	(wire
+		(pts
+			(xy 125.73 105.41) (xy 125.73 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "c2add70e-c121-5a73-921e-5638825c836d")
+	)
+	(label "UART0_RX"
+		(at 125.73 107.95 0)
+		(effects (font (size 1.27 1.27)) (justify top))
+		(uuid "c79ff46d-0ebd-515f-9a2f-b8089045590e")
+	)
+	(wire
+		(pts
+			(xy 138.43 105.41) (xy 138.43 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "cae9019d-abf1-55fc-9e3a-c2c828aaf724")
+	)
+	(label "IO0"
+		(at 138.43 107.95 0)
+		(effects (font (size 1.27 1.27)) (justify top))
+		(uuid "6c966e38-c523-5c4c-82b1-7b9fd37cc2af")
+	)
+	(wire
+		(pts
+			(xy 151.13 105.41) (xy 151.13 107.95)
+		)
+		(stroke (width 0) (type default))
+		(uuid "8ac3241e-2493-5755-85bc-03e7bc9b3d7e")
+	)
+	(wire
+		(pts
+			(xy 151.13 107.95) (xy 151.13 110.49)
+		)
+		(stroke (width 0) (type default))
+		(uuid "506a0d23-8406-58a7-b557-7fde4ecc2ac1")
+	)
+	(wire
+		(pts
+			(xy 172.72 114.3) (xy 172.72 116.84)
+		)
+		(stroke (width 0) (type default))
+		(uuid "0558434f-0016-5b98-8b70-65b353a65f31")
+	)
+	(wire
+		(pts
+			(xy 172.72 106.68) (xy 172.72 104.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "df8b8366-5964-5a8f-9b5c-86e9951b87e8")
+	)
+	(wire
+		(pts
+			(xy 172.72 104.14) (xy 172.72 101.6)
+		)
+		(stroke (width 0) (type default))
+		(uuid "42b67c7f-599b-571e-ba3e-4bb093989a59")
+	)
+	(wire
+		(pts
+			(xy 172.72 121.92) (xy 172.72 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "de397f02-4dc6-5a6f-8155-447a3006e1e0")
+	)
+	(wire
+		(pts
+			(xy 172.72 129.54) (xy 172.72 132.08)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e947b007-da7d-5a1d-8ac0-bc71eb32f4e9")
+	)
+	(wire
+		(pts
+			(xy 172.72 132.08) (xy 172.72 134.62)
+		)
+		(stroke (width 0) (type default))
+		(uuid "1ea0d2a4-af4c-5d66-a2cf-cd297964a704")
+	)
+	(wire
+		(pts
+			(xy 193.04 114.3) (xy 193.04 116.84)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a2d01f23-6572-589c-8893-8d23c60764ef")
+	)
+	(wire
+		(pts
+			(xy 193.04 106.68) (xy 193.04 104.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d108f021-1bf3-5faf-8f17-791e115f6974")
+	)
+	(label "LED_ACT_A"
+		(at 193.04 104.14 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "f5795e1a-6965-53e9-8a00-428008020b21")
+	)
+	(wire
+		(pts
+			(xy 193.04 121.92) (xy 193.04 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a1a9cc89-ca32-5ccc-91b1-dc430cd35465")
+	)
+	(wire
+		(pts
+			(xy 193.04 129.54) (xy 193.04 132.08)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a07c7697-3841-591c-b19a-768717cdd0da")
+	)
+	(wire
+		(pts
+			(xy 193.04 132.08) (xy 193.04 134.62)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2fd390bc-6cec-59d3-9c18-b1abc61622c7")
+	)
+	(wire
+		(pts
+			(xy 213.36 114.3) (xy 213.36 116.84)
+		)
+		(stroke (width 0) (type default))
+		(uuid "1b0f520c-b73c-55d6-92b8-1e600a5a262c")
+	)
+	(wire
+		(pts
+			(xy 213.36 106.68) (xy 213.36 104.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d693a736-c210-5790-8946-bfdf60391a57")
+	)
+	(label "LED_FAULT_A"
+		(at 213.36 104.14 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "bbb1d989-d8cd-5b97-b1b6-ec10d3d78515")
+	)
+	(wire
+		(pts
+			(xy 213.36 121.92) (xy 213.36 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d43db647-be73-57d9-8ff6-15347252622e")
+	)
+	(wire
+		(pts
+			(xy 213.36 129.54) (xy 213.36 132.08)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4c8c6acd-6e9b-5700-b708-270fc6f473ce")
+	)
+	(wire
+		(pts
+			(xy 213.36 132.08) (xy 213.36 134.62)
+		)
+		(stroke (width 0) (type default))
+		(uuid "b565a8ad-886f-5d6a-b7a1-5bdf0e6666e9")
+	)
+	(wire
+		(pts
+			(xy 262.89 113.03) (xy 260.35 113.03)
+		)
+		(stroke (width 0) (type default))
+		(uuid "bce4dfc7-ece0-52b9-a146-0a501f565d2a")
+	)
+	(label "UART0_RX"
+		(at 260.35 113.03 0)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "986b7225-2d25-5bb9-a7cc-c0f0a8f4c07c")
+	)
+	(wire
+		(pts
+			(xy 262.89 115.57) (xy 260.35 115.57)
+		)
+		(stroke (width 0) (type default))
+		(uuid "dd3b0c68-fe2b-5fd0-a881-e06e5a2b2472")
+	)
+	(wire
+		(pts
+			(xy 262.89 120.65) (xy 260.35 120.65)
+		)
+		(stroke (width 0) (type default))
+		(uuid "97790285-cd08-5f93-bef4-5c84f7cdc47c")
+	)
+	(wire
+		(pts
+			(xy 262.89 123.19) (xy 260.35 123.19)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2f8de3fb-45b4-5a71-8d35-ef9b0fe7e457")
+	)
+	(label "UART0_TX"
+		(at 260.35 123.19 0)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "a7c842f3-ba9a-58bf-b417-51f6de73d6ba")
+	)
+	(wire
+		(pts
+			(xy 273.05 130.81) (xy 273.05 133.35)
+		)
+		(stroke (width 0) (type default))
+		(uuid "858eca15-a859-5764-bfb9-121027eaae56")
+	)
+	(wire
+		(pts
+			(xy 273.05 133.35) (xy 273.05 135.89)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9ad6aba8-9f54-5cc6-b8d5-5f144b1f40b4")
+	)
+	(wire
+		(pts
+			(xy 283.21 120.65) (xy 285.75 120.65)
+		)
+		(stroke (width 0) (type default))
+		(uuid "5d04840c-c5cb-539c-9747-47af3699d6b6")
+	)
+	(wire
+		(pts
+			(xy 283.21 115.57) (xy 285.75 115.57)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e5d08910-eabf-51c7-82e8-98956411e522")
+	)
+	(wire
+		(pts
+			(xy 273.05 105.41) (xy 273.05 102.87)
+		)
+		(stroke (width 0) (type default))
+		(uuid "758953b8-1beb-57e4-abfa-a9ab4d06d449")
+	)
+	(wire
+		(pts
+			(xy 273.05 102.87) (xy 273.05 100.33)
+		)
+		(stroke (width 0) (type default))
+		(uuid "541707d8-f838-596f-849f-a7d74519ab1f")
+	)
+	(wire
+		(pts
+			(xy 250.19 120.65) (xy 252.73 120.65)
+		)
+		(stroke (width 0) (type default))
+		(uuid "ec229db9-552d-54cb-ad8d-75140ce7babd")
+	)
+	(wire
+		(pts
+			(xy 242.57 120.65) (xy 240.03 120.65)
+		)
+		(stroke (width 0) (type default))
+		(uuid "ce6229ca-40bb-5ca8-b6e9-0bd12bafdac6")
+	)
+	(wire
+		(pts
+			(xy 240.03 120.65) (xy 240.03 123.19)
+		)
+		(stroke (width 0) (type default))
+		(uuid "03484368-ab42-5577-b20b-f033125e60c8")
+	)
+	(wire
+		(pts
+			(xy 293.37 121.92) (xy 293.37 124.46)
+		)
+		(stroke (width 0) (type default))
+		(uuid "baf35344-b16c-5fda-9966-9daa72b4db27")
+	)
+	(wire
+		(pts
+			(xy 293.37 114.3) (xy 293.37 111.76)
+		)
+		(stroke (width 0) (type default))
+		(uuid "65336d6d-1aa1-5d3e-a800-1316309b8a10")
+	)
+	(wire
+		(pts
+			(xy 306.07 125.73) (xy 306.07 123.19)
+		)
+		(stroke (width 0) (type default))
+		(uuid "241b44f6-a320-5a85-af45-a67c9ec2c38e")
+	)
+	(wire
+		(pts
+			(xy 306.07 133.35) (xy 306.07 135.89)
+		)
+		(stroke (width 0) (type default))
+		(uuid "1f012894-844c-51c8-92a0-2505322e4a12")
+	)
+	(wire
+		(pts
+			(xy 306.07 135.89) (xy 306.07 138.43)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a3c25332-147f-5fdd-bf09-36537d9774d2")
+	)
+	(wire
+		(pts
+			(xy 318.77 106.68) (xy 318.77 104.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "01ec845c-1e40-5816-a3c0-71472e18cff7")
+	)
+	(wire
+		(pts
+			(xy 318.77 114.3) (xy 318.77 116.84)
+		)
+		(stroke (width 0) (type default))
+		(uuid "cf96e05f-6cdf-5a82-b6c7-1ff88239f8cb")
+	)
+	(wire
+		(pts
+			(xy 318.77 116.84) (xy 318.77 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3668a1b9-f5d0-5411-9314-9fe50f53e926")
+	)
+	(wire
+		(pts
+			(xy 266.7 38.1) (xy 269.24 38.1)
+		)
+		(stroke (width 0) (type default))
+		(uuid "bd3a059b-1cd7-59e8-b5a7-9e1ae0c8897f")
+	)
+	(wire
+		(pts
+			(xy 269.24 38.1) (xy 269.24 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d7196f59-d7ac-5c0e-86f6-28ece0b9edb9")
+	)
+	(wire
+		(pts
+			(xy 246.38 38.1) (xy 243.84 38.1)
+		)
+		(stroke (width 0) (type default))
+		(uuid "912cbda4-7452-50d5-8590-22307a1c9b68")
+	)
+	(wire
+		(pts
+			(xy 243.84 38.1) (xy 243.84 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "29aa5e95-7fbe-562d-9164-2124cde21964")
+	)
+	(wire
+		(pts
+			(xy 168.91 45.72) (xy 171.45 45.72)
+		)
+		(stroke (width 0) (type default))
+		(uuid "956aae90-55af-5ef9-af9d-f8646912d40a")
+	)
+	(wire
+		(pts
+			(xy 168.91 43.18) (xy 182.88 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "0cc1c1d3-07d0-5cad-99e5-2cf8e4a721d4")
+	)
+	(wire
+		(pts
+			(xy 182.88 43.18) (xy 181.61 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d9e3dfa7-6d7d-5ced-8bc8-b515ddf348c3")
+	)
+	(wire
+		(pts
+			(xy 181.61 43.18) (xy 181.61 45.72)
+		)
+		(stroke (width 0) (type default))
+		(uuid "105ae6c5-6078-5da4-aeb7-894e128c9783")
+	)
+	(label "BUCK_SW"
+		(at 175.895 43.18 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "d54330d6-040b-5274-a6c8-ebd73c94b7fe")
+	)
+	(wire
+		(pts
+			(xy 303.53 40.64) (xy 303.53 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e93d4893-9431-5a63-9990-65587e107bc4")
+	)
+	(wire
+		(pts
+			(xy 303.53 43.18) (xy 303.53 48.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "f3e731b7-388f-5ca0-9b15-368ee7826c54")
+	)
+	(wire
+		(pts
+			(xy 193.04 116.84) (xy 193.04 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "90a69ca1-0eab-54a3-a601-5202fb023538")
+	)
+	(wire
+		(pts
+			(xy 213.36 116.84) (xy 213.36 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e8f8ef94-5087-5b8c-86d8-b1d15fe36e3f")
+	)
+	(wire
+		(pts
+			(xy 172.72 116.84) (xy 172.72 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "1ebd5f1b-4572-5cf0-ae75-9b975aa37b1b")
+	)
+	(wire
+		(pts
+			(xy 285.75 120.65) (xy 285.75 124.46)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3e10c3c7-50cd-58c6-935c-443b63e26d14")
+	)
+	(wire
+		(pts
+			(xy 285.75 124.46) (xy 293.37 124.46)
+		)
+		(stroke (width 0) (type default))
+		(uuid "eaf65d0a-0d69-5b8d-9fcd-d1114b337ead")
+	)
+	(wire
+		(pts
+			(xy 293.37 124.46) (xy 293.37 123.19)
+		)
+		(stroke (width 0) (type default))
+		(uuid "ecb0c93f-49d6-5b19-98ee-54110562a44f")
+	)
+	(wire
+		(pts
+			(xy 293.37 123.19) (xy 306.07 123.19)
+		)
+		(stroke (width 0) (type default))
+		(uuid "f40a0421-870b-5c8b-944b-61bca03bde04")
+	)
+	(label "RS485_A"
+		(at 299.72 123.19 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "08924777-9ca2-55ea-8b0e-118c8ce69248")
+	)
+	(wire
+		(pts
+			(xy 285.75 115.57) (xy 285.75 111.76)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2aaa9cee-c1fd-563b-b6ac-6f89fa4f7ecb")
+	)
+	(wire
+		(pts
+			(xy 285.75 111.76) (xy 293.37 111.76)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a188164d-a50b-5c30-9d57-f26c37e120ac")
+	)
+	(wire
+		(pts
+			(xy 293.37 111.76) (xy 293.37 104.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3a3ff0fc-e319-576f-8f30-a91e750ce746")
+	)
+	(wire
+		(pts
+			(xy 293.37 104.14) (xy 318.77 104.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "da1f180f-a415-5162-86a9-75442146b2ef")
+	)
+	(label "RS485_B"
+		(at 306.07 104.14 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "4259931a-39f3-5f9f-8d79-cca853646ebf")
+	)
+	(wire
+		(pts
+			(xy 260.35 115.57) (xy 260.35 120.65)
+		)
+		(stroke (width 0) (type default))
+		(uuid "58b1ba5c-5efd-5b29-9503-a02c2988971a")
+	)
+	(wire
+		(pts
+			(xy 260.35 120.65) (xy 252.73 120.65)
+		)
+		(stroke (width 0) (type default))
+		(uuid "89353437-0ad7-54c9-8ec8-0b0180ecb60e")
+	)
+	(label "RS485_DE"
+		(at 256.54 120.65 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "7b791c60-4de3-53d7-a0f7-959d6471d5cd")
+	)
+	(wire
+		(pts
+			(xy 143.51 48.26) (xy 143.51 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "bbca821c-fe60-5e38-b70b-c5cda834cabe")
+	)
+	(wire
+		(pts
+			(xy 143.51 43.18) (xy 135.89 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "0f1418d3-2903-546d-9976-f7e5d3a5c65c")
+	)
+	(wire
+		(pts
+			(xy 135.89 43.18) (xy 135.89 41.91)
+		)
+		(stroke (width 0) (type default))
+		(uuid "c7617b93-4780-505f-8a19-573208338a8b")
+	)
+	(label "VIN"
+		(at 139.7 43.18 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "ddb98014-a624-5e67-acdf-78e3ebb4cd59")
+	)
+	(wire
+		(pts
+			(xy 91.44 43.18) (xy 93.98 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "db28bc88-5c63-52c9-9670-91d630b9235d")
+	)
+	(wire
+		(pts
+			(xy 93.98 43.18) (xy 93.98 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "5e38d3f6-3e6b-5a3a-9637-33586aeffc68")
+	)
+	(wire
+		(pts
+			(xy 93.98 40.64) (xy 101.6 40.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "c31a5e73-dfe3-5c64-a10f-d4fb249daf1d")
+	)
+	(label "VIN"
+		(at 97.79 40.64 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "dd48d9c7-eade-5844-874c-e7e55767a938")
+	)
+	(wire
+		(pts
+			(xy 72.39 43.18) (xy 76.2 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "0779362e-075f-5b31-afd4-389f8e86454c")
+	)
+	(wire
+		(pts
+			(xy 72.39 43.18) (xy 73.66 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4f773181-cfb2-562e-a69d-3aa7dec4b598")
+	)
+	(wire
+		(pts
+			(xy 73.66 43.18) (xy 73.66 54.61)
+		)
+		(stroke (width 0) (type default))
+		(uuid "8fba008b-4161-58e4-adb0-dbd13e53899f")
+	)
+	(label "VIN_F"
+		(at 73.66 48.895 90)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "0d14a8b2-64e0-5323-945d-3693998900e9")
+	)
+	(wire
+		(pts
+			(xy 83.82 53.34) (xy 83.82 54.61)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3f057807-0677-530e-90fc-a76b1f81f6e1")
+	)
+	(wire
+		(pts
+			(xy 83.82 54.61) (xy 76.2 54.61)
+		)
+		(stroke (width 0) (type default))
+		(uuid "29c676c7-6a37-5382-9d60-7179a47adb2e")
+	)
+	(wire
+		(pts
+			(xy 76.2 54.61) (xy 76.2 67.31)
+		)
+		(stroke (width 0) (type default))
+		(uuid "37daab1e-49cf-57bf-a31a-2f6274e17abc")
+	)
+	(wire
+		(pts
+			(xy 76.2 67.31) (xy 73.66 67.31)
+		)
+		(stroke (width 0) (type default))
+		(uuid "dc8f820d-4b1c-56d2-8ee3-73eff15171bd")
+	)
+	(label "VIN_GATE"
+		(at 78.867 54.61 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "aa7000d7-57e3-539e-a1ff-5201d6eca3be")
+	)
+	(wire
+		(pts
+			(xy 48.26 43.18) (xy 59.69 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "c7d1e8be-8971-5944-9851-d4e2b24c559f")
+	)
+	(wire
+		(pts
+			(xy 59.69 43.18) (xy 55.88 43.18)
+		)
+		(stroke (width 0) (type default))
+		(uuid "67ee4046-7be7-543d-8e60-f78dd8305eb3")
+	)
+	(wire
+		(pts
+			(xy 55.88 43.18) (xy 55.88 49.53)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4082cb4c-ae2b-51d3-a6b0-582c73ec8966")
+	)
+	(label "VIN_RAW"
+		(at 53.975 43.18 0)
+		(effects (font (size 1.27 1.27)) (justify bottom))
+		(uuid "fe0c812b-a997-5738-9dbe-f8557c2c39ce")
+	)
+	(junction
+		(at 55.88 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b5b97eac-a03f-5693-9381-1de7d67a9160")
+	)
+	(junction
+		(at 59.69 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "ac9a9361-5f37-55cd-a919-5f364e31447f")
+	)
+	(junction
+		(at 72.39 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "3dc8bbb0-2d48-5f8f-a2ef-5fccb5c672ef")
+	)
+	(junction
+		(at 73.66 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6aa05627-7a6e-5a98-aa1b-17818d766ecb")
+	)
+	(junction
+		(at 83.82 54.61)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "9bfb9ae2-e047-54b4-be13-66b673979595")
+	)
+	(junction
+		(at 93.98 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6985a5af-952e-593a-8e01-3248e945b48d")
+	)
+	(junction
+		(at 135.89 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c443d879-b382-575e-aad0-f79219334ad4")
+	)
+	(junction
+		(at 143.51 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "ba9a0c77-2e26-5762-a077-725a648c901d")
+	)
+	(junction
+		(at 181.61 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "85e04dc1-9b00-57d9-833b-f37fd829b13e")
+	)
+	(junction
+		(at 182.88 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "922de081-dd6b-53cd-8602-13d20385d429")
+	)
+	(junction
+		(at 246.38 38.1)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2f0fb2c1-71e3-556c-9ec4-ccdd332e22e1")
+	)
+	(junction
+		(at 260.35 120.65)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "4c891390-61a3-56d1-a662-360a3497f7be")
+	)
+	(junction
+		(at 266.7 38.1)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "594283be-7464-547a-b000-026510cdc94e")
+	)
+	(junction
+		(at 293.37 111.76)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b5638239-5bb5-5256-892a-d1476321e645")
+	)
+	(junction
+		(at 293.37 123.19)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "7fe6b120-d749-50ec-9867-44467a8027aa")
+	)
+	(junction
+		(at 293.37 124.46)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "f11feb56-36b6-5c4f-a953-79bf9c6eb0cf")
+	)
+	(junction
+		(at 303.53 40.64)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "7092f449-f0b4-599b-a2dc-95999b7e1d12")
+	)
+	(junction
+		(at 303.53 43.18)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "d7d6690d-60aa-5a42-a4c0-beb29812d848")
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)

@@ -44,6 +44,137 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets the sub-sheets this sheet instantiates, in document order.</summary>
         public KiCadNodeList<KiCadSheet> Sheets => new(Node, "sheet", n => new KiCadSheet(n));
 
+        // ------------------------------------------------------------------------------- the header
+
+        /// <summary>Gets or sets the file-format version, the date stamp KiCad bumps on every format change.</summary>
+        public string Version
+        {
+            get => ReadChild("version") ?? string.Empty;
+            set => WriteChild("version", value, SQuoteStyle.Bare);
+        }
+
+        /// <summary>Gets or sets the name of the program that wrote the file, e.g. <c>eeschema</c>.</summary>
+        public string Generator
+        {
+            get => ReadChild("generator") ?? string.Empty;
+            set => WriteChild("generator", value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>
+        /// Gets or sets the generator's own version, e.g. <c>"10.0"</c>. KiCad 7 added it, so it is
+        /// <see langword="null"/> on anything older.
+        /// </summary>
+        public string? GeneratorVersion
+        {
+            get => ReadChild("generator_version");
+            set => WriteChild("generator_version", value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets the paper size, e.g. <c>A4</c> or <c>A3</c>, or a <c>User</c> size with its dimensions.</summary>
+        public string? Paper
+        {
+            get => ReadChild("paper");
+            set => WriteChild("paper", value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>
+        /// Gets the drawing-frame text, creating an empty <c>(title_block ...)</c> when the sheet has
+        /// none — which is also how you give a sheet its first title.
+        /// </summary>
+        public KiCadTitleBlock TitleBlock => new(Require("title_block"));
+
+        /// <summary>Gets or sets whether the fonts the sheet uses are embedded in the file.</summary>
+        public bool EmbeddedFonts
+        {
+            get => ReadFlag("embedded_fonts");
+            set => WriteFlag("embedded_fonts", value);
+        }
+
+        // ------------------------------------------------------------------------------ connectivity
+
+        /// <summary>Gets the wire segments drawn on this sheet, in document order.</summary>
+        public KiCadNodeList<KiCadWire> Wires => new(Node, "wire", n => new KiCadWire(n));
+
+        /// <summary>Gets the bus segments drawn on this sheet, in document order.</summary>
+        public KiCadNodeList<KiCadBus> Buses => new(Node, "bus", n => new KiCadBus(n));
+
+        /// <summary>Gets the stubs that tap signals off a bus.</summary>
+        public KiCadNodeList<KiCadBusEntry> BusEntries => new(Node, "bus_entry", n => new KiCadBusEntry(n));
+
+        /// <summary>Gets the bus aliases declared in this file. They are file-scoped, not project-scoped.</summary>
+        public KiCadNodeList<KiCadBusAlias> BusAliases => new(Node, "bus_alias", n => new KiCadBusAlias(n));
+
+        /// <summary>Gets the junction dots, in document order.</summary>
+        public KiCadNodeList<KiCadJunction> Junctions => new(Node, "junction", n => new KiCadJunction(n));
+
+        /// <summary>Gets the no-connect markers, in document order.</summary>
+        public KiCadNodeList<KiCadNoConnect> NoConnects => new(Node, "no_connect", n => new KiCadNoConnect(n));
+
+        // ------------------------------------------------------------------------------------ naming
+
+        /// <summary>Gets the sheet-local net labels, in document order.</summary>
+        public KiCadNodeList<KiCadLabel> Labels => new(Node, "label", n => new KiCadLabel(n));
+
+        /// <summary>Gets the global net labels — the ones that join across every sheet in the design.</summary>
+        public KiCadNodeList<KiCadGlobalLabel> GlobalLabels => new(Node, "global_label", n => new KiCadGlobalLabel(n));
+
+        /// <summary>Gets the hierarchical labels, each the child half of a parent sheet's pin.</summary>
+        public KiCadNodeList<KiCadHierarchicalLabel> HierarchicalLabels =>
+            new(Node, "hierarchical_label", n => new KiCadHierarchicalLabel(n));
+
+        /// <summary>Gets the net-class flags placed on this sheet.</summary>
+        public KiCadNodeList<KiCadNetClassFlag> NetClassFlags => new(Node, "netclass_flag", n => new KiCadNetClassFlag(n));
+
+        // ------------------------------------------------------------------------------- what is drawn
+
+        /// <summary>Gets the free text drawn on this sheet, in document order.</summary>
+        public KiCadNodeList<KiCadSchematicText> TextItems => new(Node, "text", n => new KiCadSchematicText(n));
+
+        /// <summary>Gets the text boxes drawn on this sheet.</summary>
+        public KiCadNodeList<KiCadTextBox> TextBoxes => new(Node, "text_box", n => new KiCadTextBox(n));
+
+        /// <summary>
+        /// Gets the polylines drawn directly on this sheet. The view is the same one a symbol's
+        /// polylines use; the sheet-only <c>(uuid ...)</c> is reachable through
+        /// <c>item.Node.GetChildValue("uuid")</c>.
+        /// </summary>
+        public KiCadNodeList<KiCadPolyline> Polylines => new(Node, "polyline", n => new KiCadPolyline(n));
+
+        /// <summary>Gets the rectangles drawn directly on this sheet — usually the boxes around a functional block.</summary>
+        public KiCadNodeList<KiCadRectangle> Rectangles => new(Node, "rectangle", n => new KiCadRectangle(n));
+
+        /// <summary>Gets the circles drawn directly on this sheet.</summary>
+        public KiCadNodeList<KiCadCircle> Circles => new(Node, "circle", n => new KiCadCircle(n));
+
+        /// <summary>Gets the arcs drawn directly on this sheet.</summary>
+        public KiCadNodeList<KiCadArc> Arcs => new(Node, "arc", n => new KiCadArc(n));
+
+        /// <summary>Gets the Bézier curves drawn directly on this sheet.</summary>
+        public KiCadNodeList<KiCadBezier> Beziers => new(Node, "bezier", n => new KiCadBezier(n));
+
+        /// <summary>Gets the bitmaps placed on this sheet.</summary>
+        public KiCadNodeList<KiCadImage> Images => new(Node, "image", n => new KiCadImage(n));
+
+        // ---------------------------------------------------------------------------------- the rest
+
+        /// <summary>
+        /// Gets the library symbols cached in this file, as the same view a <c>.kicad_sym</c> uses.
+        /// </summary>
+        /// <remarks>
+        /// KiCad copies every symbol a sheet places into <c>(lib_symbols ...)</c> so the file opens
+        /// without its libraries. These are therefore definitions, not placements —
+        /// <see cref="Symbols"/> is what is actually on the sheet — and the two lists cannot be
+        /// confused because the cache is nested one level down.
+        /// </remarks>
+        public KiCadNodeList<KiCadSymbol> LibrarySymbols => new(Require("lib_symbols"), "symbol", n => new KiCadSymbol(n));
+
+        /// <summary>
+        /// Gets the page numbers this file assigns, one per hierarchical path. On a root sheet the
+        /// list holds every path in the design; on a child sheet it holds only <c>"/"</c>.
+        /// </summary>
+        public KiCadNodeList<KiCadSheetInstance> SheetInstances =>
+            new(Require("sheet_instances"), "path", n => new KiCadSheetInstance(n));
+
         /// <summary>True when anything in the file has been changed since it was parsed.</summary>
         public bool IsModified => _document.IsModified;
 
@@ -125,6 +256,12 @@ namespace KiCadSharp.Schematics
 
         /// <summary>Gets the sheet's fields.</summary>
         public KiCadNodeList<KiCadProperty> Properties => new(Node, "property", n => new KiCadProperty(n));
+
+        /// <summary>
+        /// Gets the connection points drawn on the sheet's box. Each one is joined to the child file
+        /// by name, through a hierarchical label spelled the same way.
+        /// </summary>
+        public KiCadNodeList<KiCadSheetPin> Pins => new(Node, "pin", n => new KiCadSheetPin(n));
 
         /// <summary>Gets the value of a named field.</summary>
         /// <param name="key">The field key.</param>

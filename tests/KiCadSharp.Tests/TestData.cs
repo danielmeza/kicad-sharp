@@ -22,6 +22,29 @@ public static class TestData
     /// <summary>The hierarchy that instantiates one child sheet twice, so every designator is used twice.</summary>
     public static string DuplicateRefsRoot => Path.Combine(Root, "duplicate-refs", "duplicate-refs.kicad_sch");
 
+    /// <summary>The child sheet of <see cref="DuplicateRefsRoot"/>: 45,693 bytes of wires, labels and junctions.</summary>
+    public static string DuplicateRefsChild => Path.Combine(Root, "duplicate-refs", "power-input.kicad_sch");
+
+    /// <summary>
+    /// A 170,001-byte KiCad 10 sheet with 161 wires, 22 labels, 18 junctions, 8 texts, 8 rectangles,
+    /// 4 bus aliases, 74 placed symbols and 19 cached library symbols.
+    /// </summary>
+    public static string Rs485Bridge => Path.Combine(Root, "orbion-rs485-bridge.kicad_sch");
+
+    /// <summary>
+    /// Every <c>.kicad_sch</c> fixture in the repository, so a round-trip test can be run over all of
+    /// them rather than over whichever one was remembered.
+    /// </summary>
+    public static IEnumerable<string> Schematics
+    {
+        get
+        {
+            yield return Rs485Bridge;
+            yield return DuplicateRefsRoot;
+            yield return DuplicateRefsChild;
+        }
+    }
+
     /// <summary>
     /// Copies the whole <c>duplicate-refs</c> fixture into a fresh scratch directory and returns the
     /// path of the root schematic inside it. Annotation rewrites files, so no test may run against
