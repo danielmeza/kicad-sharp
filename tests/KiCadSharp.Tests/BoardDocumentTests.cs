@@ -267,9 +267,9 @@ public class BoardDocumentTests
             zone.Points);
 
         Assert.NotNull(zone.Fill);
-        Assert.False(zone.Fill.Enabled);
-        Assert.Equal(0.508, zone.Fill.ThermalGap);
-        Assert.Equal(0.508, zone.Fill.ThermalBridgeWidth);
+        Assert.False(zone.Fill!.Enabled);
+        Assert.Equal(0.508, zone.Fill!.ThermalGap);
+        Assert.Equal(0.508, zone.Fill!.ThermalBridgeWidth);
     }
 
     // ----------------------------------------------------------------------- detail: setup, stackup
@@ -344,13 +344,13 @@ public class BoardDocumentTests
         Assert.Equal(100, outline.Width2D);
         Assert.Equal(60, outline.Height2D);
         Assert.NotNull(outline.Stroke);
-        Assert.Equal("default", outline.Stroke.Type);
+        Assert.Equal("default", outline.Stroke!.Type);
         Assert.NotNull(outline.Fill);
 
         // KiCad 7+ writes the board and footprint shapes' fill as a bare (fill no), not as the
         // (fill (type none)) a symbol library uses. Both are the same question with a different word.
-        Assert.Equal("no", outline.Fill.Type);
-        Assert.False(outline.Fill.IsFilled);
+        Assert.Equal("no", outline.Fill!.Type);
+        Assert.False(outline.Fill!.IsFilled);
 
         var line = Assert.Single(board.GraphicLines);
         Assert.Equal(new KiCadPosition(18, 40), line.Start);
@@ -366,8 +366,8 @@ public class BoardDocumentTests
         Assert.Equal(new KiCadPosition(10, 50), text.Position);
         Assert.Equal("F.SilkS", text.Layer);
         Assert.NotNull(text.FontEffects);
-        Assert.Equal(new KiCadSize(0.5, 0.5), text.FontEffects.Size);
-        Assert.Equal(0.08, text.FontEffects.Thickness);
+        Assert.Equal(new KiCadSize(0.5, 0.5), text.FontEffects!.Size);
+        Assert.Equal(0.08, text.FontEffects!.Thickness);
     }
 
     // -------------------------------------------------- a footprint on a board is just a footprint
@@ -614,7 +614,7 @@ public class BoardDocumentTests
         Assert.Equal(3, poly.Points.Count);
         Assert.Equal(new KiCadPosition(5, 5), poly.Points[2]);
         Assert.Equal("solid", poly.Fill!.Type);
-        Assert.True(poly.Fill.IsFilled);
+        Assert.True(poly.Fill!.IsFilled);
 
         var curve = Assert.Single(board.GraphicCurves);
         Assert.Equal(4, curve.Points.Count);

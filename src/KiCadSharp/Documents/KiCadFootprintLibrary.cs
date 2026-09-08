@@ -506,7 +506,11 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets the stroke, creating a <c>(stroke ...)</c> child if there is none.</summary>
-        public KiCadStroke Stroke => new(Require("stroke"));
+        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+
+        /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadStroke RequireStroke() => new(Require("stroke"));
     }
 
     /// <summary>A line: <c>(fp_line (start x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
@@ -571,7 +575,11 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets the fill, creating a <c>(fill ...)</c> child if there is none.</summary>
-        public KiCadFill Fill => new(Require("fill"));
+        public KiCadFill? Fill => Node.GetChild("fill") is { } node ? new KiCadFill(node) : null;
+
+        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFill RequireFill() => new(Require("fill"));
     }
 
     /// <summary>A circle: <c>(fp_circle (center x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
@@ -741,27 +749,31 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets the text rendering, creating an <c>(effects ...)</c> if there is none.</summary>
-        public KiCadFontEffects FontEffects => new(Require("effects"));
+        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+
+        /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
 
         /// <summary>Gets or sets the glyph size.</summary>
         public KiCadSize Size
         {
             get => KiCadSize.Read(Node.GetChild("effects")?.GetChild("font")?.GetChild("size"), 1);
-            set => FontEffects.Size = value;
+            set => RequireFontEffects().Size = value;
         }
 
         /// <summary>Gets or sets the pen thickness.</summary>
         public double Thickness
         {
-            get => Node.GetChild("effects") is null ? 0.15 : FontEffects.Thickness;
-            set => FontEffects.Thickness = value;
+            get => FontEffects?.Thickness ?? 0.15;
+            set => RequireFontEffects().Thickness = value;
         }
 
         /// <summary>Gets or sets whether the text is italic.</summary>
         public bool Italic
         {
-            get => Node.GetChild("effects") is not null && FontEffects.Italic;
-            set => FontEffects.Italic = value;
+            get => FontEffects?.Italic ?? false;
+            set => RequireFontEffects().Italic = value;
         }
 
         /// <summary>
@@ -770,9 +782,9 @@ namespace KiCadSharp.Documents
         /// </summary>
         public bool Hide
         {
-            get => (Node.GetChild("effects") is not null && FontEffects.Hide)
+            get => (FontEffects?.Hide ?? false)
                 || Node.Values.Any(v => string.Equals(v, "hide", StringComparison.Ordinal));
-            set => FontEffects.Hide = value;
+            set => RequireFontEffects().Hide = value;
         }
     }
 
