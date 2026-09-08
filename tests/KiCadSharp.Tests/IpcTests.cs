@@ -37,13 +37,13 @@ public class IpcTests
         }
     }
 
-    private static KiCad Connect()
+    private static KiCad Connect(Action<KiCadClientSettings>? configure = null)
     {
         Environment.SetEnvironmentVariable("KICAD_API_SOCKET", Socket);
 
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
-        services.AddKiCad("kicad-sharp-tests");
+        services.AddKiCad("kicad-sharp-tests", settings => configure?.Invoke(settings));
         return services.BuildServiceProvider().GetRequiredService<IKiCadFactory>().Create("kicad-sharp-tests");
     }
 
@@ -184,6 +184,25 @@ public class IpcTests
 
         var text = await board.GetAsString();
         Assert.StartsWith("(kicad_pcb", text);
+    }
+
+    [Fact]
+    public async Task AShortRequestTimeoutGivesUpAndTheNextRequestStillWorks()
+    {
+        if (Socket is null)
+        {
+            return;
+        }
+
+        // KiCad answers a Ping in well under a millisecond, so a zero budget is the only way to
+        // make a real one miss a deadline. What matters is the other side of it: the abandoned
+        // request is still outstanding on the socket, its reply arrives anyway, and the next
+        // request has to get its own answer rather than that one.
+        var impatient = Connect(settings => settings.RequestTimeout = TimeSpan.Zero);
+        await Assert.ThrowsAsync<KiCadConnectionException>(async () => await impatient.Ping());
+
+        var version = await Connect().GetVersion();
+        Assert.Equal("10.0.6", $"{version.Major}.{version.Minor}.{version.Patch}");
     }
 
     [Fact]

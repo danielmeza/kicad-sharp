@@ -28,7 +28,9 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.11" />
-    <PackageVersion Include="Rebus.nng" Version="8.6.1" />
+    <!-- Consumed for its native libnng only, and never declared to consumers; see the comment on the
+         PackageReference in src/KiCadSharp/KiCadSharp.csproj. -->
+    <PackageVersion Include="nng.NET" Version="1.4.0-rc0" />
   </ItemGroup>
 
   <ItemGroup>

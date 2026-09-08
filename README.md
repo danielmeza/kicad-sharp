@@ -33,16 +33,23 @@ of which round trip byte for byte.
 | Type | Purpose |
 |---|---|
 | `KiCadIPCClient : IDisposable` | The transport. `Connect(ct)`, `Send<TResult>(IMessage, ct)`, `Send(IMessage, ct)`, `Disconnect()`, `IsConnected`. |
-| `KiCadClientSettings` | `PipeName`, `Token`, `ClientName`, `DefaultClientName = "kicad.client"`. |
+| `KiCadClientSettings` | `PipeName`, `Token`, `ClientName`, `RequestTimeout`, `DefaultClientName = "kicad.client"`. |
 | `KiCadIPCProxy` | Abstract base for `KiCad` / `Board` / `Project`; wraps `Send`. |
 | `KiCadEnvironment` | Static reader for `KICAD_API_SOCKET`, `KICAD_API_TOKEN`, `KIPRJMOD`, `KICAD_USER_TEMPLATE_DIR`, `KICAD9_3DMODEL_DIR`, `KICAD9_FOOTPRINT_DIR`, `KICAD9_SYMBOL_DIR`, `KICAD9_DESIGN_BLOCK_DIR`, `VIRTUAL_ENV`; plus `GetDefaultSocketPath()`, `GenerateRandomClientName()`, `IsRunningOnKiCad()`. |
-| `KiCadServicesExtensions.AddKiCad(...)` | DI registration: a keyed `KiCadIPCClient`, a keyed `KiCad`, the nng load context, and `IKiCadFactory`. |
+| `KiCadServicesExtensions.AddKiCad(...)` | DI registration: a keyed `KiCadIPCClient`, a keyed `KiCad`, and `IKiCadFactory`. |
 | `IKiCadFactory` | `KiCad Create(string? clientName = null)`. |
 | `KiCadConnectionException` | Dial/send/receive failures. |
 
 Requests are framed as an `ApiRequest` envelope with the command packed into `Any` and a header
 carrying the KiCad token; the reply is an `ApiResponse` unpacked back to `TResult`. If no token was
 configured, the client adopts the one KiCad returns on the first successful round trip.
+
+`RequestTimeout` defaults to `Timeout.InfiniteTimeSpan`, which is nng's own default and what this
+client has always done. Waiting is not the same as hanging, though: the reply is polled for rather
+than blocked on, so a `CancellationToken` is observed **while the request is on the wire** and not
+only before it goes out. Pass one with a deadline for a per-call bound, or set `RequestTimeout` for
+a client-wide one. There is no useful single default — `Ping` returns in under a millisecond and
+`RefillZones` on a large board does not.
 
 ### `KiCad` — the connection handle
 
@@ -256,6 +263,43 @@ await board.PushCommit(commit, "set active layer");
 
 `GetBoard()` asks KiCad for open `DOCTYPE_PCB` documents and throws when there are none.
 
+### nng, and which platforms it reaches
+
+The transport is nng. `KiCadSharp` calls it through a **P/Invoke wrapper of thirteen entry points**
+(`src/KiCadSharp/Interop`) — `nng_req0_open`, `nng_dial`, `nng_sendmsg`, `nng_recvmsg`, the four
+`nng_msg_*` calls the envelope needs, `nng_close`, `nng_socket_set_ms`, `nng_strerror`,
+`nng_version` — and ships the native library itself, under `runtimes/<rid>/native/`.
+
+That native library is not new. It was always there: `libnng.so` is a native asset of `nng.NET`, so
+publishing a consumer self-contained has always put a **540,512-byte `libnng.so`** beside the
+executable. What is gone is the managed binding on top of it, and the `Rebus` message bus and
+`Newtonsoft.Json` that arrived with it — see [Pending](#pending).
+
+| Runtime identifier | Shipped | File |
+|---|---|---|
+| `linux-x64`, `linux-arm64`, `linux-arm` | yes | `libnng.so` (nng 1.3.2) |
+| `osx-x64` | yes | `libnng.dylib` (nng 1.3.2) |
+| `win-x64`, `win-x86` | yes | `nng.dll` (nng 1.4.0) |
+| `osx-arm64`, `win-arm64`, `linux-musl-*` | **no** | — |
+
+Those six are exactly what upstream publishes, and exactly what this library carried before, so no
+platform gains or loses support here. On a platform that is not in the list, or in a container that
+does not have libnng's own dependencies, set **`KICADSHARP_NNG_LIBRARY`** to the full path of a
+`libnng` to load instead (`brew install nng`, a distribution package, your own build). Nothing else
+has to be shipped: on the six above the file arrives with the package and is found by the runtime.
+
+Two failure modes worth naming, both measured:
+
+- **A slim container.** `libnng.so` links `libatomic.so.1`, `libnsl.so.1`, `librt.so.1` and glibc. A
+  bare `ubuntu:24.04` image has no `libatomic1`, and the load fails there — `apt install libatomic1`
+  fixes it. On musl (Alpine) this build cannot load at all; supply one and point
+  `KICADSHARP_NNG_LIBRARY` at it.
+- **`linux-musl-x64` publishes look fine and are not.** NuGet's RID fallback hands the glibc
+  `libnng.so` to a musl publish, so the file is present and unloadable.
+
+Either way the exception says which of the two it is, names every path that was tried, and names the
+environment variable — rather than the loader's bare `DllNotFoundException`.
+
 ### It does not work against eeschema on KiCad 10.0.6
 
 Measured against KiCad 10.0.6, and the reason there is no schematic API here:
@@ -337,8 +381,6 @@ What is still missing here:
 - **`KiCad.RefreshPaths()` and `KiCad.ImportLibrary(...)` are no-ops.** The commands they would send
   do not exist in KiCad's IPC API; the methods return `ValueTask.CompletedTask` and do nothing. A
   `GetPath(PathType)` is commented out for the same reason.
-- **No cancellation on the object model.** `KiCadIPCClient.Send` takes a `CancellationToken`;
-  `KiCadIPCProxy.Send` drops it, so nothing on `KiCad`, `Board` or `Project` can be cancelled.
 - **`ApiException` is `internal`.** It is what a non-OK API status throws, and the XML docs name it,
   but a consumer in another assembly cannot `catch` it by name — catch `Exception` or
   `KiCadConnectionException`.
@@ -352,19 +394,21 @@ What is still missing here:
 
 **Repository.**
 
-- **`KiCadSharp` depends on `Rebus`, a message bus, and nothing uses it.** The dependency is
-  declared as `Rebus.nng`, which is what supplies the `nng` bindings the IPC client needs — and it
-  brings `Rebus` 8.6.1 along, which in turn is the only reason `Newtonsoft.Json` is still in the
-  restore graph. The `using nng;` in `KiCadIpcClient` and `KiCadServicesExtensions` resolves from
-  `nng.NET` / `nng.NET.Shared`; there is no `using Rebus` anywhere in this repository. Referencing
-  `nng.NET` directly would drop two packages from every consumer's graph. Not done here, because
-  swapping a transport package is a consumer-visible packaging decision and belongs in its own
-  change.
-- **`tests/KiCadSharp.Tests` is the only gate on the document layer.** 56 tests over the vendored
-  KiCad 10 fixtures, with the byte counts in the assertions. There is no test for the IPC surface at
-  all — that needs a running KiCad, and nothing here fakes one. The one test that shells out to
-  `kicad-cli` returns early unless `KICADSHARP_KICAD_CLI` points at one. Run them with
-  `dotnet test KiCadSharp.slnx`.
+- **The nng wrapper is `internal`, and stays that way.** `KiCadSharp.Interop` is not part of the
+  public surface: a consumer that wants nng for its own purposes should reference nng, not reach
+  through this. `[InternalsVisibleTo("KiCadSharp.Tests")]` is what lets the tests exercise it.
+- **The build still restores `nng.NET`, for its native files only.** `dotnet list package` shows it,
+  because it is genuinely a build-time input: the `libnng` binaries this package ships are copied out
+  of it, pinned and hash-verified by NuGet rather than committed here. It is declared
+  `ExcludeAssets="all" PrivateAssets="all"`, so no consumer sees it and the packed nuspec names no nng
+  package at all.
+- **`tests/KiCadSharp.Tests` is the only gate on the document layer.** Tests over the vendored KiCad
+  10 fixtures, with the byte counts in the assertions. The IPC surface is covered two ways: the
+  transport and its timeout behaviour against an in-process nng peer (`NngInteropTests`,
+  `IpcTimeoutTests`, no KiCad needed), and the client against a real KiCad (`IpcTests`, which returns
+  early unless `KICADSHARP_IPC_SOCKET` names a socket — see `scripts/kicad-ipc-container.sh`). The one
+  test that shells out to `kicad-cli` returns early unless `KICADSHARP_KICAD_CLI` points at one. Run
+  them with `dotnet test KiCadSharp.slnx`.
 
 ## Building
 

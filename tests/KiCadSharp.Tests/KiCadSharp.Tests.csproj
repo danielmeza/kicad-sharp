@@ -5,6 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- NngTestPeer declares the two nng entry points the library deliberately does not (rep0_open,
+         listen) so the timeout tests have something to talk to. [LibraryImport] emits unsafe
+         marshalling stubs, and marshalling a struct that comes from another assembly - the library's
+         nng_socket - needs runtime marshalling switched off (SYSLIB1051). Neither affects any other
+         test: this project has no other interop. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

@@ -3,6 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Required by [LibraryImport]: the interop source generator emits its marshalling stubs as
+         unsafe code, and refuses to run without this (SYSLIB1062). No source file in this project
+         contains an `unsafe` block of its own - src/KiCadSharp/Interop marshals with byte[] and
+         Marshal.Copy rather than with pointers. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -26,7 +31,50 @@ SExpressions. The schematic side of KiCad's IPC API does not answer on KiCad 10;
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
-    <PackageReference Include="Rebus.nng" />
   </ItemGroup>
+
+  <!-- nng, the native library the IPC client speaks over.
+
+       KiCadSharp used to reach nng through Rebus.nng -> nng.NET, a managed binding that brought the
+       Rebus message bus and Newtonsoft.Json with it. The client calls nng directly now
+       (src/KiCadSharp/Interop), so the only thing still wanted from the nng.NET package is the
+       native library it carries - the same libnng.so consumers already had in their output, because
+       it is a native asset of nng.NET.
+
+       ExcludeAssets="all" with PrivateAssets="all" takes nothing from the package and declares
+       nothing to consumers: no managed nng.NET.dll, no build/nng.NET.targets, and no dependency in
+       the packed nuspec. That last part is what makes this possible at all - every published version
+       of nng.NET is a prerelease (1.3.0-rc0 .. 1.4.0-rc0), and a stable package may not declare a
+       prerelease dependency (NU5104). Rebus.nng was, in effect, a stability shim for that.
+
+       GeneratePathProperty gives $(Pkgnng_NET), and the files are copied out by hand below: to this
+       library's output, so a project reference works, and into the package under runtimes/, so a
+       package reference works the standard way through .deps.json. -->
+  <ItemGroup>
+    <PackageReference Include="nng.NET" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <!-- runtimes/<rid>/native/{libnng.so,libnng.dylib,nng.dll}, verbatim from the nng.NET package.
+       runtimes/any/ is excluded: that is the managed nng.NET assembly, which is the layer being
+       removed. -->
+  <ItemGroup Condition="'$(Pkgnng_NET)' != ''">
+    <None Include="$(Pkgnng_NET)/runtimes/**"
+          Exclude="$(Pkgnng_NET)/runtimes/any/**"
+          Link="runtimes/%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Pack="true"
+          PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)"
+          Visible="false" />
+  </ItemGroup>
+
+  <!-- Without this the failure is silent: an empty $(Pkgnng_NET) turns the glob above into nothing,
+       the package builds without a single native library in it, and the first thing anyone sees is a
+       DllNotFoundException at run time. -->
+  <Target Name="RequireNngNativeAssets" BeforeTargets="BeforeBuild;GenerateNuspec">
+    <Error Condition="'$(Pkgnng_NET)' == ''"
+           Text="The nng.NET package path is not known, so no libnng would be shipped. Restore this project before building it." />
+    <Error Condition="!Exists('$(Pkgnng_NET)/runtimes/linux-x64/native/libnng.so')"
+           Text="nng.NET no longer lays its native libraries out under runtimes/&lt;rid&gt;/native/. Nothing would be shipped; fix src/KiCadSharp/KiCadSharp.csproj." />
+  </Target>
 
 </Project>
