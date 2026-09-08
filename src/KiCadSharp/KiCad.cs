@@ -21,18 +21,18 @@ namespace KiCadSharp
         /// <summary>
         /// Pings the KiCad instance to check if the connection is alive
         /// </summary>
-        public async ValueTask Ping()
+        public async ValueTask Ping(CancellationToken cancellationToken = default)
         {
-            await Send(new Ping());
+            await Send(new Ping(), cancellationToken);
         }
 
         /// <summary>
         /// Gets the version of the connected KiCad instance
         /// </summary>
         /// <returns>KiCad version information</returns>
-        public async ValueTask<KiCadVersion> GetVersion()
+        public async ValueTask<KiCadVersion> GetVersion(CancellationToken cancellationToken = default)
         {
-            var response = await Send<GetVersionResponse>(new GetVersion());
+            var response = await Send<GetVersionResponse>(new GetVersion(), cancellationToken);
             return new KiCadVersion(response.Version);
         }
 
@@ -41,13 +41,13 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="binaryName">Name of the binary (e.g., "kicad-cli")</param>
         /// <returns>Full path to the binary</returns>
-        public async ValueTask<string> GetKiCadBinaryPath(string binaryName)
+        public async ValueTask<string> GetKiCadBinaryPath(string binaryName, CancellationToken cancellationToken = default)
         {
             var command = new GetKiCadBinaryPath
             {
                 BinaryName = binaryName
             };
-            var response = await Send<PathResponse>(command);
+            var response = await Send<PathResponse>(command, cancellationToken);
             return response.Path;
         }
 
@@ -56,13 +56,13 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="identifier">Plugin identifier</param>
         /// <returns>Path where plugin settings can be stored</returns>
-        public async ValueTask<string> GetPluginSettingsPath(string identifier)
+        public async ValueTask<string> GetPluginSettingsPath(string identifier, CancellationToken cancellationToken = default)
         {
             var command = new GetPluginSettingsPath
             {
                 Identifier = identifier
             };
-            var response = await Send<StringResponse>(command);
+            var response = await Send<StringResponse>(command, cancellationToken);
             return response.Response;
         }
 
@@ -71,14 +71,14 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="documentType">Type of documents to retrieve</param>
         /// <returns>List of document specifiers</returns>
-        public async ValueTask<DocumentSpecifier[]> GetOpenDocuments(DocumentType documentType)
+        public async ValueTask<DocumentSpecifier[]> GetOpenDocuments(DocumentType documentType, CancellationToken cancellationToken = default)
         {
             var command = new GetOpenDocuments
             {
 
                 Type = documentType
             };
-            var response = await Send<GetOpenDocumentsResponse>(command);
+            var response = await Send<GetOpenDocumentsResponse>(command, cancellationToken);
             return response.Documents.ToArray();
         }
 
@@ -87,9 +87,9 @@ namespace KiCadSharp
         /// </summary>
         /// <returns>Board object</returns>
         /// <exception cref="ApiException">Thrown if no board is open</exception>
-        public async ValueTask<Board> GetBoard()
+        public async ValueTask<Board> GetBoard(CancellationToken cancellationToken = default)
         {
-            var docs = await GetOpenDocuments(DocumentType.DoctypePcb);
+            var docs = await GetOpenDocuments(DocumentType.DoctypePcb, cancellationToken);
             if (docs.Length == 0)
             {
                 throw new ApiException("Expected to be able to retrieve at least one board");
@@ -102,14 +102,24 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="document">Document specifier</param>
         /// <returns>Project object</returns>
+        /// <remarks>
+        /// Synchronous on purpose, and not an oversight: the caller already has the document, so
+        /// this only binds a handle and sends nothing. The parameterless overload has to ask KiCad
+        /// which board is open first, which is why that one is a <see cref="ValueTask{TResult}"/>.
+        /// </remarks>
         public Project GetProject(DocumentSpecifier document)
         {
             return new Project(Client, document);
         }
 
-        public async ValueTask<Project> GetProject()
+        /// <summary>
+        /// Gets a project object for the board currently open in KiCad.
+        /// </summary>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        /// <returns>Project object</returns>
+        public async ValueTask<Project> GetProject(CancellationToken cancellationToken = default)
         {
-            var board = await GetBoard();
+            var board = await GetBoard(cancellationToken);
             return board.GetProject();
         }
 
@@ -118,26 +128,26 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="actionName">Name of the action to run</param>
         /// <returns>Status of the action</returns>
-        public async ValueTask<RunActionResponse> RunAction(string actionName)
+        public async ValueTask<RunActionResponse> RunAction(string actionName, CancellationToken cancellationToken = default)
         {
             var command = new RunAction
             {
                 Action = actionName
             };
-            return await Send<RunActionResponse>(command);
+            return await Send<RunActionResponse>(command, cancellationToken);
         }
 
         /// <summary>
         /// Refreshes the specified KiCad frame
         /// </summary>
         /// <param name="frameType">Type of frame to refresh</param>
-        public async ValueTask RefreshEditor(FrameType frameType)
+        public async ValueTask RefreshEditor(FrameType frameType, CancellationToken cancellationToken = default)
         {
             var command = new RefreshEditor
             {
                 Frame = frameType
             };
-            await Send(command);
+            await Send(command, cancellationToken);
         }
 
         /// <summary>
@@ -166,7 +176,7 @@ namespace KiCadSharp
             //    Name = name,
             //    AddToTable = addToTable
             //};
-            //await Send(command); 
+            //await Send(command, cancellationToken); 
             return ValueTask.CompletedTask;
         }
 
@@ -187,13 +197,13 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="pathType">Type of path to retrieve</param>
         /// <returns>The requested path</returns>
-        //public async ValueTask<string> GetPath(PathType pathType) type does't exist in kicad
+        //public async ValueTask<string> GetPath(PathType pathType, CancellationToken cancellationToken = default) type does't exist in kicad
         //{
         //    var command = new GetPath
         //    {
         //        Type = pathType
         //    };
-        //    var response = await Send<PathResponse>(command);
+        //    var response = await Send<PathResponse>(command, cancellationToken);
         //    return response.Path;
         //}
     }

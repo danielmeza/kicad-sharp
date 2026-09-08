@@ -78,14 +78,15 @@ namespace KiCadSharp.Schematics
         }
 
         /// <summary>
-        /// The drawing-frame text, or <see langword="null"/> when the sheet has no
+        /// Gets the drawing-frame text, or <see langword="null"/> when the sheet has no
         /// <c>(title_block ...)</c>.
         /// </summary>
         /// <remarks>
-        /// Reading this does not add the form. A getter that created one would dirty a document
-        /// nobody edited and put an empty <c>(title_block)</c> into the next save — which is exactly
-        /// the kind of write this library exists to avoid. Use <see cref="RequireTitleBlock"/> to
-        /// give a sheet its first title.
+        /// Reading this does not add the form. KiCad omits <c>(title_block ...)</c> entirely when
+        /// every field is empty — 30 of the 134 sheets KiCad 10 itself ships have none — so a getter
+        /// that created one would dirty a document nobody edited and put an empty
+        /// <c>(title_block)</c> into the next save. Use <see cref="RequireTitleBlock"/> to give a
+        /// sheet its first title.
         /// </remarks>
         public KiCadTitleBlock? TitleBlock =>
             Node.GetChild("title_block") is { } node ? new KiCadTitleBlock(node) : null;
@@ -182,12 +183,18 @@ namespace KiCadSharp.Schematics
 
         /// <summary>Gets the symbol cache as a mutable list, adding the <c>(lib_symbols ...)</c> form when the file has none.</summary>
         /// <returns>The live list.</returns>
-        public KiCadNodeList<KiCadSymbol> RequireLibrarySymbols() => new(Require("lib_symbols"), "symbol", n => new KiCadSymbol(n));
+        public KiCadNodeList<KiCadSymbol> RequireLibrarySymbols() =>
+            new(Require("lib_symbols"), "symbol", n => new KiCadSymbol(n));
 
         /// <summary>
         /// Gets the page numbers this file assigns, one per hierarchical path. On a root sheet the
         /// list holds every path in the design; on a child sheet it holds only <c>"/"</c>.
         /// </summary>
+        /// <remarks>
+        /// A child sheet in a hierarchy carries no <c>(sheet_instances ...)</c> at all — 79 of the
+        /// 134 sheets KiCad 10 ships have none — so reading this must not create one. Use
+        /// <see cref="RequireSheetInstances"/> when you mean to write the page map.
+        /// </remarks>
         public KiCadNodeList<KiCadSheetInstance> SheetInstances =>
             new(Node.GetChild("sheet_instances"), "path", n => new KiCadSheetInstance(n));
 
@@ -269,6 +276,62 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets the sheet's UUID — the segment it contributes to a hierarchical path.</summary>
         public string Uuid => ReadChild("uuid") ?? string.Empty;
 
+        /// <summary>Gets or sets the top-left corner of the box drawn for the sheet.</summary>
+        public KiCadPosition Position
+        {
+            get => KiCadPosition.Read(Node.GetChild("at"));
+            set => value.Write(Require("at"), includeRotation: false);
+        }
+
+        /// <summary>Gets or sets the box's extent, in millimetres. The pins sit on its edges.</summary>
+        public KiCadSize Size
+        {
+            get => KiCadSize.Read(Node.GetChild("size"));
+            set => value.Write(Require("size"));
+        }
+
+        /// <summary>Gets the box's border, or <see langword="null"/> when it carries no <c>(stroke ...)</c>.</summary>
+        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+
+        /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the sheet has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadStroke RequireStroke() => new(Require("stroke"));
+
+        /// <summary>Gets the box's fill, or <see langword="null"/> when it carries no <c>(fill ...)</c>.</summary>
+        public KiCadFill? Fill => Node.GetChild("fill") is { } node ? new KiCadFill(node) : null;
+
+        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the sheet has none.</summary>
+        /// <returns>The view.</returns>
+        public KiCadFill RequireFill() => new(Require("fill"));
+
+        /// <summary>Gets or sets whether the sheet's contents are excluded from the simulator.</summary>
+        public bool ExcludeFromSim
+        {
+            get => ReadFlag("exclude_from_sim");
+            set => WriteFlag("exclude_from_sim", value);
+        }
+
+        /// <summary>Gets or sets whether the sheet's contents reach the bill of materials.</summary>
+        public bool InBom
+        {
+            get => ReadFlag("in_bom");
+            set => WriteFlag("in_bom", value);
+        }
+
+        /// <summary>Gets or sets whether the sheet's contents reach the board.</summary>
+        public bool OnBoard
+        {
+            get => ReadFlag("on_board");
+            set => WriteFlag("on_board", value);
+        }
+
+        /// <summary>Gets or sets whether the sheet's contents are marked do-not-populate.</summary>
+        public bool Dnp
+        {
+            get => ReadFlag("dnp");
+            set => WriteFlag("dnp", value);
+        }
+
         /// <summary>Gets the sheet's display name, the <c>Sheetname</c> property.</summary>
         public string? SheetName => GetPropertyValue("Sheetname");
 
@@ -320,6 +383,83 @@ namespace KiCadSharp.Schematics
 
         /// <summary>Gets the unit of a multi-unit symbol; 1 for a single-unit part.</summary>
         public int Unit => Node.GetChild("unit") is { } unit && unit.TryGetValue<int>(0, out var value) ? value : 1;
+
+        /// <summary>
+        /// Gets or sets where the symbol sits and how far it is turned, in millimetres and degrees.
+        /// </summary>
+        /// <remarks>
+        /// This is the origin the library symbol's own geometry is drawn around, not the outline's
+        /// corner, so two symbols of different sizes at the same <c>(at ...)</c> overlap at their
+        /// pins' reference point rather than at their edges.
+        /// </remarks>
+        public KiCadPosition Position
+        {
+            get => KiCadPosition.Read(Node.GetChild("at"));
+            set => value.Write(Require("at"), includeRotation: true);
+        }
+
+        /// <summary>
+        /// Gets or sets the axis the symbol is flipped about — <c>"x"</c> or <c>"y"</c> — or
+        /// <see langword="null"/> when it is not mirrored. Setting <see langword="null"/> removes the
+        /// form, which is how KiCad spells "not mirrored".
+        /// </summary>
+        public string? Mirror
+        {
+            get => ReadChild("mirror");
+            set => WriteChild("mirror", value, SQuoteStyle.Bare);
+        }
+
+        /// <summary>
+        /// Gets the body style of a symbol drawn two ways (the De Morgan alternative); 1 is the
+        /// normal body. KiCad 9 renamed the token from <c>convert</c> to <c>body_style</c>, and both
+        /// spellings are read.
+        /// </summary>
+        public int BodyStyle =>
+            (Node.GetChild("body_style") ?? Node.GetChild("convert")) is { } style
+            && style.TryGetValue<int>(0, out var value)
+                ? value
+                : 1;
+
+        /// <summary>
+        /// Gets the library symbol's own name when it differs from <see cref="LibId"/>, which is what
+        /// KiCad writes for a symbol edited only on this sheet; <see langword="null"/> otherwise.
+        /// </summary>
+        public string? LibName => ReadChild("lib_name");
+
+        /// <summary>Gets or sets whether the simulator ignores this symbol.</summary>
+        public bool ExcludeFromSim
+        {
+            get => ReadFlag("exclude_from_sim");
+            set => WriteFlag("exclude_from_sim", value);
+        }
+
+        /// <summary>Gets or sets whether the symbol reaches the bill of materials.</summary>
+        public bool InBom
+        {
+            get => ReadFlag("in_bom");
+            set => WriteFlag("in_bom", value);
+        }
+
+        /// <summary>Gets or sets whether the symbol reaches the board.</summary>
+        public bool OnBoard
+        {
+            get => ReadFlag("on_board");
+            set => WriteFlag("on_board", value);
+        }
+
+        /// <summary>Gets or sets whether the symbol is marked do-not-populate.</summary>
+        public bool Dnp
+        {
+            get => ReadFlag("dnp");
+            set => WriteFlag("dnp", value);
+        }
+
+        /// <summary>Gets or sets whether the symbol reaches the component-placement file.</summary>
+        public bool InPosFiles
+        {
+            get => ReadFlag("in_pos_files");
+            set => WriteFlag("in_pos_files", value);
+        }
 
         /// <summary>Gets the symbol's fields.</summary>
         public KiCadNodeList<KiCadProperty> Properties => new(Node, "property", n => new KiCadProperty(n));

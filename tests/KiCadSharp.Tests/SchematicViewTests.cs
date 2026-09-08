@@ -278,6 +278,57 @@ public class SchematicViewTests
     }
 
     [Fact]
+    public void PlacedSymbol_ReadsWhereItIsAndHowItIsBuilt()
+    {
+        var symbol = KiCadSchematic.Load(TestData.Rs485Bridge).Symbols[0];
+
+        // The first placement in the fixture is a connector, turned 0 degrees and flipped about y.
+        Assert.Equal("orbion:Conn_01x02", symbol.LibId);
+        Assert.Equal(new KiCadPosition(40.64, 43.18, 0), symbol.Position);
+        Assert.Equal("y", symbol.Mirror);
+        Assert.Equal(1, symbol.Unit);
+        Assert.Equal(1, symbol.BodyStyle);
+        Assert.Null(symbol.LibName);
+        Assert.False(symbol.ExcludeFromSim);
+        Assert.True(symbol.InBom);
+        Assert.True(symbol.OnBoard);
+        Assert.False(symbol.Dnp);
+    }
+
+    [Fact]
+    public void PlacedSymbol_MovingOne_MovesNoOther()
+    {
+        var schematic = KiCadSchematic.Load(TestData.Rs485Bridge);
+        var second = schematic.Symbols[1].Position;
+
+        schematic.Symbols[0].Position = new KiCadPosition(40.64, 43.19, 0);
+
+        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion-rs485-bridge.kicad_sch");
+        schematic.Save(output);
+
+        // "43.18" became "43.19": one digit, so the file is the same length.
+        Assert.Equal(170_001, new FileInfo(output).Length);
+
+        var reloaded = KiCadSchematic.Load(output);
+        Assert.Equal(new KiCadPosition(40.64, 43.19, 0), reloaded.Symbols[0].Position);
+        Assert.Equal("y", reloaded.Symbols[0].Mirror);
+        Assert.Equal(second, reloaded.Symbols[1].Position);
+        Assert.Equal(74, reloaded.Symbols.Count);
+    }
+
+    [Fact]
+    public void Sheet_ReadsTheBoxItDraws()
+    {
+        var sheet = Assert.Single(KiCadSchematic.Parse(RicherSheet).Sheets);
+
+        Assert.Equal(new KiCadPosition(190.5, 30.48), sheet.Position);
+        Assert.Equal(new KiCadSize(40.64, 25.4), sheet.Size);
+        Assert.Equal(0.1524, sheet.Stroke!.Width);
+        Assert.Equal("solid", sheet.Stroke!.Type);
+        Assert.Equal(new[] { "0", "0", "0", "0.0000" }, sheet.Fill!.Color);
+    }
+
+    [Fact]
     public void ChildSheetFixture_ReadsTheSameCountsThroughTheViews()
     {
         var root = SExpression.Load(TestData.DuplicateRefsChild);
@@ -534,19 +585,20 @@ public class SchematicViewTests
         _ = schematic.Uuid;
         _ = schematic.EmbeddedFonts;
 
-        var titleBlock = schematic.TitleBlock!;
-        _ = titleBlock.Title;
-        _ = titleBlock.Date;
-        _ = titleBlock.Revision;
-        _ = titleBlock.Company;
-        _ = titleBlock.CommentNumbers;
+        var titleBlock = schematic.TitleBlock;
+        _ = titleBlock?.Title;
+        _ = titleBlock?.Date;
+        _ = titleBlock?.Revision;
+        _ = titleBlock?.Company;
+        _ = titleBlock?.CommentNumbers;
+        _ = titleBlock?.GetComment(1);
 
         foreach (var line in schematic.Wires.Cast<KiCadSchematicLine>().Concat(schematic.Buses))
         {
             _ = line.Points;
             _ = line.Start;
             _ = line.End;
-            _ = line.Stroke!.Width;
+            _ = line.Stroke?.Width;
             _ = line.Uuid;
         }
 
@@ -554,7 +606,7 @@ public class SchematicViewTests
         {
             _ = entry.Position;
             _ = entry.Size;
-            _ = entry.Stroke!.Type;
+            _ = entry.Stroke?.Type;
             _ = entry.Uuid;
         }
 
@@ -585,7 +637,7 @@ public class SchematicViewTests
         {
             _ = label.Text;
             _ = label.Position;
-            _ = label.FontEffects!.Size;
+            _ = label.FontEffects?.Size;
             _ = label.Uuid;
         }
 
@@ -593,7 +645,7 @@ public class SchematicViewTests
         {
             _ = text.Text;
             _ = text.Position;
-            _ = text.FontEffects!.Bold;
+            _ = text.FontEffects?.Bold;
             _ = text.ExcludeFromSim;
             _ = text.Uuid;
         }
@@ -603,31 +655,33 @@ public class SchematicViewTests
             _ = box.Text;
             _ = box.Position;
             _ = box.Size;
-            _ = box.Stroke!.Width;
-            _ = box.Fill!.Type;
-            _ = box.FontEffects!.Size;
+            _ = box.Stroke?.Width;
+            _ = box.Fill?.Type;
+            _ = box.FontEffects?.Size;
             _ = box.Uuid;
         }
 
         foreach (var polyline in schematic.Polylines)
         {
             _ = polyline.Points;
-            _ = polyline.Stroke!.Type;
+            _ = polyline.Stroke?.Type;
+            _ = polyline.Fill?.Type;
         }
 
         foreach (var rectangle in schematic.Rectangles)
         {
             _ = rectangle.Start;
             _ = rectangle.End;
-            _ = rectangle.Stroke!.Width;
-            _ = rectangle.Fill!.Type;
+            _ = rectangle.Stroke?.Width;
+            _ = rectangle.Fill?.Type;
         }
 
         foreach (var circle in schematic.Circles)
         {
             _ = circle.Center;
             _ = circle.Radius;
-            _ = circle.Fill!.Type;
+            _ = circle.Stroke?.Width;
+            _ = circle.Fill?.Type;
         }
 
         foreach (var arc in schematic.Arcs)
@@ -635,13 +689,15 @@ public class SchematicViewTests
             _ = arc.Start;
             _ = arc.Mid;
             _ = arc.End;
-            _ = arc.Stroke!.Width;
+            _ = arc.Stroke?.Width;
+            _ = arc.Fill?.Type;
         }
 
         foreach (var bezier in schematic.Beziers)
         {
             _ = bezier.ControlPoints;
-            _ = bezier.Stroke!.Width;
+            _ = bezier.Stroke?.Width;
+            _ = bezier.Fill?.Type;
             _ = bezier.Uuid;
         }
 
@@ -658,12 +714,23 @@ public class SchematicViewTests
             _ = symbol.LibId;
             _ = symbol.Unit;
             _ = symbol.Uuid;
+            _ = symbol.Position;
+            _ = symbol.Mirror;
+            _ = symbol.BodyStyle;
+            _ = symbol.LibName;
+            _ = symbol.ExcludeFromSim;
+            _ = symbol.InBom;
+            _ = symbol.OnBoard;
+            _ = symbol.Dnp;
+            _ = symbol.InPosFiles;
             _ = symbol.ReferenceProperty;
             _ = symbol.IsPowerSymbol;
             foreach (var property in symbol.Properties)
             {
                 _ = property.Key;
                 _ = property.Value;
+                _ = property.Position;
+                _ = property.FontEffects?.Size;
             }
         }
 
@@ -674,6 +741,11 @@ public class SchematicViewTests
             _ = librarySymbol.Pins.Count;
             _ = librarySymbol.GraphicalItems.Count;
             _ = librarySymbol.GetPropertyValue("Reference");
+            foreach (var item in librarySymbol.GraphicalItems)
+            {
+                _ = item.Stroke?.Width;
+                _ = item.Fill?.Type;
+            }
         }
 
         foreach (var sheet in schematic.Sheets)
@@ -681,12 +753,20 @@ public class SchematicViewTests
             _ = sheet.Uuid;
             _ = sheet.SheetName;
             _ = sheet.SheetFile;
+            _ = sheet.Position;
+            _ = sheet.Size;
+            _ = sheet.Stroke?.Width;
+            _ = sheet.Fill?.Type;
+            _ = sheet.ExcludeFromSim;
+            _ = sheet.InBom;
+            _ = sheet.OnBoard;
+            _ = sheet.Dnp;
             foreach (var pin in sheet.Pins)
             {
                 _ = pin.Name;
                 _ = pin.Shape;
                 _ = pin.Position;
-                _ = pin.FontEffects!.Size;
+                _ = pin.FontEffects?.Size;
                 _ = pin.Uuid;
             }
         }

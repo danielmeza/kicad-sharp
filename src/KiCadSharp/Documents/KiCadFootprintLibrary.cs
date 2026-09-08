@@ -238,6 +238,40 @@ namespace KiCadSharp.Documents
             set => WriteChild("layer", value, SQuoteStyle.Quoted);
         }
 
+        /// <summary>
+        /// Gets or sets where the footprint is placed and how far it is turned, the
+        /// <c>(at x y [rotation])</c> form.
+        /// </summary>
+        /// <remarks>
+        /// A <c>.kicad_mod</c> on its own is drawn about the origin and carries no <c>at</c>, so this
+        /// reads <c>(0, 0)</c> there. A footprint reached through <see cref="KiCadBoard.Footprints"/>
+        /// is a <em>placed</em> one and this is where it sits — the first thing anyone asks a board.
+        /// Every child of the footprint is drawn relative to it.
+        /// </remarks>
+        public KiCadPosition Position
+        {
+            get => KiCadPosition.Read(Node.GetChild("at"));
+            set => value.Write(Require("at"), includeRotation: false);
+        }
+
+        /// <summary>
+        /// Gets or sets the footprint's UUID — how a <see cref="KiCadGroup"/> and the schematic's
+        /// <c>path</c> refer to it. <see langword="null"/> on a file old enough to have used
+        /// <see cref="Tstamp"/> instead.
+        /// </summary>
+        public string? Uuid
+        {
+            get => ReadChild("uuid");
+            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>Gets or sets whether the footprint is locked against being moved.</summary>
+        public bool Locked
+        {
+            get => ReadFlag("locked");
+            set => WriteFlag("locked", value);
+        }
+
         /// <summary>Gets or sets the footprint's description, the <c>(descr "...")</c> token.</summary>
         public string? Description
         {
@@ -848,10 +882,17 @@ namespace KiCadSharp.Documents
         /// <summary>Gets the drill, or <see langword="null"/> for a surface-mount pad.</summary>
         public KiCadDrill? Drill => Node.GetChild("drill") is { } drill ? new KiCadDrill(drill) : null;
 
-        /// <summary>Gets or sets the net this pad is connected to, or <see langword="null"/> when it has none.</summary>
+        /// <summary>
+        /// Gets or sets the net this pad is connected to, or <see langword="null"/> when it has none.
+        /// </summary>
+        /// <remarks>
+        /// Both spellings are read: KiCad 9 and earlier wrote <c>(net 1 "GND")</c>, KiCad 10 writes
+        /// <c>(net "GND")</c> and keeps no codes anywhere. A set goes back into whichever slot the
+        /// pad already keeps the name in.
+        /// </remarks>
         public string? Net
         {
-            get => Node.GetChild("net")?.GetValue(1);
+            get => KiCadNetRef.ReadName(Node.GetChild("net"));
             set
             {
                 if (value is null)
@@ -860,7 +901,7 @@ namespace KiCadSharp.Documents
                     return;
                 }
 
-                Require("net").SetValue(1, value, SQuoteStyle.Quoted);
+                KiCadNetRef.WriteName(Require("net"), value);
             }
         }
     }

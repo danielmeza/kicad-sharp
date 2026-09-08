@@ -169,7 +169,7 @@ namespace KiCadSharp.Documents
     /// property needs when the form it reads has not been written yet: it can report "nothing here"
     /// without creating a <c>(lib_symbols)</c> nobody asked for, and without degrading into a
     /// snapshot that stops tracking the file the moment someone adds to it. Mutating such a list
-    /// throws, because there is nothing to mutate — take the `Require…()` accessor instead.
+    /// throws, because there is nothing to mutate — take the <c>Require…()</c> accessor instead.
     /// </para>
     /// </remarks>
     public sealed class KiCadNodeList<T> : IReadOnlyList<T>

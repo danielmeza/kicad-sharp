@@ -83,7 +83,7 @@ plus `Document` and `Name`.
 | `SchematicAnnotator` | `.kicad_sch` | `Annotate`, `AnnotateFile`, `FindDuplicateReferences`. |
 | `KiCadUtils` | `.kicad_sym` | `ParseSymbolLibrary`, `ExportSymbolToLibrary`, `ValidateSymbolLibrary`, `CloneSymbol`, `GetLibraryName`. |
 | `KiCadFileExtensions` | — | `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`, `.kicad_sym`, `.kicad_mod`, `.kicad_dru`, `.kicad_wks`, `.kicad_prl`. |
-| `KiCadSharp.Settings.IWritableOptions<T>` / `WritableOptions<T>` | JSON | A writable `IOptions<T>` that patches one section of a JSON file and reloads configuration. Unrelated to KiCad IPC. |
+| `KiCadSharp.Settings.IWritableOptions<T>` / `WritableOptions<T>` | JSON | A writable `IOptions<T>` that patches one section of a JSON file and reloads configuration. `System.Text.Json`; every other section of the file is carried across untouched. Unrelated to KiCad IPC. |
 
 ### Typed vs. generic, by file type
 
@@ -303,7 +303,24 @@ What is still missing here:
 
 **IPC surface.**
 
-- **No schematic access at all** (see above).
+- **The schematic half of the IPC API is not there in KiCad 10.0.6, and this is what that looks
+  like.** Measured against `eeschema` in the release container, with a schematic open:
+
+  ```
+  Ping        -> AS_UNHANDLED  "no handler available for request of type kiapi.common.commands.Ping"
+  GetVersion  -> AS_UNHANDLED  "no handler available for request of type kiapi.common.commands.GetVersion"
+  GetOpenDocuments(DOCTYPE_SCHEMATIC) -> 1 document
+  ```
+
+  So `eeschema` does answer — it is not deaf, and a timeout is not the symptom to look for. It
+  registers a handler set of nearly nothing: even `Ping` and `GetVersion`, which `pcbnew` answers,
+  come back `AS_UNHANDLED`. `GetOpenDocuments` is the one command in this library that works
+  against it. `schematic_commands.proto` carries no message for a symbol, wire, junction or sheet,
+  so there is nothing to wrap even by hand. **Read and write schematics on disk**, through
+  `KiCadSchematic` and `SchematicAnnotator`; the IPC route is a KiCad 11 story.
+
+  `scripts/kicad-ipc-container.sh start sheet.kicad_sch` starts `eeschema` instead of `pcbnew` if
+  you want to watch this for yourself.
 - **Most of the vendored command surface is not wrapped.** `Board` sends 15 command messages
   (counted in `Board.cs`), of which only `RefillZones`, `GetActiveLayer` and `SetActiveLayer` come
   from `board_commands.proto` — that file declares **26** commands. Not wrapped anywhere:
@@ -335,7 +352,15 @@ What is still missing here:
 
 **Repository.**
 
-- **`tests/KiCadSharp.Tests` is the only gate on the document layer.** 38 tests over the vendored
+- **`KiCadSharp` depends on `Rebus`, a message bus, and nothing uses it.** The dependency is
+  declared as `Rebus.nng`, which is what supplies the `nng` bindings the IPC client needs — and it
+  brings `Rebus` 8.6.1 along, which in turn is the only reason `Newtonsoft.Json` is still in the
+  restore graph. The `using nng;` in `KiCadIpcClient` and `KiCadServicesExtensions` resolves from
+  `nng.NET` / `nng.NET.Shared`; there is no `using Rebus` anywhere in this repository. Referencing
+  `nng.NET` directly would drop two packages from every consumer's graph. Not done here, because
+  swapping a transport package is a consumer-visible packaging decision and belongs in its own
+  change.
+- **`tests/KiCadSharp.Tests` is the only gate on the document layer.** 56 tests over the vendored
   KiCad 10 fixtures, with the byte counts in the assertions. There is no test for the IPC surface at
   all — that needs a running KiCad, and nothing here fakes one. The one test that shells out to
   `kicad-cli` returns early unless `KICADSHARP_KICAD_CLI` points at one. Run them with
