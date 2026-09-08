@@ -288,14 +288,25 @@ does not have libnng's own dependencies, set **`KICADSHARP_NNG_LIBRARY`** to the
 `libnng` to load instead (`brew install nng`, a distribution package, your own build). Nothing else
 has to be shipped: on the six above the file arrives with the package and is found by the runtime.
 
-Two failure modes worth naming, both measured:
+**What libnng itself links against**, read out of the shipped binaries. Nothing here is bundled —
+these are the host's own libraries, and the only ones a consumer may have to install are on the
+right:
 
-- **A slim container.** `libnng.so` links `libatomic.so.1`, `libnsl.so.1`, `librt.so.1` and glibc. A
-  bare `ubuntu:24.04` image has no `libatomic1`, and the load fails there — `apt install libatomic1`
-  fixes it. On musl (Alpine) this build cannot load at all; supply one and point
-  `KICADSHARP_NNG_LIBRARY` at it.
+| | Links | Not guaranteed present |
+|---|---|---|
+| Linux | `librt.so.1`, `libpthread.so.0`, `libnsl.so.1`, `libatomic.so.1`, `libc.so.6` | **`libatomic.so.1`** — a bare `ubuntu:24.04` has none (`apt install libatomic1`). glibc, so **no musl**. |
+| macOS | `/usr/lib/libSystem.B.dylib` | — nothing. |
+| Windows | `WS2_32`, `ADVAPI32`, `KERNEL32`, the UCRT — all in-box since Windows 10 | **`VCRUNTIME140.dll`** — the Visual C++ 2015–2022 Redistributable. Very widely installed, but not part of Windows and not required by .NET. |
+
+Two failure modes follow from that, both measured:
+
+- **A slim container.** A bare `ubuntu:24.04` has no `libatomic1` and the load fails there. On musl
+  (Alpine) this build cannot load at all; supply one and point `KICADSHARP_NNG_LIBRARY` at it.
 - **`linux-musl-x64` publishes look fine and are not.** NuGet's RID fallback hands the glibc
   `libnng.so` to a musl publish, so the file is present and unloadable.
+
+All of this is unchanged from when the binding was `Rebus.nng` — it is the same `libnng`, and these
+are the same requirements it always had. What is new is that the exception says which one it is.
 
 Either way the exception says which of the two it is, names every path that was tried, and names the
 environment variable — rather than the loader's bare `DllNotFoundException`.

@@ -127,6 +127,50 @@ namespace KiCadSharp.Interop
         }
 
         /// <summary>
+        /// What libnng links against on the running platform, and what to do about it.
+        /// </summary>
+        /// <remarks>
+        /// Read out of the shipped binaries rather than guessed:
+        /// <list type="bullet">
+        /// <item><description>
+        /// <b>Linux</b> (<c>x64</c>, <c>arm64</c>, <c>arm</c>): <c>librt.so.1</c>,
+        /// <c>libpthread.so.0</c>, <c>libnsl.so.1</c>, <c>libatomic.so.1</c>, <c>libc.so.6</c>.
+        /// <c>libatomic.so.1</c> is the one a slim or distroless image routinely lacks -- a bare
+        /// <c>ubuntu:24.04</c> does. glibc, so no musl distribution can load this build.
+        /// </description></item>
+        /// <item><description>
+        /// <b>macOS</b>: <c>/usr/lib/libSystem.B.dylib</c> and nothing else. Always present; a load
+        /// failure here is not a missing dependency.
+        /// </description></item>
+        /// <item><description>
+        /// <b>Windows</b>: <c>WS2_32</c>, <c>ADVAPI32</c>, <c>KERNEL32</c> and the UCRT, all in-box
+        /// since Windows 10 -- plus <c>VCRUNTIME140.dll</c>, which is <b>not</b>. That ships in the
+        /// Visual C++ 2015-2022 redistributable. It is on most machines because a great many
+        /// applications install it, and it is not guaranteed, and .NET itself does not require it.
+        /// </description></item>
+        /// </list>
+        /// </remarks>
+        internal static string NativeDependencyAdvice()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                return "on Windows nng.dll needs VCRUNTIME140.dll, which is not part of Windows and does not come with "
+                    + ".NET -- install the Microsoft Visual C++ 2015-2022 Redistributable. Everything else it imports "
+                    + "(WS2_32, ADVAPI32, KERNEL32, the UCRT) is in-box. ";
+            }
+
+            if (OperatingSystem.IsMacOS())
+            {
+                return "on macOS libnng.dylib links only /usr/lib/libSystem.B.dylib, which is always present, so this "
+                    + "is more likely an architecture mismatch: nng is published for osx-x64 and not osx-arm64. ";
+            }
+
+            return "on Linux libnng.so needs libatomic.so.1, libnsl.so.1, librt.so.1, libpthread.so.0 and glibc. "
+                + "A slim or distroless image routinely has no libatomic.so.1 (apt install libatomic1), and a musl "
+                + "distribution such as Alpine cannot load this glibc build at all. ";
+        }
+
+        /// <summary>
         /// Everywhere the library could plausibly be, for the purpose of saying what went wrong.
         /// Wider than <see cref="ProbePaths"/>: it also covers the flat layout a self-contained or
         /// single-file publish produces, where the native asset is put beside the executable and the
@@ -176,15 +220,13 @@ namespace KiCadSharp.Interop
             string message;
             if (present is not null)
             {
-                // The file is there and the loader still would not take it. On Linux that is nearly
-                // always a missing dependency of libnng itself rather than anything about this
-                // package: it links librt, libpthread, libnsl, libatomic and glibc, and a slim or
-                // distroless container image frequently has no libatomic.so.1 and no musl answer for
-                // any of it.
+                // The file is there and the loader still would not take it, which means a dependency
+                // of libnng is missing rather than anything about this package. Which dependency is
+                // entirely platform-specific, so say the one that applies -- naming Linux's libatomic
+                // on a Windows machine is worse than saying nothing.
                 message = $"KiCadSharp found nng at {present} and the platform loader refused it. "
-                    + "That is a dependency of the native library, not a missing file: on Linux libnng needs "
-                    + "libatomic.so.1, libnsl.so.1, librt.so.1 and glibc, which a slim container image may not carry "
-                    + "(apt install libatomic1), and a musl distribution such as Alpine cannot load this build at all. ";
+                    + "That is a dependency of the native library itself, not a missing file: "
+                    + NativeDependencyAdvice();
             }
             else if (ShippedRuntimeIdentifiers.Contains(identifier))
             {

@@ -22,13 +22,43 @@ public class NngInteropTests
     [Fact]
     public void TheNativeLibraryThisPackageShipsLoadsAndAnswers()
     {
-        // If this throws DllNotFoundException the resolver is wrong; if it returns nonsense the
-        // marshalling is. nng_strerror is the cheapest call that proves both: the string comes back
-        // out of the .so.
+        // Through Open(), not straight at Nng.Version(), so that a machine which cannot load libnng
+        // fails with the message that names the missing dependency rather than with the loader's
+        // bare "cannot open shared object file". This is the first test that touches nng, so it is
+        // the one whose failure a reader sees first.
+        using (NngRequestSocket.Open())
+        {
+        }
+
+        // If this returns nonsense the marshalling is wrong. nng_strerror is the cheapest call that
+        // proves the string really comes back out of the native library.
         Assert.False(string.IsNullOrWhiteSpace(Nng.Version()));
         Assert.Equal("Timed out", Nng.Describe(5));
         Assert.Equal("Object closed", Nng.Describe(Nng.Closed));
         Assert.Equal("Incorrect state", Nng.Describe(Nng.State));
+    }
+
+    [Fact]
+    public void TheAdviceForAFailedLoadMatchesTheRunningPlatform()
+    {
+        // It used to name Linux's libatomic whatever platform it was running on, which is worse than
+        // saying nothing at all on the two thirds of platforms where it is not true.
+        var advice = NngLibraryResolver.NativeDependencyAdvice();
+
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Contains("VCRUNTIME140.dll", advice);
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            Assert.Contains("libSystem.B.dylib", advice);
+        }
+        else
+        {
+            Assert.Contains("libatomic.so.1", advice);
+        }
+
+        Assert.Contains(NngLibraryResolver.NativeDependencyAdvice(), NngLibraryResolver.DescribeFailure());
     }
 
     [Fact]
