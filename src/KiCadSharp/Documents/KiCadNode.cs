@@ -117,7 +117,7 @@ namespace KiCadSharp.Documents
         /// <param name="token">The child token.</param>
         /// <param name="value">The flag.</param>
         protected void WriteFlag(string token, bool value) =>
-            Node.SetChildValue(token, value ? "yes" : "no", SQuoteStyle.Bare);
+            Node.SetChildValue(token, value ? KiCadTokens.Common.Yes : KiCadTokens.Common.No, SQuoteStyle.Bare);
 
         /// <summary>Replaces one of this node's own bare values, appending when it is not there yet.</summary>
         /// <param name="index">The value index.</param>

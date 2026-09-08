@@ -36,12 +36,12 @@ namespace KiCadSharp.Documents
         /// <param name="version">The value of the <c>version</c> token.</param>
         public KiCadFootprintLibrary(string generator = "KiCad Library Importer", string version = "20211014")
         {
-            _root = new SExpression("kicad_pcb");
-            _root.CreateChild("version", version);
-            _root.CreateChild("generator").AddValue(generator, SQuoteStyle.Quoted);
-            _root.CreateChild("general");
-            _root.CreateChild("paper").AddValue("A4", SQuoteStyle.Quoted);
-            _root.CreateChild("layers");
+            _root = new SExpression(KiCadTokens.Board.Root);
+            _root.CreateChild(KiCadTokens.Common.Version, version);
+            _root.CreateChild(KiCadTokens.Common.Generator).AddValue(generator, SQuoteStyle.Quoted);
+            _root.CreateChild(KiCadTokens.Board.General);
+            _root.CreateChild(KiCadTokens.Common.Paper).AddValue("A4", SQuoteStyle.Quoted);
+            _root.CreateChild(KiCadTokens.Common.Layers);
             _document = new SDocument();
             _document.Add(_root);
             _rootIsFootprint = false;
@@ -77,15 +77,15 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the file format version.</summary>
         public string Version
         {
-            get => _root.GetChildValue("version") ?? "20211014";
-            set => _root.SetChildValue("version", value, SQuoteStyle.Bare);
+            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? "20211014";
+            set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the name of the program that wrote the file.</summary>
         public string Generator
         {
-            get => _root.GetChildValue("generator") ?? "KiCad Library Importer";
-            set => _root.SetChildValue("generator", value, SQuoteStyle.Quoted);
+            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? "KiCad Library Importer";
+            set => _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -191,7 +191,8 @@ namespace KiCadSharp.Documents
         }
 
         private static bool IsFootprintToken(string token) =>
-            string.Equals(token, "footprint", StringComparison.Ordinal) || string.Equals(token, "module", StringComparison.Ordinal);
+            string.Equals(token, KiCadTokens.Footprint.Root, StringComparison.Ordinal)
+            || string.Equals(token, KiCadTokens.Footprint.LegacyRoot, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -215,13 +216,13 @@ namespace KiCadSharp.Documents
         /// <summary>Creates a new footprint with the reference and value text KiCad expects.</summary>
         /// <param name="id">The footprint's name.</param>
         public KiCadFootprint(string id)
-            : base(new SExpression("footprint"))
+            : base(new SExpression(KiCadTokens.Footprint.Root))
         {
             ArgumentNullException.ThrowIfNull(id);
             Node.AddValue(id, SQuoteStyle.Quoted);
-            Node.SetChildValue("layer", "F.Cu", SQuoteStyle.Quoted);
-            AddFpText("reference", "REF**", 0, 0, "F.SilkS");
-            AddFpText("value", id, 0, 1.27, "F.Fab");
+            Node.SetChildValue(KiCadTokens.Common.Layer, KiCadLayerNames.FCu, SQuoteStyle.Quoted);
+            AddFpText(KiCadTokens.Footprint.TextTypeReference, "REF**", 0, 0, KiCadLayerNames.FSilkS);
+            AddFpText(KiCadTokens.Footprint.TextTypeValue, id, 0, 1.27, KiCadLayerNames.FFab);
         }
 
         /// <summary>Gets or sets the footprint's name, the first value of the form.</summary>
@@ -234,8 +235,8 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the layer the footprint sits on.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "F.Cu";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.FCu;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -250,8 +251,8 @@ namespace KiCadSharp.Documents
         /// </remarks>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
         }
 
         /// <summary>
@@ -261,29 +262,29 @@ namespace KiCadSharp.Documents
         /// </summary>
         public string? Uuid
         {
-            get => ReadChild("uuid");
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid);
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets whether the footprint is locked against being moved.</summary>
         public bool Locked
         {
-            get => ReadFlag("locked");
-            set => WriteFlag("locked", value);
+            get => ReadFlag(KiCadTokens.Common.Locked);
+            set => WriteFlag(KiCadTokens.Common.Locked, value);
         }
 
         /// <summary>Gets or sets the footprint's description, the <c>(descr "...")</c> token.</summary>
         public string? Description
         {
-            get => ReadChild("descr");
-            set => WriteChild("descr", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Footprint.Descr);
+            set => WriteChild(KiCadTokens.Footprint.Descr, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the footprint's search keywords, the <c>(tags "...")</c> token.</summary>
         public string? Tags
         {
-            get => ReadChild("tags");
-            set => WriteChild("tags", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Footprint.Tags);
+            set => WriteChild(KiCadTokens.Footprint.Tags, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -292,15 +293,15 @@ namespace KiCadSharp.Documents
         /// </summary>
         public long Tedit
         {
-            get => ReadHex("tedit");
-            set => Node.SetChildValue("tedit", value.ToString("X", CultureInfo.InvariantCulture), SQuoteStyle.Bare);
+            get => ReadHex(KiCadTokens.Footprint.Tedit);
+            set => Node.SetChildValue(KiCadTokens.Footprint.Tedit, value.ToString("X", CultureInfo.InvariantCulture), SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the KiCad 5 placement timestamp, or 0 when the file has none.</summary>
         public long Tstamp
         {
-            get => ReadHex("tstamp");
-            set => Node.SetChildValue("tstamp", value.ToString("X", CultureInfo.InvariantCulture), SQuoteStyle.Bare);
+            get => ReadHex(KiCadTokens.Footprint.Tstamp);
+            set => Node.SetChildValue(KiCadTokens.Footprint.Tstamp, value.ToString("X", CultureInfo.InvariantCulture), SQuoteStyle.Bare);
         }
 
         /// <summary>Gets the values of the <c>(attr ...)</c> token, e.g. <c>smd</c>, <c>through_hole</c>.</summary>
@@ -308,37 +309,37 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                var attr = Node.GetChild("attr");
+                var attr = Node.GetChild(KiCadTokens.Footprint.Attr);
                 return attr is null ? Array.Empty<string>() : attr.Values.ToArray();
             }
         }
 
         /// <summary>Gets the footprint's fields, as a live view over its <c>property</c> children.</summary>
-        public KiCadNodeList<KiCadProperty> Properties => new(Node, "property", n => new KiCadProperty(n));
+        public KiCadNodeList<KiCadProperty> Properties => new(Node, KiCadTokens.Common.Property, n => new KiCadProperty(n));
 
         /// <summary>Gets the 3D models attached to the footprint.</summary>
-        public KiCadNodeList<KiCadModel> Models => new(Node, "model", n => new KiCadModel(n));
+        public KiCadNodeList<KiCadModel> Models => new(Node, KiCadTokens.Footprint.Model, n => new KiCadModel(n));
 
         /// <summary>Gets the footprint's text items.</summary>
-        public KiCadNodeList<KiCadFpText> TextItems => new(Node, "fp_text", n => new KiCadFpText(n));
+        public KiCadNodeList<KiCadFpText> TextItems => new(Node, KiCadTokens.Footprint.FpText, n => new KiCadFpText(n));
 
         /// <summary>Gets the footprint's pads.</summary>
-        public KiCadNodeList<KiCadPad> Pads => new(Node, "pad", n => new KiCadPad(n));
+        public KiCadNodeList<KiCadPad> Pads => new(Node, KiCadTokens.Footprint.Pad, n => new KiCadPad(n));
 
         /// <summary>Gets the footprint's lines.</summary>
-        public KiCadNodeList<KiCadFpLine> Lines => new(Node, "fp_line", n => new KiCadFpLine(n));
+        public KiCadNodeList<KiCadFpLine> Lines => new(Node, KiCadTokens.Footprint.FpLine, n => new KiCadFpLine(n));
 
         /// <summary>Gets the footprint's rectangles.</summary>
-        public KiCadNodeList<KiCadFpRect> Rectangles => new(Node, "fp_rect", n => new KiCadFpRect(n));
+        public KiCadNodeList<KiCadFpRect> Rectangles => new(Node, KiCadTokens.Footprint.FpRect, n => new KiCadFpRect(n));
 
         /// <summary>Gets the footprint's circles.</summary>
-        public KiCadNodeList<KiCadFpCircle> Circles => new(Node, "fp_circle", n => new KiCadFpCircle(n));
+        public KiCadNodeList<KiCadFpCircle> Circles => new(Node, KiCadTokens.Footprint.FpCircle, n => new KiCadFpCircle(n));
 
         /// <summary>Gets the footprint's arcs.</summary>
-        public KiCadNodeList<KiCadFpArc> Arcs => new(Node, "fp_arc", n => new KiCadFpArc(n));
+        public KiCadNodeList<KiCadFpArc> Arcs => new(Node, KiCadTokens.Footprint.FpArc, n => new KiCadFpArc(n));
 
         /// <summary>Gets the footprint's polygons.</summary>
-        public KiCadNodeList<KiCadFpPoly> Polygons => new(Node, "fp_poly", n => new KiCadFpPoly(n));
+        public KiCadNodeList<KiCadFpPoly> Polygons => new(Node, KiCadTokens.Footprint.FpPoly, n => new KiCadFpPoly(n));
 
         /// <summary>Gets the value of a named field.</summary>
         /// <param name="key">The field key, e.g. <c>Reference</c>.</param>
@@ -387,7 +388,7 @@ namespace KiCadSharp.Documents
         /// <returns>The line.</returns>
         public KiCadFpLine AddLine(double startX, double startY, double endX, double endY, string layer, double width = 0.12)
         {
-            var line = new KiCadFpLine(new SExpression("fp_line"))
+            var line = new KiCadFpLine(new SExpression(KiCadTokens.Footprint.FpLine))
             {
                 Start = new KiCadPosition(startX, startY),
                 End = new KiCadPosition(endX, endY),
@@ -409,7 +410,7 @@ namespace KiCadSharp.Documents
         /// <returns>The circle.</returns>
         public KiCadFpCircle AddCircle(double centerX, double centerY, double endX, double endY, string layer, double width = 0.12)
         {
-            var circle = new KiCadFpCircle(new SExpression("fp_circle"))
+            var circle = new KiCadFpCircle(new SExpression(KiCadTokens.Footprint.FpCircle))
             {
                 Center = new KiCadPosition(centerX, centerY),
                 End = new KiCadPosition(endX, endY),
@@ -472,8 +473,8 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the layer the element is drawn on.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "F.SilkS";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.FSilkS;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -484,33 +485,33 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                var stroke = Node.GetChild("stroke");
-                if (stroke is not null && stroke.GetChild("width") is { } strokeWidth && strokeWidth.TryGetValue<double>(0, out var fromStroke))
+                var stroke = Node.GetChild(KiCadTokens.Common.Stroke);
+                if (stroke is not null && stroke.GetChild(KiCadTokens.Common.Width) is { } strokeWidth && strokeWidth.TryGetValue<double>(0, out var fromStroke))
                 {
                     return fromStroke;
                 }
 
-                return ReadChildDouble("width", 0, 0.12);
+                return ReadChildDouble(KiCadTokens.Common.Width, 0, 0.12);
             }
 
             set
             {
-                if (Node.GetChild("stroke") is { } stroke)
+                if (Node.GetChild(KiCadTokens.Common.Stroke) is { } stroke)
                 {
-                    stroke.SetChildValue("width", Numbers.Format(value), SQuoteStyle.Bare);
+                    stroke.SetChildValue(KiCadTokens.Common.Width, Numbers.Format(value), SQuoteStyle.Bare);
                     return;
                 }
 
-                WriteChildDouble("width", value);
+                WriteChildDouble(KiCadTokens.Common.Width, value);
             }
         }
 
         /// <summary>Gets the stroke, creating a <c>(stroke ...)</c> child if there is none.</summary>
-        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+        public KiCadStroke? Stroke => Node.GetChild(KiCadTokens.Common.Stroke) is { } node ? new KiCadStroke(node) : null;
 
         /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the node has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadStroke RequireStroke() => new(Require("stroke"));
+        public KiCadStroke RequireStroke() => new(Require(KiCadTokens.Common.Stroke));
     }
 
     /// <summary>A line: <c>(fp_line (start x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
@@ -525,22 +526,22 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty line.</summary>
         public KiCadFpLine()
-            : base(new SExpression("fp_line"))
+            : base(new SExpression(KiCadTokens.Footprint.FpLine))
         {
         }
 
         /// <summary>Gets or sets the start point.</summary>
         public KiCadPosition Start
         {
-            get => KiCadPosition.Read(Node.GetChild("start"));
-            set => value.Write(Require("start"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
+            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
     }
 
@@ -556,30 +557,30 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty rectangle.</summary>
         public KiCadFpRect()
-            : base(new SExpression("fp_rect"))
+            : base(new SExpression(KiCadTokens.Footprint.FpRect))
         {
         }
 
         /// <summary>Gets or sets the first corner.</summary>
         public KiCadPosition Start
         {
-            get => KiCadPosition.Read(Node.GetChild("start"));
-            set => value.Write(Require("start"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
+            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
         }
 
         /// <summary>Gets or sets the opposite corner.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
         /// <summary>Gets the fill, creating a <c>(fill ...)</c> child if there is none.</summary>
-        public KiCadFill? Fill => Node.GetChild("fill") is { } node ? new KiCadFill(node) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node) : null;
 
         /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the node has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require("fill"));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
     }
 
     /// <summary>A circle: <c>(fp_circle (center x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
@@ -594,22 +595,22 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty circle.</summary>
         public KiCadFpCircle()
-            : base(new SExpression("fp_circle"))
+            : base(new SExpression(KiCadTokens.Footprint.FpCircle))
         {
         }
 
         /// <summary>Gets or sets the centre.</summary>
         public KiCadPosition Center
         {
-            get => KiCadPosition.Read(Node.GetChild("center"));
-            set => value.Write(Require("center"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Center));
+            set => value.Write(Require(KiCadTokens.Common.Center), includeRotation: false);
         }
 
         /// <summary>Gets or sets a point on the circumference.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
     }
 
@@ -625,36 +626,36 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty arc.</summary>
         public KiCadFpArc()
-            : base(new SExpression("fp_arc"))
+            : base(new SExpression(KiCadTokens.Footprint.FpArc))
         {
         }
 
         /// <summary>Gets or sets the start point.</summary>
         public KiCadPosition Start
         {
-            get => KiCadPosition.Read(Node.GetChild("start"));
-            set => value.Write(Require("start"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
+            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
         }
 
         /// <summary>Gets or sets the mid point the arc passes through, KiCad 6 and later.</summary>
         public KiCadPosition Mid
         {
-            get => KiCadPosition.Read(Node.GetChild("mid"));
-            set => value.Write(Require("mid"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Mid));
+            set => value.Write(Require(KiCadTokens.Common.Mid), includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
         /// <summary>Gets or sets the KiCad 5 sweep angle, or 0 when the file uses a mid point instead.</summary>
         public double Angle
         {
-            get => ReadChildDouble("angle");
-            set => WriteChildDouble("angle", value);
+            get => ReadChildDouble(KiCadTokens.Common.Angle);
+            set => WriteChildDouble(KiCadTokens.Common.Angle, value);
         }
     }
 
@@ -670,13 +671,13 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty polygon.</summary>
         public KiCadFpPoly()
-            : base(new SExpression("fp_poly"))
+            : base(new SExpression(KiCadTokens.Footprint.FpPoly))
         {
         }
 
         /// <summary>Gets the vertices, in order.</summary>
         public IReadOnlyList<KiCadPosition> Points =>
-            (Node.GetChild("pts")?.GetChildren("xy") ?? Enumerable.Empty<SExpression>())
+            (Node.GetChild(KiCadTokens.Common.Pts)?.GetChildren(KiCadTokens.Common.Xy) ?? Enumerable.Empty<SExpression>())
                 .Select(xy => new KiCadPosition(xy.GetValueAsDouble(0), xy.GetValueAsDouble(1)))
                 .ToArray();
 
@@ -685,8 +686,8 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild("pts") ?? Node.CreateChild("pts");
-            points.CreateChild("xy", Numbers.Format(x), Numbers.Format(y));
+            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
+            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
@@ -702,7 +703,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty text item.</summary>
         public KiCadFpText()
-            : base(new SExpression("fp_text"))
+            : base(new SExpression(KiCadTokens.Footprint.FpText))
         {
         }
 
@@ -712,7 +713,7 @@ namespace KiCadSharp.Documents
         /// <param name="position">Where the text sits.</param>
         /// <param name="layer">The layer to draw it on.</param>
         public KiCadFpText(string type, string text, KiCadPosition position, string layer)
-            : base(new SExpression("fp_text"))
+            : base(new SExpression(KiCadTokens.Footprint.FpText))
         {
             Node.AddValue(type, SQuoteStyle.Bare);
             Node.AddValue(text, SQuoteStyle.Quoted);
@@ -723,7 +724,7 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the kind of text.</summary>
         public string Type
         {
-            get => Node.GetValue(0) ?? "user";
+            get => Node.GetValue(0) ?? KiCadTokens.Footprint.TextTypeUser;
             set => WriteValue(0, value, SQuoteStyle.Bare);
         }
 
@@ -737,28 +738,28 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets where the text sits.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: true);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
         }
 
         /// <summary>Gets or sets the layer.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "F.SilkS";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.FSilkS;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets the text rendering, creating an <c>(effects ...)</c> if there is none.</summary>
-        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+        public KiCadFontEffects? FontEffects => Node.GetChild(KiCadTokens.Common.Effects) is { } node ? new KiCadFontEffects(node) : null;
 
         /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
+        public KiCadFontEffects RequireFontEffects() => new(Require(KiCadTokens.Common.Effects));
 
         /// <summary>Gets or sets the glyph size.</summary>
         public KiCadSize Size
         {
-            get => KiCadSize.Read(Node.GetChild("effects")?.GetChild("font")?.GetChild("size"), 1);
+            get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Effects)?.GetChild(KiCadTokens.Common.Font)?.GetChild(KiCadTokens.Common.Size), 1);
             set => RequireFontEffects().Size = value;
         }
 
@@ -783,7 +784,7 @@ namespace KiCadSharp.Documents
         public bool Hide
         {
             get => (FontEffects?.Hide ?? false)
-                || Node.Values.Any(v => string.Equals(v, "hide", StringComparison.Ordinal));
+                || Node.Values.Any(v => string.Equals(v, KiCadTokens.Common.Hide, StringComparison.Ordinal));
             set => RequireFontEffects().Hide = value;
         }
     }
@@ -800,7 +801,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty pad.</summary>
         public KiCadPad()
-            : base(new SExpression("pad"))
+            : base(new SExpression(KiCadTokens.Footprint.Pad))
         {
         }
 
@@ -812,7 +813,7 @@ namespace KiCadSharp.Documents
         /// <param name="size">The pad size.</param>
         /// <param name="layers">The layers the pad is on.</param>
         public KiCadPad(string number, string type, string shape, KiCadPosition position, KiCadSize size, IEnumerable<string> layers)
-            : base(new SExpression("pad"))
+            : base(new SExpression(KiCadTokens.Footprint.Pad))
         {
             ArgumentNullException.ThrowIfNull(layers);
             Node.AddValue(number, SQuoteStyle.Quoted);
@@ -847,15 +848,15 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets where the pad sits.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
         }
 
         /// <summary>Gets or sets the pad size.</summary>
         public KiCadSize Size
         {
-            get => KiCadSize.Read(Node.GetChild("size"), 1);
-            set => value.Write(Require("size"));
+            get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Size), 1);
+            set => value.Write(Require(KiCadTokens.Common.Size));
         }
 
         /// <summary>Gets or sets the layers the pad is on.</summary>
@@ -863,14 +864,14 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                var layers = Node.GetChild("layers");
+                var layers = Node.GetChild(KiCadTokens.Common.Layers);
                 return layers is null ? Array.Empty<string>() : layers.Values.ToArray();
             }
 
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                var layers = Require("layers");
+                var layers = Require(KiCadTokens.Common.Layers);
                 layers.Values.Clear();
                 foreach (var layer in value)
                 {
@@ -880,7 +881,7 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets the drill, or <see langword="null"/> for a surface-mount pad.</summary>
-        public KiCadDrill? Drill => Node.GetChild("drill") is { } drill ? new KiCadDrill(drill) : null;
+        public KiCadDrill? Drill => Node.GetChild(KiCadTokens.Common.Drill) is { } drill ? new KiCadDrill(drill) : null;
 
         /// <summary>
         /// Gets or sets the net this pad is connected to, or <see langword="null"/> when it has none.
@@ -892,16 +893,16 @@ namespace KiCadSharp.Documents
         /// </remarks>
         public string? Net
         {
-            get => KiCadNetRef.ReadName(Node.GetChild("net"));
+            get => KiCadNetRef.ReadName(Node.GetChild(KiCadTokens.Common.Net));
             set
             {
                 if (value is null)
                 {
-                    Node.RemoveChild("net");
+                    Node.RemoveChild(KiCadTokens.Common.Net);
                     return;
                 }
 
-                KiCadNetRef.WriteName(Require("net"), value);
+                KiCadNetRef.WriteName(Require(KiCadTokens.Common.Net), value);
             }
         }
     }
@@ -933,7 +934,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Gets the drill offset from the pad centre, or <see langword="null"/> when there is none.</summary>
         public KiCadPosition? Offset =>
-            Node.GetChild("offset") is { } offset ? KiCadPosition.Read(offset) : null;
+            Node.GetChild(KiCadTokens.Footprint.Offset) is { } offset ? KiCadPosition.Read(offset) : null;
     }
 
     /// <summary>A 3D model reference: <c>(model "path" (offset (xyz ...)) (scale (xyz ...)) (rotate (xyz ...)))</c>.</summary>
@@ -948,14 +949,14 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty model reference.</summary>
         public KiCadModel()
-            : base(new SExpression("model"))
+            : base(new SExpression(KiCadTokens.Footprint.Model))
         {
         }
 
         /// <summary>Creates a model reference.</summary>
         /// <param name="path">The model path.</param>
         public KiCadModel(string path)
-            : base(new SExpression("model"))
+            : base(new SExpression(KiCadTokens.Footprint.Model))
         {
             ArgumentNullException.ThrowIfNull(path);
             Node.AddValue(path, SQuoteStyle.Quoted);
@@ -971,22 +972,22 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the model offset.</summary>
         public KiCadXyz Offset
         {
-            get => KiCadXyz.Read(Node.GetChild("offset"), 0);
-            set => value.Write(Require("offset"));
+            get => KiCadXyz.Read(Node.GetChild(KiCadTokens.Footprint.Offset), 0);
+            set => value.Write(Require(KiCadTokens.Footprint.Offset));
         }
 
         /// <summary>Gets or sets the model scale.</summary>
         public KiCadXyz Scale
         {
-            get => KiCadXyz.Read(Node.GetChild("scale"), 1);
-            set => value.Write(Require("scale"));
+            get => KiCadXyz.Read(Node.GetChild(KiCadTokens.Common.Scale), 1);
+            set => value.Write(Require(KiCadTokens.Common.Scale));
         }
 
         /// <summary>Gets or sets the model rotation, in degrees.</summary>
         public KiCadXyz Rotation
         {
-            get => KiCadXyz.Read(Node.GetChild("rotate"), 0);
-            set => value.Write(Require("rotate"));
+            get => KiCadXyz.Read(Node.GetChild(KiCadTokens.Footprint.Rotate), 0);
+            set => value.Write(Require(KiCadTokens.Footprint.Rotate));
         }
     }
 }

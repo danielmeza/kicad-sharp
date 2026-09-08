@@ -55,13 +55,13 @@ namespace KiCadSharp
                 var rootExpression = parser.ParseFile(filePath);
                 
                 // Verify it's a symbol library
-                if (rootExpression.Token != "kicad_symbol_lib")
+                if (rootExpression.Token != KiCadTokens.Symbol.LibraryRoot)
                 {
                     return false;
                 }
                 
                 // Verify it has a version
-                if (rootExpression.GetChild("version") == null)
+                if (rootExpression.GetChild(KiCadTokens.Common.Version) == null)
                 {
                     return false;
                 }
@@ -143,15 +143,15 @@ namespace KiCadSharp
                     return false;
                 }
 
-                if (string.Equals(root.Token, "module", StringComparison.Ordinal))
+                if (string.Equals(root.Token, KiCadTokens.Footprint.LegacyRoot, StringComparison.Ordinal))
                 {
                     return true;
                 }
 
-                var isFootprintFile = string.Equals(root.Token, "footprint", StringComparison.Ordinal)
-                    || string.Equals(root.Token, "kicad_pcb", StringComparison.Ordinal);
+                var isFootprintFile = string.Equals(root.Token, KiCadTokens.Footprint.Root, StringComparison.Ordinal)
+                    || string.Equals(root.Token, KiCadTokens.Board.Root, StringComparison.Ordinal);
 
-                return isFootprintFile && root.GetChild("version") is not null;
+                return isFootprintFile && root.GetChild(KiCadTokens.Common.Version) is not null;
             }
             catch (Exception)
             {
