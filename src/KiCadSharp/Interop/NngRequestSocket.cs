@@ -34,9 +34,23 @@ namespace KiCadSharp.Interop
         /// <summary>
         /// Opens a REQ v0 socket, applies the timeouts and dials <paramref name="url"/>.
         /// </summary>
+        /// <returns>
+        /// An <b>open, dialled</b> socket that the caller now owns and must dispose --
+        /// <see cref="KiCadIPCClient"/> keeps it until <c>Disconnect</c>. The <c>return</c> is inside
+        /// the <c>try</c> and there is no <c>finally</c>, so on the way out through it nothing here
+        /// closes anything.
+        /// </returns>
         /// <remarks>
-        /// One operation rather than three, so a socket that fails to dial is closed here instead of
-        /// being handed back half built for the caller to remember to dispose.
+        /// One operation rather than three so that the failure path has an owner. If any of the three
+        /// steps throws, the socket is already open and nobody has a reference to it yet: nothing
+        /// would ever call <c>nng_close</c> on it, and there is no finalizer to do so late. The
+        /// <c>catch</c> exists for that one case and rethrows unchanged.
+        /// <para>
+        /// No test asserts that close happens, and that is measured rather than lazy: on nng 1.3.2
+        /// leaking 100,000 sockets this way costs no file descriptor and no observable memory, and
+        /// socket ids increment monotonically instead of being reused, so a test would pass whether
+        /// the <c>catch</c> were here or not.
+        /// </para>
         /// </remarks>
         internal static NngRequestSocket Dial(string url, TimeSpan sendTimeout, TimeSpan receiveTimeout)
         {
@@ -46,13 +60,15 @@ namespace KiCadSharp.Interop
                 socket.SetSendTimeout(sendTimeout);
                 socket.SetReceiveTimeout(receiveTimeout);
                 socket.Dial(url);
-                return socket;
             }
             catch
             {
                 socket.Dispose();
                 throw;
             }
+
+            // Success: still open, and the caller's to close.
+            return socket;
         }
 
         /// <summary>Opens a REQ v0 socket.</summary>

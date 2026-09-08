@@ -61,11 +61,18 @@ public class NngInteropTests
     [Fact]
     public void DialingAPathThatIsNotThereFailsAtOnce()
     {
-        using var socket = NngRequestSocket.Open();
+        // Through the factory, so its failure path is the one exercised. That the socket it opened is
+        // also closed on the way out is *not* asserted here, and deliberately not: measured on nng
+        // 1.3.2, leaking 100,000 of them moves no file descriptor (39 -> 39) and no managed byte, and
+        // socket ids increment monotonically rather than being reused, so there is nothing a test can
+        // read. A test that passes whether or not the cleanup is there is worse than no test, because
+        // it claims cover it does not have.
         var elapsed = Stopwatch.StartNew();
 
-        var failure = Assert.Throws<NngException>(
-            () => socket.Dial($"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}"));
+        var failure = Assert.Throws<NngException>(() => NngRequestSocket.Dial(
+            $"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}",
+            Timeout.InfiniteTimeSpan,
+            Timeout.InfiniteTimeSpan));
 
         Assert.Equal("nng_dial", failure.Operation);
         Assert.Contains("Connection refused", failure.Message);
@@ -105,8 +112,10 @@ public class NngInteropTests
     public void ARequestAndItsReplyRoundTripThroughTheWrapper()
     {
         using var peer = NngTestPeer.Start(TimeSpan.Zero);
-        using var socket = NngRequestSocket.Open();
-        socket.Dial(peer.Url);
+
+        // The factory: on the way out it hands back an open socket the caller owns. Being able to
+        // send on it afterwards is what says so.
+        using var socket = NngRequestSocket.Dial(peer.Url, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
         socket.Send([1, 2, 3, 4]);
 
