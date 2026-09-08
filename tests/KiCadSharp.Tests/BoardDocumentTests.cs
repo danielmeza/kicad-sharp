@@ -418,16 +418,22 @@ public class BoardDocumentTests
     [InlineData("power-input.kicad_pcb", 29_733)]
     [InlineData("probe-4layer.kicad_pcb", 12_454)]
     [InlineData("orbion-4layer.kicad_pcb", 2_539)]
+    [InlineData("kicad10-pcbnew.kicad_pcb", 5_986)]
+    // The three boards this repository did not write. A getter that creates the form it was asked
+    // for has 79,356 nodes to hide in on the first of them rather than the 900 of probe-4layer.
+    [InlineData("antmicro-m2-pcie-adapter/m2-pcie-adapter.kicad_pcb", 1_865_463)]
+    [InlineData("bitaxe-gamma/bitaxeGamma.kicad_pcb", 1_221_219)]
+    [InlineData("snedge/SNEdge.kicad_pcb", 333_929)]
     public void Board_Save_AfterReadingEverything_IsByteIdentical(string fixture, int length)
     {
-        var source = Path.Combine(TestData.Root, fixture);
+        var source = Path.Combine(TestData.Root, fixture.Replace('/', Path.DirectorySeparatorChar));
         var board = KiCadBoard.Load(source);
 
         // Read every property the view offers, including the optional forms. A getter that quietly
         // created the form it was asked for would show up right here as a changed file.
         ReadEverything(board);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), fixture);
+        var output = Path.Combine(TestData.NewScratchDirectory(), Path.GetFileName(source));
         board.Save(output);
 
         Assert.Equal(length, new FileInfo(output).Length);
@@ -888,13 +894,86 @@ public class BoardDocumentTests
         {
             _ = footprint.Id;
             _ = footprint.Layer;
+            _ = footprint.Position;
+            _ = footprint.Uuid;
+            _ = footprint.Locked;
             _ = footprint.Description;
             _ = footprint.Tags;
             _ = footprint.Attributes;
+            _ = footprint.Tedit;
+            _ = footprint.Tstamp;
             _ = footprint.GetPropertyValue("Reference");
-            _ = footprint.Pads.Count;
-            _ = footprint.Lines.Count;
-            _ = footprint.Models.Count;
+
+            foreach (var property in footprint.Properties)
+            {
+                _ = property.Key;
+                _ = property.Value;
+                _ = property.Id;
+                _ = property.Position;
+                _ = property.FontEffects?.Size;
+            }
+
+            foreach (var pad in footprint.Pads)
+            {
+                _ = pad.Number;
+                _ = pad.Type;
+                _ = pad.Shape;
+                _ = pad.Position;
+                _ = pad.Size;
+                _ = pad.Layers;
+                _ = pad.Net;
+
+                if (pad.Drill is { } drill)
+                {
+                    _ = drill.IsOval;
+                    _ = drill.Size;
+                    _ = drill.Width;
+                    _ = drill.Height;
+                    _ = drill.Offset;
+                }
+            }
+
+            foreach (var model in footprint.Models)
+            {
+                _ = model.Path;
+                _ = model.Offset;
+                _ = model.Scale;
+                _ = model.Rotation;
+            }
+
+            foreach (var text in footprint.TextItems)
+            {
+                _ = text.Type;
+                _ = text.Text;
+                _ = text.Position;
+                _ = text.Layer;
+                _ = text.Size;
+                _ = text.Thickness;
+                _ = text.Italic;
+                _ = text.Hide;
+            }
+
+            foreach (var shape in footprint.Lines.Cast<KiCadFpItem>()
+                .Concat(footprint.Rectangles)
+                .Concat(footprint.Circles)
+                .Concat(footprint.Arcs)
+                .Concat(footprint.Polygons))
+            {
+                _ = shape.Layer;
+                _ = shape.Width;
+            }
+        }
+
+        // The two spellings of "which net is this on". Both are read on every board, because a
+        // getter that reaches for the one the file does not use must still leave the file alone.
+        foreach (var segment in board.Segments)
+        {
+            _ = segment.NetName;
+        }
+
+        foreach (var via in board.Vias)
+        {
+            _ = via.NetName;
         }
     }
 
