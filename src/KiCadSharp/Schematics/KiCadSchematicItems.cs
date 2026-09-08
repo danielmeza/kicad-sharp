@@ -35,7 +35,7 @@ namespace KiCadSharp.Schematics
 
         /// <summary>Gets every vertex of the segment, in the order the file lists them.</summary>
         public IReadOnlyList<KiCadPosition> Points =>
-            (Node.GetChild("pts")?.GetChildren("xy") ?? Enumerable.Empty<SExpression>())
+            (Node.GetChild(KiCadTokens.Common.Pts)?.GetChildren(KiCadTokens.Common.Xy) ?? Enumerable.Empty<SExpression>())
                 .Select(xy => new KiCadPosition(xy.GetValueAsDouble(0), xy.GetValueAsDouble(1)))
                 .ToArray();
 
@@ -74,36 +74,36 @@ namespace KiCadSharp.Schematics
         /// Gets the stroke, or <see langword="null"/> when the form carries no <c>(stroke ...)</c>.
         /// Reading it never adds one; use <see cref="RequireStroke"/> for that.
         /// </summary>
-        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+        public KiCadStroke? Stroke => Node.GetChild(KiCadTokens.Common.Stroke) is { } node ? new KiCadStroke(node) : null;
 
         /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the node has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadStroke RequireStroke() => new(Require("stroke"));
+        public KiCadStroke RequireStroke() => new(Require(KiCadTokens.Common.Stroke));
 
         /// <summary>Gets or sets the segment's UUID, which is what the editor's undo history keys on.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Appends a vertex to the segment.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y) =>
-            PointsNode.CreateChild("xy", Numbers.Format(x), Numbers.Format(y));
+            PointsNode.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
 
-        private SExpression PointsNode => Node.GetChild("pts") ?? Node.CreateChild("pts");
+        private SExpression PointsNode => Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
 
-        private List<SExpression> Vertices() => (Node.GetChild("pts")?.GetChildren("xy") ?? Enumerable.Empty<SExpression>()).ToList();
+        private List<SExpression> Vertices() => (Node.GetChild(KiCadTokens.Common.Pts)?.GetChildren(KiCadTokens.Common.Xy) ?? Enumerable.Empty<SExpression>()).ToList();
 
         private SExpression PointAt(int index)
         {
             var points = PointsNode;
-            var vertices = points.GetChildren("xy").ToList();
+            var vertices = points.GetChildren(KiCadTokens.Common.Xy).ToList();
             while (vertices.Count <= index)
             {
-                vertices.Add(points.CreateChild("xy", "0", "0"));
+                vertices.Add(points.CreateChild(KiCadTokens.Common.Xy, "0", "0"));
             }
 
             return vertices[index];
@@ -160,32 +160,32 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets where the entry starts.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
         }
 
         /// <summary>Gets or sets how far the entry runs from <see cref="Position"/>.</summary>
         public KiCadSize Size
         {
-            get => KiCadSize.Read(Node.GetChild("size"));
-            set => value.Write(Require("size"));
+            get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Size));
+            set => value.Write(Require(KiCadTokens.Common.Size));
         }
 
         /// <summary>
         /// Gets the stroke, or <see langword="null"/> when the form carries no <c>(stroke ...)</c>.
         /// Reading it never adds one; use <see cref="RequireStroke"/> for that.
         /// </summary>
-        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+        public KiCadStroke? Stroke => Node.GetChild(KiCadTokens.Common.Stroke) is { } node ? new KiCadStroke(node) : null;
 
         /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the node has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadStroke RequireStroke() => new(Require("stroke"));
+        public KiCadStroke RequireStroke() => new(Require(KiCadTokens.Common.Stroke));
 
         /// <summary>Gets or sets the entry's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -208,15 +208,15 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets where the junction sits.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
         }
 
         /// <summary>Gets or sets the dot's diameter in millimetres; 0 defers to the theme.</summary>
         public double Diameter
         {
-            get => ReadChildDouble("diameter");
-            set => WriteChildDouble("diameter", value);
+            get => ReadChildDouble(KiCadTokens.Schematic.Diameter);
+            set => WriteChildDouble(KiCadTokens.Schematic.Diameter, value);
         }
 
         /// <summary>Gets the colour components as written, or an empty list when there is no colour.</summary>
@@ -224,7 +224,7 @@ namespace KiCadSharp.Schematics
         {
             get
             {
-                var color = Node.GetChild("color");
+                var color = Node.GetChild(KiCadTokens.Common.Color);
                 return color is null ? Array.Empty<string>() : color.Values.ToArray();
             }
         }
@@ -232,8 +232,8 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets the junction's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -256,15 +256,15 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets the pin end the cross sits on.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
         }
 
         /// <summary>Gets or sets the marker's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -297,25 +297,25 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets where the label sits and which way it points.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: true);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
         }
 
         /// <summary>
         /// Gets the text rendering, or <see langword="null"/> when the form carries no
         /// <c>(effects ...)</c>. Reading it never adds one; use <see cref="RequireFontEffects"/>.
         /// </summary>
-        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+        public KiCadFontEffects? FontEffects => Node.GetChild(KiCadTokens.Common.Effects) is { } node ? new KiCadFontEffects(node) : null;
 
         /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
+        public KiCadFontEffects RequireFontEffects() => new(Require(KiCadTokens.Common.Effects));
 
         /// <summary>Gets or sets the label's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -351,15 +351,15 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets the arrow shape drawn around the text.</summary>
         public string Shape
         {
-            get => ReadChild("shape") ?? "input";
-            set => WriteChild("shape", value, SQuoteStyle.Bare);
+            get => ReadChild(KiCadTokens.Schematic.Shape) ?? "input";
+            set => WriteChild(KiCadTokens.Schematic.Shape, value, SQuoteStyle.Bare);
         }
 
         /// <summary>
         /// Gets the label's fields. A global label carries an <c>Intersheetrefs</c> property holding
         /// the page numbers KiCad prints beside it.
         /// </summary>
-        public KiCadNodeList<KiCadProperty> Properties => new(Node, "property", n => new KiCadProperty(n));
+        public KiCadNodeList<KiCadProperty> Properties => new(Node, KiCadTokens.Common.Property, n => new KiCadProperty(n));
 
         /// <summary>Gets the value of a named field.</summary>
         /// <param name="key">The field key.</param>
@@ -416,8 +416,8 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets the length of the stem drawn from the net to the flag, in millimetres.</summary>
         public double Length
         {
-            get => ReadChildDouble("length", 0, 2.54);
-            set => WriteChildDouble("length", value);
+            get => ReadChildDouble(KiCadTokens.Common.Length, 0, 2.54);
+            set => WriteChildDouble(KiCadTokens.Common.Length, value);
         }
     }
 
@@ -440,15 +440,15 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets whether the simulator ignores this text.</summary>
         public bool ExcludeFromSim
         {
-            get => ReadFlag("exclude_from_sim");
-            set => WriteFlag("exclude_from_sim", value);
+            get => ReadFlag(KiCadTokens.Schematic.ExcludeFromSim);
+            set => WriteFlag(KiCadTokens.Schematic.ExcludeFromSim, value);
         }
 
         /// <summary>Gets or sets the text's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -479,32 +479,32 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets the top-left corner and the rotation of the box.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: true);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
         }
 
         /// <summary>Gets or sets the box's extent, in millimetres.</summary>
         public KiCadSize Size
         {
-            get => KiCadSize.Read(Node.GetChild("size"));
-            set => value.Write(Require("size"));
+            get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Size));
+            set => value.Write(Require(KiCadTokens.Common.Size));
         }
 
         /// <summary>
         /// Gets the text rendering, or <see langword="null"/> when the form carries no
         /// <c>(effects ...)</c>. Reading it never adds one; use <see cref="RequireFontEffects"/>.
         /// </summary>
-        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+        public KiCadFontEffects? FontEffects => Node.GetChild(KiCadTokens.Common.Effects) is { } node ? new KiCadFontEffects(node) : null;
 
         /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
+        public KiCadFontEffects RequireFontEffects() => new(Require(KiCadTokens.Common.Effects));
 
         /// <summary>Gets or sets the box's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -527,15 +527,15 @@ namespace KiCadSharp.Schematics
 
         /// <summary>Gets the control points, in order.</summary>
         public IReadOnlyList<KiCadPosition> ControlPoints =>
-            (Node.GetChild("pts")?.GetChildren("xy") ?? Enumerable.Empty<SExpression>())
+            (Node.GetChild(KiCadTokens.Common.Pts)?.GetChildren(KiCadTokens.Common.Xy) ?? Enumerable.Empty<SExpression>())
                 .Select(xy => new KiCadPosition(xy.GetValueAsDouble(0), xy.GetValueAsDouble(1)))
                 .ToArray();
 
         /// <summary>Gets or sets the curve's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -560,32 +560,32 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets where the image's centre sits.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
         }
 
         /// <summary>Gets or sets the scale factor; 1 draws the bitmap at its native size.</summary>
         public double Scale
         {
-            get => ReadChildDouble("scale", 0, 1);
-            set => WriteChildDouble("scale", value);
+            get => ReadChildDouble(KiCadTokens.Common.Scale, 0, 1);
+            set => WriteChildDouble(KiCadTokens.Common.Scale, value);
         }
 
         /// <summary>
         /// Gets the base64 PNG payload, with the line breaks KiCad wrote it in removed. Empty when
         /// the form carries no <c>(data ...)</c>.
         /// </summary>
-        public string Data => Node.GetChild("data") is { } data ? string.Concat(data.Values) : string.Empty;
+        public string Data => Node.GetChild(KiCadTokens.Schematic.Data) is { } data ? string.Concat(data.Values) : string.Empty;
 
         /// <summary>Gets the payload split the way the file splits it, one string per atom.</summary>
         public IReadOnlyList<string> DataAtoms =>
-            Node.GetChild("data") is { } data ? data.Values.ToArray() : Array.Empty<string>();
+            Node.GetChild(KiCadTokens.Schematic.Data) is { } data ? data.Values.ToArray() : Array.Empty<string>();
 
         /// <summary>Gets or sets the image's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 }

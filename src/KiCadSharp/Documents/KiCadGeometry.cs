@@ -61,7 +61,7 @@ namespace KiCadSharp.Documents
     {
         internal static KiCadXyz Read(SExpression? owner, double fallback)
         {
-            var xyz = owner?.GetChild("xyz") ?? owner;
+            var xyz = owner?.GetChild(KiCadTokens.Common.Xyz) ?? owner;
             return xyz is null
                 ? new KiCadXyz(fallback, fallback, fallback)
                 : new KiCadXyz(xyz.GetValueAsDouble(0), xyz.GetValueAsDouble(1), xyz.GetValueAsDouble(2));
@@ -69,7 +69,7 @@ namespace KiCadSharp.Documents
 
         internal readonly void Write(SExpression owner)
         {
-            var xyz = owner.GetChild("xyz") ?? owner.CreateChild("xyz");
+            var xyz = owner.GetChild(KiCadTokens.Common.Xyz) ?? owner.CreateChild(KiCadTokens.Common.Xyz);
             xyz.SetValue(0, Numbers.Format(X), SQuoteStyle.Bare);
             xyz.SetValue(1, Numbers.Format(Y), SQuoteStyle.Bare);
             xyz.SetValue(2, Numbers.Format(Z), SQuoteStyle.Bare);
@@ -96,15 +96,15 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the stroke width in millimetres.</summary>
         public double Width
         {
-            get => ReadChildDouble("width", 0, 0.254);
-            set => WriteChildDouble("width", value);
+            get => ReadChildDouble(KiCadTokens.Common.Width, 0, 0.254);
+            set => WriteChildDouble(KiCadTokens.Common.Width, value);
         }
 
         /// <summary>Gets or sets the stroke type, e.g. <c>default</c>, <c>solid</c>, <c>dash</c>.</summary>
         public string Type
         {
-            get => ReadChild("type") ?? "default";
-            set => WriteChild("type", value, SQuoteStyle.Bare);
+            get => ReadChild(KiCadTokens.Common.Type) ?? "default";
+            set => WriteChild(KiCadTokens.Common.Type, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets the colour components as written, or an empty list when there is no colour.</summary>
@@ -112,7 +112,7 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                var color = Node.GetChild("color");
+                var color = Node.GetChild(KiCadTokens.Common.Color);
                 return color is null ? Array.Empty<string>() : color.Values.ToArray();
             }
         }
@@ -140,17 +140,17 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the fill type, as the node spells it.</summary>
         public string Type
         {
-            get => ReadChild("type") ?? Node.GetValue(0) ?? "none";
+            get => ReadChild(KiCadTokens.Common.Type) ?? Node.GetValue(0) ?? "none";
 
             set
             {
-                if (Node.GetChild("type") is null && Node.GetValue(0) is not null)
+                if (Node.GetChild(KiCadTokens.Common.Type) is null && Node.GetValue(0) is not null)
                 {
                     WriteValue(0, value, SQuoteStyle.Bare);
                     return;
                 }
 
-                WriteChild("type", value, SQuoteStyle.Bare);
+                WriteChild(KiCadTokens.Common.Type, value, SQuoteStyle.Bare);
             }
         }
 
@@ -161,14 +161,14 @@ namespace KiCadSharp.Documents
         /// </summary>
         public bool IsFilled =>
             !string.Equals(Type, "none", StringComparison.Ordinal)
-            && !string.Equals(Type, "no", StringComparison.Ordinal);
+            && !string.Equals(Type, KiCadTokens.Common.No, StringComparison.Ordinal);
 
         /// <summary>Gets the colour components as written, or an empty list when there is no colour.</summary>
         public IReadOnlyList<string> Color
         {
             get
             {
-                var color = Node.GetChild("color");
+                var color = Node.GetChild(KiCadTokens.Common.Color);
                 return color is null ? Array.Empty<string>() : color.Values.ToArray();
             }
         }
@@ -186,16 +186,16 @@ namespace KiCadSharp.Documents
         {
         }
 
-        private SExpression Font => Node.GetChild("font") ?? Node.CreateChild("font");
+        private SExpression Font => Node.GetChild(KiCadTokens.Common.Font) ?? Node.CreateChild(KiCadTokens.Common.Font);
 
         /// <summary>Gets or sets the glyph size, in millimetres.</summary>
         public KiCadSize Size
         {
-            get => KiCadSize.Read(Node.GetChild("font")?.GetChild("size"), 1.27);
+            get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Font)?.GetChild(KiCadTokens.Common.Size), 1.27);
             set
             {
                 var font = Font;
-                value.Write(font.GetChild("size") ?? font.CreateChild("size"));
+                value.Write(font.GetChild(KiCadTokens.Common.Size) ?? font.CreateChild(KiCadTokens.Common.Size));
             }
         }
 
@@ -204,32 +204,32 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                var thickness = Node.GetChild("font")?.GetChild("thickness");
+                var thickness = Node.GetChild(KiCadTokens.Common.Font)?.GetChild(KiCadTokens.Common.Thickness);
                 return thickness is not null && thickness.TryGetValue<double>(0, out var value) ? value : 0.25;
             }
 
-            set => Font.SetChildValue("thickness", Numbers.Format(value), SQuoteStyle.Bare);
+            set => Font.SetChildValue(KiCadTokens.Common.Thickness, Numbers.Format(value), SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets whether the text is bold.</summary>
         public bool Bold
         {
-            get => Node.GetChild("font") is { } font && (font.GetChild("bold") is { } b && (b.GetValue(0) is null || b.GetValueAsBool()));
-            set => Font.SetChildValue("bold", value ? "yes" : "no", SQuoteStyle.Bare);
+            get => Node.GetChild(KiCadTokens.Common.Font) is { } font && (font.GetChild(KiCadTokens.Common.Bold) is { } b && (b.GetValue(0) is null || b.GetValueAsBool()));
+            set => Font.SetChildValue(KiCadTokens.Common.Bold, value ? KiCadTokens.Common.Yes : KiCadTokens.Common.No, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets whether the text is italic.</summary>
         public bool Italic
         {
-            get => Node.GetChild("font") is { } font && (font.GetChild("italic") is { } i && (i.GetValue(0) is null || i.GetValueAsBool()));
-            set => Font.SetChildValue("italic", value ? "yes" : "no", SQuoteStyle.Bare);
+            get => Node.GetChild(KiCadTokens.Common.Font) is { } font && (font.GetChild(KiCadTokens.Common.Italic) is { } i && (i.GetValue(0) is null || i.GetValueAsBool()));
+            set => Font.SetChildValue(KiCadTokens.Common.Italic, value ? KiCadTokens.Common.Yes : KiCadTokens.Common.No, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets whether the text is hidden.</summary>
         public bool Hide
         {
-            get => ReadFlag("hide");
-            set => WriteFlag("hide", value);
+            get => ReadFlag(KiCadTokens.Common.Hide);
+            set => WriteFlag(KiCadTokens.Common.Hide, value);
         }
     }
 }

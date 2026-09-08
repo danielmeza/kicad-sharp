@@ -37,8 +37,8 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets the page number printed on that sheet.</summary>
         public string Page
         {
-            get => ReadChild("page") ?? string.Empty;
-            set => WriteChild("page", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Schematic.Page) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Schematic.Page, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -67,14 +67,14 @@ namespace KiCadSharp.Schematics
 
         /// <summary>Gets the net names the alias stands for, in the order the file lists them.</summary>
         public IReadOnlyList<string> Members =>
-            Node.GetChild("members") is { } members ? members.Values.ToArray() : Array.Empty<string>();
+            Node.GetChild(KiCadTokens.Common.Members) is { } members ? members.Values.ToArray() : Array.Empty<string>();
 
         /// <summary>Appends a net to the bundle, creating the <c>(members ...)</c> form if needed.</summary>
         /// <param name="net">The net name.</param>
         public void AddMember(string net)
         {
             ArgumentNullException.ThrowIfNull(net);
-            (Node.GetChild("members") ?? Node.CreateChild("members")).AddValue(net, SQuoteStyle.Quoted);
+            (Node.GetChild(KiCadTokens.Common.Members) ?? Node.CreateChild(KiCadTokens.Common.Members)).AddValue(net, SQuoteStyle.Quoted);
         }
     }
 
@@ -117,25 +117,25 @@ namespace KiCadSharp.Schematics
         /// <summary>Gets or sets where the pin sits on the sheet box and which way it points.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: true);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
         }
 
         /// <summary>
         /// Gets the text rendering, or <see langword="null"/> when the form carries no
         /// <c>(effects ...)</c>. Reading it never adds one; use <see cref="RequireFontEffects"/>.
         /// </summary>
-        public KiCadFontEffects? FontEffects => Node.GetChild("effects") is { } node ? new KiCadFontEffects(node) : null;
+        public KiCadFontEffects? FontEffects => Node.GetChild(KiCadTokens.Common.Effects) is { } node ? new KiCadFontEffects(node) : null;
 
         /// <summary>Gets the <c>(effects ...)</c> form, adding an empty one when the node has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
+        public KiCadFontEffects RequireFontEffects() => new(Require(KiCadTokens.Common.Effects));
 
         /// <summary>Gets or sets the pin's UUID.</summary>
         public string Uuid
         {
-            get => ReadChild("uuid") ?? string.Empty;
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
     }
 }

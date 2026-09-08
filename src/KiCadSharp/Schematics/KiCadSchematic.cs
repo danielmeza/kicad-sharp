@@ -36,28 +36,28 @@ namespace KiCadSharp.Schematics
         public string? FilePath { get; }
 
         /// <summary>Gets the sheet's own UUID — the first segment of every path inside it.</summary>
-        public string Uuid => ReadChild("uuid") ?? string.Empty;
+        public string Uuid => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
 
         /// <summary>Gets the symbols placed on this sheet, in document order.</summary>
-        public KiCadNodeList<KiCadSchematicSymbol> Symbols => new(Node, "symbol", n => new KiCadSchematicSymbol(n));
+        public KiCadNodeList<KiCadSchematicSymbol> Symbols => new(Node, KiCadTokens.Common.Symbol, n => new KiCadSchematicSymbol(n));
 
         /// <summary>Gets the sub-sheets this sheet instantiates, in document order.</summary>
-        public KiCadNodeList<KiCadSheet> Sheets => new(Node, "sheet", n => new KiCadSheet(n));
+        public KiCadNodeList<KiCadSheet> Sheets => new(Node, KiCadTokens.Schematic.Sheet, n => new KiCadSheet(n));
 
         // ------------------------------------------------------------------------------- the header
 
         /// <summary>Gets or sets the file-format version, the date stamp KiCad bumps on every format change.</summary>
         public string Version
         {
-            get => ReadChild("version") ?? string.Empty;
-            set => WriteChild("version", value, SQuoteStyle.Bare);
+            get => ReadChild(KiCadTokens.Common.Version) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the name of the program that wrote the file, e.g. <c>eeschema</c>.</summary>
         public string Generator
         {
-            get => ReadChild("generator") ?? string.Empty;
-            set => WriteChild("generator", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Generator) ?? string.Empty;
+            set => WriteChild(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -66,15 +66,15 @@ namespace KiCadSharp.Schematics
         /// </summary>
         public string? GeneratorVersion
         {
-            get => ReadChild("generator_version");
-            set => WriteChild("generator_version", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.GeneratorVersion);
+            set => WriteChild(KiCadTokens.Common.GeneratorVersion, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the paper size, e.g. <c>A4</c> or <c>A3</c>, or a <c>User</c> size with its dimensions.</summary>
         public string? Paper
         {
-            get => ReadChild("paper");
-            set => WriteChild("paper", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Paper);
+            set => WriteChild(KiCadTokens.Common.Paper, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -89,83 +89,83 @@ namespace KiCadSharp.Schematics
         /// sheet its first title.
         /// </remarks>
         public KiCadTitleBlock? TitleBlock =>
-            Node.GetChild("title_block") is { } node ? new KiCadTitleBlock(node) : null;
+            Node.GetChild(KiCadTokens.Common.TitleBlock) is { } node ? new KiCadTitleBlock(node) : null;
 
         /// <summary>Gets the drawing-frame text, adding an empty <c>(title_block ...)</c> when the sheet has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadTitleBlock RequireTitleBlock() => new(Require("title_block"));
+        public KiCadTitleBlock RequireTitleBlock() => new(Require(KiCadTokens.Common.TitleBlock));
 
         /// <summary>Gets or sets whether the fonts the sheet uses are embedded in the file.</summary>
         public bool EmbeddedFonts
         {
-            get => ReadFlag("embedded_fonts");
-            set => WriteFlag("embedded_fonts", value);
+            get => ReadFlag(KiCadTokens.Common.EmbeddedFonts);
+            set => WriteFlag(KiCadTokens.Common.EmbeddedFonts, value);
         }
 
         // ------------------------------------------------------------------------------ connectivity
 
         /// <summary>Gets the wire segments drawn on this sheet, in document order.</summary>
-        public KiCadNodeList<KiCadWire> Wires => new(Node, "wire", n => new KiCadWire(n));
+        public KiCadNodeList<KiCadWire> Wires => new(Node, KiCadTokens.Schematic.Wire, n => new KiCadWire(n));
 
         /// <summary>Gets the bus segments drawn on this sheet, in document order.</summary>
-        public KiCadNodeList<KiCadBus> Buses => new(Node, "bus", n => new KiCadBus(n));
+        public KiCadNodeList<KiCadBus> Buses => new(Node, KiCadTokens.Schematic.Bus, n => new KiCadBus(n));
 
         /// <summary>Gets the stubs that tap signals off a bus.</summary>
-        public KiCadNodeList<KiCadBusEntry> BusEntries => new(Node, "bus_entry", n => new KiCadBusEntry(n));
+        public KiCadNodeList<KiCadBusEntry> BusEntries => new(Node, KiCadTokens.Schematic.BusEntry, n => new KiCadBusEntry(n));
 
         /// <summary>Gets the bus aliases declared in this file. They are file-scoped, not project-scoped.</summary>
-        public KiCadNodeList<KiCadBusAlias> BusAliases => new(Node, "bus_alias", n => new KiCadBusAlias(n));
+        public KiCadNodeList<KiCadBusAlias> BusAliases => new(Node, KiCadTokens.Schematic.BusAlias, n => new KiCadBusAlias(n));
 
         /// <summary>Gets the junction dots, in document order.</summary>
-        public KiCadNodeList<KiCadJunction> Junctions => new(Node, "junction", n => new KiCadJunction(n));
+        public KiCadNodeList<KiCadJunction> Junctions => new(Node, KiCadTokens.Schematic.Junction, n => new KiCadJunction(n));
 
         /// <summary>Gets the no-connect markers, in document order.</summary>
-        public KiCadNodeList<KiCadNoConnect> NoConnects => new(Node, "no_connect", n => new KiCadNoConnect(n));
+        public KiCadNodeList<KiCadNoConnect> NoConnects => new(Node, KiCadTokens.Schematic.NoConnect, n => new KiCadNoConnect(n));
 
         // ------------------------------------------------------------------------------------ naming
 
         /// <summary>Gets the sheet-local net labels, in document order.</summary>
-        public KiCadNodeList<KiCadLabel> Labels => new(Node, "label", n => new KiCadLabel(n));
+        public KiCadNodeList<KiCadLabel> Labels => new(Node, KiCadTokens.Schematic.Label, n => new KiCadLabel(n));
 
         /// <summary>Gets the global net labels — the ones that join across every sheet in the design.</summary>
-        public KiCadNodeList<KiCadGlobalLabel> GlobalLabels => new(Node, "global_label", n => new KiCadGlobalLabel(n));
+        public KiCadNodeList<KiCadGlobalLabel> GlobalLabels => new(Node, KiCadTokens.Schematic.GlobalLabel, n => new KiCadGlobalLabel(n));
 
         /// <summary>Gets the hierarchical labels, each the child half of a parent sheet's pin.</summary>
         public KiCadNodeList<KiCadHierarchicalLabel> HierarchicalLabels =>
-            new(Node, "hierarchical_label", n => new KiCadHierarchicalLabel(n));
+            new(Node, KiCadTokens.Schematic.HierarchicalLabel, n => new KiCadHierarchicalLabel(n));
 
         /// <summary>Gets the net-class flags placed on this sheet.</summary>
-        public KiCadNodeList<KiCadNetClassFlag> NetClassFlags => new(Node, "netclass_flag", n => new KiCadNetClassFlag(n));
+        public KiCadNodeList<KiCadNetClassFlag> NetClassFlags => new(Node, KiCadTokens.Schematic.NetClassFlag, n => new KiCadNetClassFlag(n));
 
         // ------------------------------------------------------------------------------- what is drawn
 
         /// <summary>Gets the free text drawn on this sheet, in document order.</summary>
-        public KiCadNodeList<KiCadSchematicText> TextItems => new(Node, "text", n => new KiCadSchematicText(n));
+        public KiCadNodeList<KiCadSchematicText> TextItems => new(Node, KiCadTokens.Common.Text, n => new KiCadSchematicText(n));
 
         /// <summary>Gets the text boxes drawn on this sheet.</summary>
-        public KiCadNodeList<KiCadTextBox> TextBoxes => new(Node, "text_box", n => new KiCadTextBox(n));
+        public KiCadNodeList<KiCadTextBox> TextBoxes => new(Node, KiCadTokens.Common.TextBox, n => new KiCadTextBox(n));
 
         /// <summary>
         /// Gets the polylines drawn directly on this sheet. The view is the same one a symbol's
         /// polylines use; the sheet-only <c>(uuid ...)</c> is reachable through
-        /// <c>item.Node.GetChildValue("uuid")</c>.
+        /// <c>item.Node.GetChildValue(KiCadTokens.Common.Uuid)</c>.
         /// </summary>
-        public KiCadNodeList<KiCadPolyline> Polylines => new(Node, "polyline", n => new KiCadPolyline(n));
+        public KiCadNodeList<KiCadPolyline> Polylines => new(Node, KiCadTokens.Common.Polyline, n => new KiCadPolyline(n));
 
         /// <summary>Gets the rectangles drawn directly on this sheet — usually the boxes around a functional block.</summary>
-        public KiCadNodeList<KiCadRectangle> Rectangles => new(Node, "rectangle", n => new KiCadRectangle(n));
+        public KiCadNodeList<KiCadRectangle> Rectangles => new(Node, KiCadTokens.Common.Rectangle, n => new KiCadRectangle(n));
 
         /// <summary>Gets the circles drawn directly on this sheet.</summary>
-        public KiCadNodeList<KiCadCircle> Circles => new(Node, "circle", n => new KiCadCircle(n));
+        public KiCadNodeList<KiCadCircle> Circles => new(Node, KiCadTokens.Common.Circle, n => new KiCadCircle(n));
 
         /// <summary>Gets the arcs drawn directly on this sheet.</summary>
-        public KiCadNodeList<KiCadArc> Arcs => new(Node, "arc", n => new KiCadArc(n));
+        public KiCadNodeList<KiCadArc> Arcs => new(Node, KiCadTokens.Common.Arc, n => new KiCadArc(n));
 
         /// <summary>Gets the Bézier curves drawn directly on this sheet.</summary>
-        public KiCadNodeList<KiCadBezier> Beziers => new(Node, "bezier", n => new KiCadBezier(n));
+        public KiCadNodeList<KiCadBezier> Beziers => new(Node, KiCadTokens.Common.Bezier, n => new KiCadBezier(n));
 
         /// <summary>Gets the bitmaps placed on this sheet.</summary>
-        public KiCadNodeList<KiCadImage> Images => new(Node, "image", n => new KiCadImage(n));
+        public KiCadNodeList<KiCadImage> Images => new(Node, KiCadTokens.Schematic.Image, n => new KiCadImage(n));
 
         // ---------------------------------------------------------------------------------- the rest
 
@@ -179,12 +179,12 @@ namespace KiCadSharp.Schematics
         /// confused because the cache is nested one level down.
         /// </remarks>
         public KiCadNodeList<KiCadSymbol> LibrarySymbols =>
-            new(Node.GetChild("lib_symbols"), "symbol", n => new KiCadSymbol(n));
+            new(Node.GetChild(KiCadTokens.Schematic.LibSymbols), KiCadTokens.Common.Symbol, n => new KiCadSymbol(n));
 
         /// <summary>Gets the symbol cache as a mutable list, adding the <c>(lib_symbols ...)</c> form when the file has none.</summary>
         /// <returns>The live list.</returns>
         public KiCadNodeList<KiCadSymbol> RequireLibrarySymbols() =>
-            new(Require("lib_symbols"), "symbol", n => new KiCadSymbol(n));
+            new(Require(KiCadTokens.Schematic.LibSymbols), KiCadTokens.Common.Symbol, n => new KiCadSymbol(n));
 
         /// <summary>
         /// Gets the page numbers this file assigns, one per hierarchical path. On a root sheet the
@@ -196,12 +196,12 @@ namespace KiCadSharp.Schematics
         /// <see cref="RequireSheetInstances"/> when you mean to write the page map.
         /// </remarks>
         public KiCadNodeList<KiCadSheetInstance> SheetInstances =>
-            new(Node.GetChild("sheet_instances"), "path", n => new KiCadSheetInstance(n));
+            new(Node.GetChild(KiCadTokens.Schematic.SheetInstances), KiCadTokens.Schematic.Path, n => new KiCadSheetInstance(n));
 
         /// <summary>Gets the page map as a mutable list, adding the <c>(sheet_instances ...)</c> form when the file has none.</summary>
         /// <returns>The live list.</returns>
         public KiCadNodeList<KiCadSheetInstance> RequireSheetInstances() =>
-            new(Require("sheet_instances"), "path", n => new KiCadSheetInstance(n));
+            new(Require(KiCadTokens.Schematic.SheetInstances), KiCadTokens.Schematic.Path, n => new KiCadSheetInstance(n));
 
         /// <summary>True when anything in the file has been changed since it was parsed.</summary>
         public bool IsModified => _document.IsModified;
@@ -252,9 +252,10 @@ namespace KiCadSharp.Schematics
             var root = document.Root
                 ?? throw new InvalidOperationException($"'{filePath ?? "<text>"}' holds no s-expression.");
 
-            if (!string.Equals(root.Token, "kicad_sch", StringComparison.Ordinal))
+            if (!string.Equals(root.Token, KiCadTokens.Schematic.Root, StringComparison.Ordinal))
             {
-                throw new InvalidOperationException($"Expected a (kicad_sch ...) file but the root form is ({root.Token} ...).");
+                throw new InvalidOperationException(
+                    $"Expected a ({KiCadTokens.Schematic.Root} ...) file but the root form is ({root.Token} ...).");
             }
 
             return new KiCadSchematic(document, root, filePath);
@@ -274,78 +275,78 @@ namespace KiCadSharp.Schematics
         }
 
         /// <summary>Gets the sheet's UUID — the segment it contributes to a hierarchical path.</summary>
-        public string Uuid => ReadChild("uuid") ?? string.Empty;
+        public string Uuid => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
 
         /// <summary>Gets or sets the top-left corner of the box drawn for the sheet.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
         }
 
         /// <summary>Gets or sets the box's extent, in millimetres. The pins sit on its edges.</summary>
         public KiCadSize Size
         {
-            get => KiCadSize.Read(Node.GetChild("size"));
-            set => value.Write(Require("size"));
+            get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Size));
+            set => value.Write(Require(KiCadTokens.Common.Size));
         }
 
         /// <summary>Gets the box's border, or <see langword="null"/> when it carries no <c>(stroke ...)</c>.</summary>
-        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } node ? new KiCadStroke(node) : null;
+        public KiCadStroke? Stroke => Node.GetChild(KiCadTokens.Common.Stroke) is { } node ? new KiCadStroke(node) : null;
 
         /// <summary>Gets the <c>(stroke ...)</c> form, adding an empty one when the sheet has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadStroke RequireStroke() => new(Require("stroke"));
+        public KiCadStroke RequireStroke() => new(Require(KiCadTokens.Common.Stroke));
 
         /// <summary>Gets the box's fill, or <see langword="null"/> when it carries no <c>(fill ...)</c>.</summary>
-        public KiCadFill? Fill => Node.GetChild("fill") is { } node ? new KiCadFill(node) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node) : null;
 
         /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the sheet has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require("fill"));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
 
         /// <summary>Gets or sets whether the sheet's contents are excluded from the simulator.</summary>
         public bool ExcludeFromSim
         {
-            get => ReadFlag("exclude_from_sim");
-            set => WriteFlag("exclude_from_sim", value);
+            get => ReadFlag(KiCadTokens.Schematic.ExcludeFromSim);
+            set => WriteFlag(KiCadTokens.Schematic.ExcludeFromSim, value);
         }
 
         /// <summary>Gets or sets whether the sheet's contents reach the bill of materials.</summary>
         public bool InBom
         {
-            get => ReadFlag("in_bom");
-            set => WriteFlag("in_bom", value);
+            get => ReadFlag(KiCadTokens.Common.InBom);
+            set => WriteFlag(KiCadTokens.Common.InBom, value);
         }
 
         /// <summary>Gets or sets whether the sheet's contents reach the board.</summary>
         public bool OnBoard
         {
-            get => ReadFlag("on_board");
-            set => WriteFlag("on_board", value);
+            get => ReadFlag(KiCadTokens.Common.OnBoard);
+            set => WriteFlag(KiCadTokens.Common.OnBoard, value);
         }
 
         /// <summary>Gets or sets whether the sheet's contents are marked do-not-populate.</summary>
         public bool Dnp
         {
-            get => ReadFlag("dnp");
-            set => WriteFlag("dnp", value);
+            get => ReadFlag(KiCadTokens.Schematic.Dnp);
+            set => WriteFlag(KiCadTokens.Schematic.Dnp, value);
         }
 
         /// <summary>Gets the sheet's display name, the <c>Sheetname</c> property.</summary>
-        public string? SheetName => GetPropertyValue("Sheetname");
+        public string? SheetName => GetPropertyValue(KiCadPropertyNames.SheetName);
 
         /// <summary>Gets the file this sheet instantiates, the <c>Sheetfile</c> property, as written.</summary>
-        public string? SheetFile => GetPropertyValue("Sheetfile");
+        public string? SheetFile => GetPropertyValue(KiCadPropertyNames.SheetFile);
 
         /// <summary>Gets the sheet's fields.</summary>
-        public KiCadNodeList<KiCadProperty> Properties => new(Node, "property", n => new KiCadProperty(n));
+        public KiCadNodeList<KiCadProperty> Properties => new(Node, KiCadTokens.Common.Property, n => new KiCadProperty(n));
 
         /// <summary>
         /// Gets the connection points drawn on the sheet's box. Each one is joined to the child file
         /// by name, through a hierarchical label spelled the same way.
         /// </summary>
-        public KiCadNodeList<KiCadSheetPin> Pins => new(Node, "pin", n => new KiCadSheetPin(n));
+        public KiCadNodeList<KiCadSheetPin> Pins => new(Node, KiCadTokens.Common.Pin, n => new KiCadSheetPin(n));
 
         /// <summary>Gets the value of a named field.</summary>
         /// <param name="key">The field key.</param>
@@ -376,13 +377,13 @@ namespace KiCadSharp.Schematics
         }
 
         /// <summary>Gets the symbol's UUID, unique within its file.</summary>
-        public string Uuid => ReadChild("uuid") ?? string.Empty;
+        public string Uuid => ReadChild(KiCadTokens.Common.Uuid) ?? string.Empty;
 
         /// <summary>Gets the library symbol this is an instance of, e.g. <c>orbion:Conn_01x02</c>.</summary>
-        public string LibId => ReadChild("lib_id") ?? string.Empty;
+        public string LibId => ReadChild(KiCadTokens.Schematic.LibId) ?? string.Empty;
 
         /// <summary>Gets the unit of a multi-unit symbol; 1 for a single-unit part.</summary>
-        public int Unit => Node.GetChild("unit") is { } unit && unit.TryGetValue<int>(0, out var value) ? value : 1;
+        public int Unit => Node.GetChild(KiCadTokens.Schematic.Unit) is { } unit && unit.TryGetValue<int>(0, out var value) ? value : 1;
 
         /// <summary>
         /// Gets or sets where the symbol sits and how far it is turned, in millimetres and degrees.
@@ -394,8 +395,8 @@ namespace KiCadSharp.Schematics
         /// </remarks>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: true);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
         }
 
         /// <summary>
@@ -405,8 +406,8 @@ namespace KiCadSharp.Schematics
         /// </summary>
         public string? Mirror
         {
-            get => ReadChild("mirror");
-            set => WriteChild("mirror", value, SQuoteStyle.Bare);
+            get => ReadChild(KiCadTokens.Schematic.Mirror);
+            set => WriteChild(KiCadTokens.Schematic.Mirror, value, SQuoteStyle.Bare);
         }
 
         /// <summary>
@@ -415,7 +416,7 @@ namespace KiCadSharp.Schematics
         /// spellings are read.
         /// </summary>
         public int BodyStyle =>
-            (Node.GetChild("body_style") ?? Node.GetChild("convert")) is { } style
+            (Node.GetChild(KiCadTokens.Schematic.BodyStyle) ?? Node.GetChild(KiCadTokens.Schematic.Convert)) is { } style
             && style.TryGetValue<int>(0, out var value)
                 ? value
                 : 1;
@@ -424,45 +425,45 @@ namespace KiCadSharp.Schematics
         /// Gets the library symbol's own name when it differs from <see cref="LibId"/>, which is what
         /// KiCad writes for a symbol edited only on this sheet; <see langword="null"/> otherwise.
         /// </summary>
-        public string? LibName => ReadChild("lib_name");
+        public string? LibName => ReadChild(KiCadTokens.Schematic.LibName);
 
         /// <summary>Gets or sets whether the simulator ignores this symbol.</summary>
         public bool ExcludeFromSim
         {
-            get => ReadFlag("exclude_from_sim");
-            set => WriteFlag("exclude_from_sim", value);
+            get => ReadFlag(KiCadTokens.Schematic.ExcludeFromSim);
+            set => WriteFlag(KiCadTokens.Schematic.ExcludeFromSim, value);
         }
 
         /// <summary>Gets or sets whether the symbol reaches the bill of materials.</summary>
         public bool InBom
         {
-            get => ReadFlag("in_bom");
-            set => WriteFlag("in_bom", value);
+            get => ReadFlag(KiCadTokens.Common.InBom);
+            set => WriteFlag(KiCadTokens.Common.InBom, value);
         }
 
         /// <summary>Gets or sets whether the symbol reaches the board.</summary>
         public bool OnBoard
         {
-            get => ReadFlag("on_board");
-            set => WriteFlag("on_board", value);
+            get => ReadFlag(KiCadTokens.Common.OnBoard);
+            set => WriteFlag(KiCadTokens.Common.OnBoard, value);
         }
 
         /// <summary>Gets or sets whether the symbol is marked do-not-populate.</summary>
         public bool Dnp
         {
-            get => ReadFlag("dnp");
-            set => WriteFlag("dnp", value);
+            get => ReadFlag(KiCadTokens.Schematic.Dnp);
+            set => WriteFlag(KiCadTokens.Schematic.Dnp, value);
         }
 
         /// <summary>Gets or sets whether the symbol reaches the component-placement file.</summary>
         public bool InPosFiles
         {
-            get => ReadFlag("in_pos_files");
-            set => WriteFlag("in_pos_files", value);
+            get => ReadFlag(KiCadTokens.Schematic.InPosFiles);
+            set => WriteFlag(KiCadTokens.Schematic.InPosFiles, value);
         }
 
         /// <summary>Gets the symbol's fields.</summary>
-        public KiCadNodeList<KiCadProperty> Properties => new(Node, "property", n => new KiCadProperty(n));
+        public KiCadNodeList<KiCadProperty> Properties => new(Node, KiCadTokens.Common.Property, n => new KiCadProperty(n));
 
         /// <summary>
         /// Gets or sets the <c>Reference</c> property — what the editor draws next to the symbol, and
@@ -470,10 +471,10 @@ namespace KiCadSharp.Schematics
         /// </summary>
         public string? ReferenceProperty
         {
-            get => GetPropertyValue("Reference");
+            get => GetPropertyValue(KiCadPropertyNames.Reference);
             set
             {
-                var property = Properties.FirstOrDefault(p => string.Equals(p.Key, "Reference", StringComparison.Ordinal));
+                var property = Properties.FirstOrDefault(p => string.Equals(p.Key, KiCadPropertyNames.Reference, StringComparison.Ordinal));
                 if (property is not null && value is not null)
                 {
                     property.Value = value;
@@ -497,7 +498,7 @@ namespace KiCadSharp.Schematics
         /// <param name="sheetPath">The full path of the sheet instance, e.g. <c>/root-uuid/sheet-uuid</c>.</param>
         /// <returns>The reference, or <see langword="null"/> when that path has no entry.</returns>
         public string? GetInstanceReference(string project, string sheetPath) =>
-            FindPath(project, sheetPath)?.GetChildValue("reference");
+            FindPath(project, sheetPath)?.GetChildValue(KiCadTokens.Schematic.Reference);
 
         /// <summary>
         /// Writes the reference designator for one sheet instance, creating the <c>instances</c>,
@@ -516,15 +517,15 @@ namespace KiCadSharp.Schematics
 
             var path = FindPath(project, sheetPath);
             if (path is not null
-                && string.Equals(path.GetChildValue("reference"), reference, StringComparison.Ordinal)
-                && path.GetChild("unit")?.GetValue(0) == unit.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                && string.Equals(path.GetChildValue(KiCadTokens.Schematic.Reference), reference, StringComparison.Ordinal)
+                && path.GetChild(KiCadTokens.Schematic.Unit)?.GetValue(0) == unit.ToString(System.Globalization.CultureInfo.InvariantCulture))
             {
                 return false;
             }
 
             path ??= CreatePath(project, sheetPath);
-            path.SetChildValue("reference", reference, SQuoteStyle.Quoted);
-            path.SetChildValue("unit", unit.ToString(System.Globalization.CultureInfo.InvariantCulture), SQuoteStyle.Bare);
+            path.SetChildValue(KiCadTokens.Schematic.Reference, reference, SQuoteStyle.Quoted);
+            path.SetChildValue(KiCadTokens.Schematic.Unit, unit.ToString(System.Globalization.CultureInfo.InvariantCulture), SQuoteStyle.Bare);
             return true;
         }
 
@@ -546,7 +547,7 @@ namespace KiCadSharp.Schematics
                 return 0;
             }
 
-            var stale = projectNode.GetChildren("path")
+            var stale = projectNode.GetChildren(KiCadTokens.Schematic.Path)
                 .Where(p => p.GetValue(0) is not { } value || !livePaths.Contains(value))
                 .ToList();
 
@@ -559,26 +560,26 @@ namespace KiCadSharp.Schematics
         }
 
         private SExpression? FindProject(string project) =>
-            Node.GetChild("instances")?
-                .GetChildren("project")
+            Node.GetChild(KiCadTokens.Schematic.Instances)?
+                .GetChildren(KiCadTokens.Schematic.Project)
                 .FirstOrDefault(p => string.Equals(p.GetValue(0), project, StringComparison.Ordinal));
 
         private SExpression? FindPath(string project, string sheetPath) =>
             FindProject(project)?
-                .GetChildren("path")
+                .GetChildren(KiCadTokens.Schematic.Path)
                 .FirstOrDefault(p => string.Equals(p.GetValue(0), sheetPath, StringComparison.Ordinal));
 
         private SExpression CreatePath(string project, string sheetPath)
         {
-            var instances = Node.GetChild("instances") ?? Node.CreateChild("instances");
+            var instances = Node.GetChild(KiCadTokens.Schematic.Instances) ?? Node.CreateChild(KiCadTokens.Schematic.Instances);
             var projectNode = FindProject(project);
             if (projectNode is null)
             {
-                projectNode = instances.CreateChild("project");
+                projectNode = instances.CreateChild(KiCadTokens.Schematic.Project);
                 projectNode.AddValue(project, SQuoteStyle.Quoted);
             }
 
-            var path = projectNode.CreateChild("path");
+            var path = projectNode.CreateChild(KiCadTokens.Schematic.Path);
             path.AddValue(sheetPath, SQuoteStyle.Quoted);
             return path;
         }

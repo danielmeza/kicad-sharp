@@ -120,8 +120,8 @@ namespace KiCadSharp.Documents
         /// </summary>
         public int Net
         {
-            get => KiCadNetRef.ReadCode(Node.GetChild("net")) ?? 0;
-            set => Node.SetChildValue("net", value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
+            get => KiCadNetRef.ReadCode(Node.GetChild(KiCadTokens.Common.Net)) ?? 0;
+            set => Node.SetChildValue(KiCadTokens.Common.Net, value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace KiCadSharp.Documents
         /// <see langword="null"/> on a file that numbers its nets instead, where the name lives in
         /// the board's net table and <see cref="KiCadBoard.GetNet(int)"/> reaches it.
         /// </summary>
-        public string? NetName => KiCadNetRef.ReadName(Node.GetChild("net"));
+        public string? NetName => KiCadNetRef.ReadName(Node.GetChild(KiCadTokens.Common.Net));
 
         /// <summary>
         /// Gets or sets the item's UUID, which is how a <see cref="KiCadGroup"/> refers to it.
@@ -137,15 +137,15 @@ namespace KiCadSharp.Documents
         /// </summary>
         public string? Uuid
         {
-            get => ReadChild("uuid");
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid);
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets whether the item is locked against being moved or rerouted.</summary>
         public bool Locked
         {
-            get => ReadFlag("locked");
-            set => WriteFlag("locked", value);
+            get => ReadFlag(KiCadTokens.Common.Locked);
+            set => WriteFlag(KiCadTokens.Common.Locked, value);
         }
     }
 
@@ -164,36 +164,36 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty segment.</summary>
         public KiCadTrackSegment()
-            : base(new SExpression("segment"))
+            : base(new SExpression(KiCadTokens.Board.Segment))
         {
         }
 
         /// <summary>Gets or sets the start point.</summary>
         public KiCadPosition Start
         {
-            get => KiCadPosition.Read(Node.GetChild("start"));
-            set => value.Write(Require("start"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
+            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
         /// <summary>Gets or sets the track width in millimetres.</summary>
         public double Width
         {
-            get => ReadChildDouble("width", 0, 0.2);
-            set => WriteChildDouble("width", value);
+            get => ReadChildDouble(KiCadTokens.Common.Width, 0, 0.2);
+            set => WriteChildDouble(KiCadTokens.Common.Width, value);
         }
 
         /// <summary>Gets or sets the copper layer the track runs on.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "F.Cu";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.FCu;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets the straight-line length of the segment, in millimetres.</summary>
@@ -228,43 +228,43 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty track arc.</summary>
         public KiCadTrackArc()
-            : base(new SExpression("arc"))
+            : base(new SExpression(KiCadTokens.Board.TrackArc))
         {
         }
 
         /// <summary>Gets or sets the start point.</summary>
         public KiCadPosition Start
         {
-            get => KiCadPosition.Read(Node.GetChild("start"));
-            set => value.Write(Require("start"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
+            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
         }
 
         /// <summary>Gets or sets the point the arc passes through.</summary>
         public KiCadPosition Mid
         {
-            get => KiCadPosition.Read(Node.GetChild("mid"));
-            set => value.Write(Require("mid"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Mid));
+            set => value.Write(Require(KiCadTokens.Common.Mid), includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
         /// <summary>Gets or sets the track width in millimetres.</summary>
         public double Width
         {
-            get => ReadChildDouble("width", 0, 0.2);
-            set => WriteChildDouble("width", value);
+            get => ReadChildDouble(KiCadTokens.Common.Width, 0, 0.2);
+            set => WriteChildDouble(KiCadTokens.Common.Width, value);
         }
 
         /// <summary>Gets or sets the copper layer the track runs on.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "F.Cu";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.FCu;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
     }
 
@@ -283,7 +283,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty via.</summary>
         public KiCadVia()
-            : base(new SExpression("via"))
+            : base(new SExpression(KiCadTokens.Board.Via))
         {
         }
 
@@ -298,14 +298,14 @@ namespace KiCadSharp.Documents
         /// </remarks>
         public string ViaType
         {
-            get => Node.GetValue(0) is { } value && IsViaType(value) ? value : "through";
+            get => Node.GetValue(0) is { } value && IsViaType(value) ? value : KiCadTokens.Board.ViaThrough;
 
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
                 var hasBareType = Node.GetValue(0) is { } current && IsViaType(current);
 
-                if (string.Equals(value, "through", StringComparison.Ordinal))
+                if (string.Equals(value, KiCadTokens.Board.ViaThrough, StringComparison.Ordinal))
                 {
                     if (hasBareType)
                     {
@@ -329,22 +329,22 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets where the via sits.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
         }
 
         /// <summary>Gets or sets the annular pad diameter in millimetres.</summary>
         public double Size
         {
-            get => ReadChildDouble("size", 0, 0.6);
-            set => WriteChildDouble("size", value);
+            get => ReadChildDouble(KiCadTokens.Common.Size, 0, 0.6);
+            set => WriteChildDouble(KiCadTokens.Common.Size, value);
         }
 
         /// <summary>Gets or sets the hole diameter in millimetres.</summary>
         public double Drill
         {
-            get => ReadChildDouble("drill", 0, 0.3);
-            set => WriteChildDouble("drill", value);
+            get => ReadChildDouble(KiCadTokens.Common.Drill, 0, 0.3);
+            set => WriteChildDouble(KiCadTokens.Common.Drill, value);
         }
 
         /// <summary>
@@ -355,14 +355,14 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                var layers = Node.GetChild("layers");
+                var layers = Node.GetChild(KiCadTokens.Common.Layers);
                 return layers is null ? Array.Empty<string>() : layers.Values.ToArray();
             }
 
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                var layers = Require("layers");
+                var layers = Require(KiCadTokens.Common.Layers);
                 layers.Values.Clear();
                 foreach (var layer in value)
                 {
@@ -374,21 +374,21 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets whether the via may be moved off its net by the router.</summary>
         public bool Free
         {
-            get => ReadFlag("free");
-            set => WriteFlag("free", value);
+            get => ReadFlag(KiCadTokens.Board.Free);
+            set => WriteFlag(KiCadTokens.Board.Free, value);
         }
 
         /// <summary>Gets or sets whether KiCad may drop the annular ring on layers the via does not connect.</summary>
         public bool RemoveUnusedLayers
         {
-            get => ReadFlag("remove_unused_layers");
-            set => WriteFlag("remove_unused_layers", value);
+            get => ReadFlag(KiCadTokens.Board.RemoveUnusedLayers);
+            set => WriteFlag(KiCadTokens.Board.RemoveUnusedLayers, value);
         }
 
         private static bool IsViaType(string value) =>
-            string.Equals(value, "through", StringComparison.Ordinal)
-            || string.Equals(value, "blind", StringComparison.Ordinal)
-            || string.Equals(value, "micro", StringComparison.Ordinal);
+            string.Equals(value, KiCadTokens.Board.ViaThrough, StringComparison.Ordinal)
+            || string.Equals(value, KiCadTokens.Board.ViaBlind, StringComparison.Ordinal)
+            || string.Equals(value, KiCadTokens.Board.ViaMicro, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -420,7 +420,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty zone.</summary>
         public KiCadZone()
-            : base(new SExpression("zone"))
+            : base(new SExpression(KiCadTokens.Board.Zone))
         {
         }
 
@@ -430,8 +430,8 @@ namespace KiCadSharp.Documents
         /// </summary>
         public int Net
         {
-            get => KiCadNetRef.ReadCode(Node.GetChild("net")) ?? 0;
-            set => Node.SetChildValue("net", value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
+            get => KiCadNetRef.ReadCode(Node.GetChild(KiCadTokens.Common.Net)) ?? 0;
+            set => Node.SetChildValue(KiCadTokens.Common.Net, value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
         }
 
         /// <summary>
@@ -442,17 +442,17 @@ namespace KiCadSharp.Documents
         /// </summary>
         public string NetName
         {
-            get => ReadChild("net_name") ?? KiCadNetRef.ReadName(Node.GetChild("net")) ?? string.Empty;
+            get => ReadChild(KiCadTokens.Board.NetName) ?? KiCadNetRef.ReadName(Node.GetChild(KiCadTokens.Common.Net)) ?? string.Empty;
 
             set
             {
-                if (Node.GetChild("net_name") is null && Node.GetChild("net") is { } net && KiCadNetRef.ReadName(net) is not null)
+                if (Node.GetChild(KiCadTokens.Board.NetName) is null && Node.GetChild(KiCadTokens.Common.Net) is { } net && KiCadNetRef.ReadName(net) is not null)
                 {
                     KiCadNetRef.WriteName(net, value);
                     return;
                 }
 
-                WriteChild("net_name", value, SQuoteStyle.Quoted);
+                WriteChild(KiCadTokens.Board.NetName, value, SQuoteStyle.Quoted);
             }
         }
 
@@ -461,12 +461,12 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                if (Node.GetChild("layers") is { } layers)
+                if (Node.GetChild(KiCadTokens.Common.Layers) is { } layers)
                 {
                     return layers.Values.ToArray();
                 }
 
-                return Node.GetChild("layer")?.GetValue(0) is { } single ? new[] { single } : Array.Empty<string>();
+                return Node.GetChild(KiCadTokens.Common.Layer)?.GetValue(0) is { } single ? new[] { single } : Array.Empty<string>();
             }
 
             set
@@ -476,14 +476,14 @@ namespace KiCadSharp.Documents
 
                 // Keep the file's own spelling: a one-layer zone written as (layer "F.Cu") stays that
                 // way, and only grows into (layers …) when it really needs more than one.
-                if (Node.GetChild("layers") is null && names.Length <= 1 && Node.GetChild("layer") is { } single)
+                if (Node.GetChild(KiCadTokens.Common.Layers) is null && names.Length <= 1 && Node.GetChild(KiCadTokens.Common.Layer) is { } single)
                 {
                     single.SetValue(0, names.Length == 0 ? string.Empty : names[0], SQuoteStyle.Quoted);
                     return;
                 }
 
-                Node.RemoveChild("layer");
-                var layers = Require("layers");
+                Node.RemoveChild(KiCadTokens.Common.Layer);
+                var layers = Require(KiCadTokens.Common.Layers);
                 layers.Values.Clear();
                 foreach (var name in names)
                 {
@@ -495,15 +495,15 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the zone's UUID.</summary>
         public string? Uuid
         {
-            get => ReadChild("uuid");
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid);
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the zone's name, which the designer types and the design rules match on.</summary>
         public string? Name
         {
-            get => ReadChild("name");
-            set => WriteChild("name", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Name);
+            set => WriteChild(KiCadTokens.Common.Name, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -512,26 +512,26 @@ namespace KiCadSharp.Documents
         /// </summary>
         public int Priority
         {
-            get => Node.GetChild("priority") is { } priority && priority.TryGetValue<int>(0, out var value) ? value : 0;
-            set => Node.SetChildValue("priority", value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
+            get => Node.GetChild(KiCadTokens.Board.Priority) is { } priority && priority.TryGetValue<int>(0, out var value) ? value : 0;
+            set => Node.SetChildValue(KiCadTokens.Board.Priority, value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets how the zone outline is drawn on screen: <c>none</c>, <c>edge</c> or <c>full</c>.</summary>
         public string HatchStyle
         {
-            get => Node.GetChild("hatch")?.GetValue(0) ?? "none";
+            get => Node.GetChild(KiCadTokens.Board.Hatch)?.GetValue(0) ?? "none";
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                Require("hatch").SetValue(0, value, SQuoteStyle.Bare);
+                Require(KiCadTokens.Board.Hatch).SetValue(0, value, SQuoteStyle.Bare);
             }
         }
 
         /// <summary>Gets or sets the spacing of the outline hatching, in millimetres.</summary>
         public double HatchPitch
         {
-            get => Node.GetChild("hatch")?.GetValueAsDouble(1) ?? 0;
-            set => Require("hatch").SetValue(1, Numbers.Format(value), SQuoteStyle.Bare);
+            get => Node.GetChild(KiCadTokens.Board.Hatch)?.GetValueAsDouble(1) ?? 0;
+            set => Require(KiCadTokens.Board.Hatch).SetValue(1, Numbers.Format(value), SQuoteStyle.Bare);
         }
 
         /// <summary>
@@ -541,11 +541,11 @@ namespace KiCadSharp.Documents
         /// </summary>
         public string ConnectPadsMode
         {
-            get => Node.GetChild("connect_pads")?.GetValue(0) ?? string.Empty;
+            get => Node.GetChild(KiCadTokens.Board.ConnectPads)?.GetValue(0) ?? string.Empty;
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                Require("connect_pads").SetValue(0, value, SQuoteStyle.Bare);
+                Require(KiCadTokens.Board.ConnectPads).SetValue(0, value, SQuoteStyle.Bare);
             }
         }
 
@@ -554,18 +554,18 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                var clearance = Node.GetChild("connect_pads")?.GetChild("clearance");
+                var clearance = Node.GetChild(KiCadTokens.Board.ConnectPads)?.GetChild(KiCadTokens.Board.Clearance);
                 return clearance is not null && clearance.TryGetValue<double>(0, out var value) ? value : 0;
             }
 
-            set => Require("connect_pads").SetChildValue("clearance", Numbers.Format(value), SQuoteStyle.Bare);
+            set => Require(KiCadTokens.Board.ConnectPads).SetChildValue(KiCadTokens.Board.Clearance, Numbers.Format(value), SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the narrowest copper the filler may leave, in millimetres.</summary>
         public double MinThickness
         {
-            get => ReadChildDouble("min_thickness", 0, 0.25);
-            set => WriteChildDouble("min_thickness", value);
+            get => ReadChildDouble(KiCadTokens.Board.MinThickness, 0, 0.25);
+            set => WriteChildDouble(KiCadTokens.Board.MinThickness, value);
         }
 
         /// <summary>
@@ -575,12 +575,12 @@ namespace KiCadSharp.Documents
         /// </summary>
         public bool FilledAreasThickness
         {
-            get => ReadFlag("filled_areas_thickness");
-            set => WriteFlag("filled_areas_thickness", value);
+            get => ReadFlag(KiCadTokens.Board.FilledAreasThickness);
+            set => WriteFlag(KiCadTokens.Board.FilledAreasThickness, value);
         }
 
         /// <summary>Gets the fill settings, or <see langword="null"/> when the zone has no <c>fill</c> form.</summary>
-        public KiCadZoneFill? Fill => Node.GetChild("fill") is { } fill ? new KiCadZoneFill(fill) : null;
+        public KiCadZoneFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } fill ? new KiCadZoneFill(fill) : null;
 
         /// <summary>
         /// True when the board was saved filled: <c>(fill yes …)</c>. A zone that has an outline but
@@ -589,35 +589,35 @@ namespace KiCadSharp.Documents
         public bool IsFilled => Fill?.Enabled ?? false;
 
         /// <summary>True when the zone is a rule area — it pours nothing and carries a <c>(keepout …)</c> form.</summary>
-        public bool IsKeepout => Node.GetChild("keepout") is not null;
+        public bool IsKeepout => Node.GetChild(KiCadTokens.Board.Keepout) is not null;
 
         /// <summary>Gets the outline the designer drew, in order: the <c>(polygon (pts (xy …)))</c> form.</summary>
         public IReadOnlyList<KiCadPosition> Points =>
-            ReadPoints(Node.GetChild("polygon"));
+            ReadPoints(Node.GetChild(KiCadTokens.Board.Polygon));
 
         /// <summary>
         /// Gets the copper the filler computed, one entry per layer poured. Empty until the board is
         /// filled; see <see cref="IsFilled"/>.
         /// </summary>
         public KiCadNodeList<KiCadZoneFilledPolygon> FilledPolygons =>
-            new(Node, "filled_polygon", n => new KiCadZoneFilledPolygon(n));
+            new(Node, KiCadTokens.Board.FilledPolygon, n => new KiCadZoneFilledPolygon(n));
 
         /// <summary>Gets the fill settings, adding a <c>(fill …)</c> form when the zone has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadZoneFill RequireFill() => new(Require("fill"));
+        public KiCadZoneFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
 
         /// <summary>Appends a vertex to the outline, creating the <c>polygon</c> form when there is none.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var polygon = Node.GetChild("polygon") ?? Node.CreateChild("polygon");
-            var points = polygon.GetChild("pts") ?? polygon.CreateChild("pts");
-            points.CreateChild("xy", Numbers.Format(x), Numbers.Format(y));
+            var polygon = Node.GetChild(KiCadTokens.Board.Polygon) ?? Node.CreateChild(KiCadTokens.Board.Polygon);
+            var points = polygon.GetChild(KiCadTokens.Common.Pts) ?? polygon.CreateChild(KiCadTokens.Common.Pts);
+            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
 
         internal static IReadOnlyList<KiCadPosition> ReadPoints(SExpression? owner) =>
-            (owner?.GetChild("pts")?.GetChildren("xy") ?? Enumerable.Empty<SExpression>())
+            (owner?.GetChild(KiCadTokens.Common.Pts)?.GetChildren(KiCadTokens.Common.Xy) ?? Enumerable.Empty<SExpression>())
                 .Select(xy => new KiCadPosition(xy.GetValueAsDouble(0), xy.GetValueAsDouble(1)))
                 .ToArray();
     }
@@ -640,20 +640,20 @@ namespace KiCadSharp.Documents
         /// </summary>
         public bool Enabled
         {
-            get => string.Equals(Node.GetValue(0), "yes", StringComparison.Ordinal);
+            get => string.Equals(Node.GetValue(0), KiCadTokens.Common.Yes, StringComparison.Ordinal);
             set
             {
                 if (value)
                 {
-                    if (!string.Equals(Node.GetValue(0), "yes", StringComparison.Ordinal))
+                    if (!string.Equals(Node.GetValue(0), KiCadTokens.Common.Yes, StringComparison.Ordinal))
                     {
-                        Node.Values.Insert(0, "yes");
+                        Node.Values.Insert(0, KiCadTokens.Common.Yes);
                     }
 
                     return;
                 }
 
-                if (string.Equals(Node.GetValue(0), "yes", StringComparison.Ordinal))
+                if (string.Equals(Node.GetValue(0), KiCadTokens.Common.Yes, StringComparison.Ordinal))
                 {
                     Node.Values.RemoveAt(0);
                 }
@@ -663,22 +663,22 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the fill pattern: <c>solid</c> when the token is absent, or <c>hatch</c>.</summary>
         public string Mode
         {
-            get => ReadChild("mode") ?? "solid";
-            set => WriteChild("mode", value, SQuoteStyle.Bare);
+            get => ReadChild(KiCadTokens.Board.Mode) ?? "solid";
+            set => WriteChild(KiCadTokens.Board.Mode, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the gap a thermal relief leaves around a pad, in millimetres.</summary>
         public double ThermalGap
         {
-            get => ReadChildDouble("thermal_gap");
-            set => WriteChildDouble("thermal_gap", value);
+            get => ReadChildDouble(KiCadTokens.Board.ThermalGap);
+            set => WriteChildDouble(KiCadTokens.Board.ThermalGap, value);
         }
 
         /// <summary>Gets or sets the width of each spoke of a thermal relief, in millimetres.</summary>
         public double ThermalBridgeWidth
         {
-            get => ReadChildDouble("thermal_bridge_width");
-            set => WriteChildDouble("thermal_bridge_width", value);
+            get => ReadChildDouble(KiCadTokens.Board.ThermalBridgeWidth);
+            set => WriteChildDouble(KiCadTokens.Board.ThermalBridgeWidth, value);
         }
     }
 
@@ -702,12 +702,12 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the layer this copper is on.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "F.Cu";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.FCu;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>True when the polygon is a hole in the pour rather than copper.</summary>
-        public bool IsIsland => Node.GetChild("island") is not null;
+        public bool IsIsland => Node.GetChild(KiCadTokens.Board.Island) is not null;
 
         /// <summary>Gets the outline of the computed copper, in order.</summary>
         public IReadOnlyList<KiCadPosition> Points => KiCadZone.ReadPoints(Node);
@@ -735,8 +735,8 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the layer the drawing is on.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "F.SilkS";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.FSilkS;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -747,54 +747,54 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                if (Node.GetChild("stroke")?.GetChild("width") is { } strokeWidth && strokeWidth.TryGetValue<double>(0, out var fromStroke))
+                if (Node.GetChild(KiCadTokens.Common.Stroke)?.GetChild(KiCadTokens.Common.Width) is { } strokeWidth && strokeWidth.TryGetValue<double>(0, out var fromStroke))
                 {
                     return fromStroke;
                 }
 
-                return ReadChildDouble("width", 0, 0.1);
+                return ReadChildDouble(KiCadTokens.Common.Width, 0, 0.1);
             }
 
             set
             {
-                if (Node.GetChild("stroke") is { } stroke)
+                if (Node.GetChild(KiCadTokens.Common.Stroke) is { } stroke)
                 {
-                    stroke.SetChildValue("width", Numbers.Format(value), SQuoteStyle.Bare);
+                    stroke.SetChildValue(KiCadTokens.Common.Width, Numbers.Format(value), SQuoteStyle.Bare);
                     return;
                 }
 
-                WriteChildDouble("width", value);
+                WriteChildDouble(KiCadTokens.Common.Width, value);
             }
         }
 
         /// <summary>Gets the stroke, or <see langword="null"/> on a file that writes a bare <c>(width w)</c>.</summary>
-        public KiCadStroke? Stroke => Node.GetChild("stroke") is { } stroke ? new KiCadStroke(stroke) : null;
+        public KiCadStroke? Stroke => Node.GetChild(KiCadTokens.Common.Stroke) is { } stroke ? new KiCadStroke(stroke) : null;
 
         /// <summary>Gets or sets the drawing's UUID.</summary>
         public string? Uuid
         {
-            get => ReadChild("uuid");
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid);
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets whether the drawing is locked against being moved.</summary>
         public bool Locked
         {
-            get => ReadFlag("locked");
-            set => WriteFlag("locked", value);
+            get => ReadFlag(KiCadTokens.Common.Locked);
+            set => WriteFlag(KiCadTokens.Common.Locked, value);
         }
 
         /// <summary>Gets the stroke, adding a <c>(stroke …)</c> form when the drawing has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadStroke RequireStroke() => new(Require("stroke"));
+        public KiCadStroke RequireStroke() => new(Require(KiCadTokens.Common.Stroke));
 
         /// <summary>Gets the fill, or <see langword="null"/> when the shape has no <c>fill</c> form.</summary>
         /// <remarks>An open shape — a line, an arc, a curve — has none, and reading this does not give it one.</remarks>
-        public KiCadFill? Fill => Node.GetChild("fill") is { } fill ? new KiCadFill(fill) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } fill ? new KiCadFill(fill) : null;
 
         /// <summary>Gets the fill, adding a <c>(fill …)</c> form when the shape has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require("fill"));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
     }
 
     /// <summary>A board line: <c>(gr_line (start x y) (end x y) (stroke …) (layer "Edge.Cuts"))</c>.</summary>
@@ -809,22 +809,22 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty line.</summary>
         public KiCadGrLine()
-            : base(new SExpression("gr_line"))
+            : base(new SExpression(KiCadTokens.Board.GrLine))
         {
         }
 
         /// <summary>Gets or sets the start point.</summary>
         public KiCadPosition Start
         {
-            get => KiCadPosition.Read(Node.GetChild("start"));
-            set => value.Write(Require("start"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
+            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
     }
 
@@ -841,22 +841,22 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty rectangle.</summary>
         public KiCadGrRect()
-            : base(new SExpression("gr_rect"))
+            : base(new SExpression(KiCadTokens.Board.GrRect))
         {
         }
 
         /// <summary>Gets or sets the first corner.</summary>
         public KiCadPosition Start
         {
-            get => KiCadPosition.Read(Node.GetChild("start"));
-            set => value.Write(Require("start"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
+            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
         }
 
         /// <summary>Gets or sets the opposite corner.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
         /// <summary>Gets the width of the rectangle in millimetres, corner to corner.</summary>
@@ -878,22 +878,22 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty circle.</summary>
         public KiCadGrCircle()
-            : base(new SExpression("gr_circle"))
+            : base(new SExpression(KiCadTokens.Board.GrCircle))
         {
         }
 
         /// <summary>Gets or sets the centre.</summary>
         public KiCadPosition Center
         {
-            get => KiCadPosition.Read(Node.GetChild("center"));
-            set => value.Write(Require("center"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Center));
+            set => value.Write(Require(KiCadTokens.Common.Center), includeRotation: false);
         }
 
         /// <summary>Gets or sets a point on the circumference; KiCad stores that rather than a radius.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
         /// <summary>Gets the radius in millimetres, the distance from the centre to the stored point.</summary>
@@ -920,36 +920,36 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty arc.</summary>
         public KiCadGrArc()
-            : base(new SExpression("gr_arc"))
+            : base(new SExpression(KiCadTokens.Board.GrArc))
         {
         }
 
         /// <summary>Gets or sets the start point.</summary>
         public KiCadPosition Start
         {
-            get => KiCadPosition.Read(Node.GetChild("start"));
-            set => value.Write(Require("start"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
+            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
         }
 
         /// <summary>Gets or sets the point the arc passes through.</summary>
         public KiCadPosition Mid
         {
-            get => KiCadPosition.Read(Node.GetChild("mid"));
-            set => value.Write(Require("mid"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Mid));
+            set => value.Write(Require(KiCadTokens.Common.Mid), includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
-            get => KiCadPosition.Read(Node.GetChild("end"));
-            set => value.Write(Require("end"), includeRotation: false);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
+            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
         /// <summary>Gets or sets the KiCad 5 sweep angle, or 0 on a file that stores a mid point instead.</summary>
         public double Angle
         {
-            get => ReadChildDouble("angle");
-            set => WriteChildDouble("angle", value);
+            get => ReadChildDouble(KiCadTokens.Common.Angle);
+            set => WriteChildDouble(KiCadTokens.Common.Angle, value);
         }
     }
 
@@ -965,7 +965,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty polygon.</summary>
         public KiCadGrPoly()
-            : base(new SExpression("gr_poly"))
+            : base(new SExpression(KiCadTokens.Board.GrPoly))
         {
         }
 
@@ -977,8 +977,8 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild("pts") ?? Node.CreateChild("pts");
-            points.CreateChild("xy", Numbers.Format(x), Numbers.Format(y));
+            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
+            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
@@ -995,7 +995,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty curve.</summary>
         public KiCadGrCurve()
-            : base(new SExpression("gr_curve"))
+            : base(new SExpression(KiCadTokens.Board.GrCurve))
         {
         }
 
@@ -1007,8 +1007,8 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild("pts") ?? Node.CreateChild("pts");
-            points.CreateChild("xy", Numbers.Format(x), Numbers.Format(y));
+            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
+            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
@@ -1030,7 +1030,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty text item.</summary>
         public KiCadGrText()
-            : base(new SExpression("gr_text"))
+            : base(new SExpression(KiCadTokens.Board.GrText))
         {
         }
 
@@ -1039,7 +1039,7 @@ namespace KiCadSharp.Documents
         /// <param name="position">Where the text sits.</param>
         /// <param name="layer">The layer to draw it on.</param>
         public KiCadGrText(string text, KiCadPosition position, string layer)
-            : base(new SExpression("gr_text"))
+            : base(new SExpression(KiCadTokens.Board.GrText))
         {
             ArgumentNullException.ThrowIfNull(text);
             Node.AddValue(text, SQuoteStyle.Quoted);
@@ -1057,38 +1057,38 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets where the text sits, including its rotation.</summary>
         public KiCadPosition Position
         {
-            get => KiCadPosition.Read(Node.GetChild("at"));
-            set => value.Write(Require("at"), includeRotation: true);
+            get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
+            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
         }
 
         /// <summary>Gets or sets the layer.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "F.SilkS";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.FSilkS;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the text's UUID.</summary>
         public string? Uuid
         {
-            get => ReadChild("uuid");
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid);
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets whether the text is cut out of the copper or silk around it rather than drawn on it.</summary>
         public bool KnockOut
         {
-            get => ReadFlag("knockout");
-            set => WriteFlag("knockout", value);
+            get => ReadFlag(KiCadTokens.Board.Knockout);
+            set => WriteFlag(KiCadTokens.Board.Knockout, value);
         }
 
         /// <summary>Gets the text rendering, or <see langword="null"/> when the file leaves it to KiCad's defaults.</summary>
         public KiCadFontEffects? FontEffects =>
-            Node.GetChild("effects") is { } effects ? new KiCadFontEffects(effects) : null;
+            Node.GetChild(KiCadTokens.Common.Effects) is { } effects ? new KiCadFontEffects(effects) : null;
 
         /// <summary>Gets the text rendering, adding an <c>(effects …)</c> form when there is none.</summary>
         /// <returns>The view.</returns>
-        public KiCadFontEffects RequireFontEffects() => new(Require("effects"));
+        public KiCadFontEffects RequireFontEffects() => new(Require(KiCadTokens.Common.Effects));
     }
 
     /// <summary>
@@ -1112,7 +1112,7 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates an empty dimension.</summary>
         public KiCadDimension()
-            : base(new SExpression("dimension"))
+            : base(new SExpression(KiCadTokens.Board.Dimension))
         {
         }
 
@@ -1122,22 +1122,22 @@ namespace KiCadSharp.Documents
         /// </summary>
         public string Type
         {
-            get => ReadChild("type") ?? "aligned";
-            set => WriteChild("type", value, SQuoteStyle.Bare);
+            get => ReadChild(KiCadTokens.Common.Type) ?? "aligned";
+            set => WriteChild(KiCadTokens.Common.Type, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the layer the dimension is drawn on.</summary>
         public string Layer
         {
-            get => ReadChild("layer") ?? "Dwgs.User";
-            set => WriteChild("layer", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Layer) ?? KiCadLayerNames.DwgsUser;
+            set => WriteChild(KiCadTokens.Common.Layer, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the dimension's UUID.</summary>
         public string? Uuid
         {
-            get => ReadChild("uuid");
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid);
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets the two points being measured — the <c>(pts (xy …) (xy …))</c> form.</summary>
@@ -1146,8 +1146,8 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets how far the dimension line sits from the points it measures, in millimetres.</summary>
         public double Height
         {
-            get => ReadChildDouble("height");
-            set => WriteChildDouble("height", value);
+            get => ReadChildDouble(KiCadTokens.Board.Height);
+            set => WriteChildDouble(KiCadTokens.Board.Height, value);
         }
 
         /// <summary>
@@ -1156,15 +1156,15 @@ namespace KiCadSharp.Documents
         /// gets — including its position, which KiCad recomputes whenever the dimension moves.
         /// </summary>
         public KiCadGrText? Text =>
-            Node.GetChild("gr_text") is { } text ? new KiCadGrText(text) : null;
+            Node.GetChild(KiCadTokens.Board.GrText) is { } text ? new KiCadGrText(text) : null;
 
         /// <summary>Appends a measured point.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild("pts") ?? Node.CreateChild("pts");
-            points.CreateChild("xy", Numbers.Format(x), Numbers.Format(y));
+            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
+            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
@@ -1189,7 +1189,7 @@ namespace KiCadSharp.Documents
         /// <summary>Creates a group.</summary>
         /// <param name="name">The group's name.</param>
         public KiCadGroup(string name)
-            : base(new SExpression("group"))
+            : base(new SExpression(KiCadTokens.Board.Group))
         {
             ArgumentNullException.ThrowIfNull(name);
             Node.AddValue(name, SQuoteStyle.Quoted);
@@ -1205,8 +1205,8 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the group's own UUID, so that groups can hold groups.</summary>
         public string? Uuid
         {
-            get => ReadChild("uuid");
-            set => WriteChild("uuid", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Uuid);
+            set => WriteChild(KiCadTokens.Common.Uuid, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the UUIDs of the items in the group.</summary>
@@ -1214,14 +1214,14 @@ namespace KiCadSharp.Documents
         {
             get
             {
-                var members = Node.GetChild("members");
+                var members = Node.GetChild(KiCadTokens.Common.Members);
                 return members is null ? Array.Empty<string>() : members.Values.ToArray();
             }
 
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                var members = Require("members");
+                var members = Require(KiCadTokens.Common.Members);
                 members.Values.Clear();
                 foreach (var member in value)
                 {
@@ -1235,7 +1235,7 @@ namespace KiCadSharp.Documents
         public void AddMember(string uuid)
         {
             ArgumentNullException.ThrowIfNull(uuid);
-            Require("members").Values.Add(uuid, SQuoteStyle.Quoted);
+            Require(KiCadTokens.Common.Members).Values.Add(uuid, SQuoteStyle.Quoted);
         }
 
         /// <summary>Removes an item's UUID from the group.</summary>
@@ -1244,7 +1244,7 @@ namespace KiCadSharp.Documents
         public bool RemoveMember(string uuid)
         {
             ArgumentNullException.ThrowIfNull(uuid);
-            return Node.GetChild("members")?.Values.Remove(uuid) ?? false;
+            return Node.GetChild(KiCadTokens.Common.Members)?.Values.Remove(uuid) ?? false;
         }
     }
 }

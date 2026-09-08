@@ -36,8 +36,6 @@ namespace KiCadSharp.Documents
     /// </remarks>
     public sealed class KiCadBoard
     {
-        private const string RootToken = "kicad_pcb";
-
         private readonly SDocument _document;
         private readonly SExpression _root;
 
@@ -52,22 +50,22 @@ namespace KiCadSharp.Documents
         /// </remarks>
         private static readonly (int Ordinal, string Name, string Type, string? UserName)[] DefaultLayers =
         [
-            (0, "F.Cu", "signal", null),
-            (2, "B.Cu", "signal", null),
-            (5, "F.SilkS", "user", "F.Silkscreen"),
-            (7, "B.SilkS", "user", "B.Silkscreen"),
-            (1, "F.Mask", "user", null),
-            (3, "B.Mask", "user", null),
-            (13, "F.Paste", "user", null),
-            (15, "B.Paste", "user", null),
-            (25, "Edge.Cuts", "user", null),
-            (27, "Margin", "user", null),
-            (31, "F.CrtYd", "user", "F.Courtyard"),
-            (29, "B.CrtYd", "user", "B.Courtyard"),
-            (35, "F.Fab", "user", null),
-            (33, "B.Fab", "user", null),
-            (19, "Cmts.User", "user", "User.Comments"),
-            (17, "Dwgs.User", "user", "User.Drawings"),
+            (0, KiCadLayerNames.FCu, KiCadLayerNames.TypeSignal, null),
+            (2, KiCadLayerNames.BCu, KiCadLayerNames.TypeSignal, null),
+            (5, KiCadLayerNames.FSilkS, KiCadLayerNames.TypeUser, KiCadLayerNames.FSilkscreen),
+            (7, KiCadLayerNames.BSilkS, KiCadLayerNames.TypeUser, KiCadLayerNames.BSilkscreen),
+            (1, KiCadLayerNames.FMask, KiCadLayerNames.TypeUser, null),
+            (3, KiCadLayerNames.BMask, KiCadLayerNames.TypeUser, null),
+            (13, KiCadLayerNames.FPaste, KiCadLayerNames.TypeUser, null),
+            (15, KiCadLayerNames.BPaste, KiCadLayerNames.TypeUser, null),
+            (25, KiCadLayerNames.EdgeCuts, KiCadLayerNames.TypeUser, null),
+            (27, KiCadLayerNames.Margin, KiCadLayerNames.TypeUser, null),
+            (31, KiCadLayerNames.FCrtYd, KiCadLayerNames.TypeUser, KiCadLayerNames.FCourtyard),
+            (29, KiCadLayerNames.BCrtYd, KiCadLayerNames.TypeUser, KiCadLayerNames.BCourtyard),
+            (35, KiCadLayerNames.FFab, KiCadLayerNames.TypeUser, null),
+            (33, KiCadLayerNames.BFab, KiCadLayerNames.TypeUser, null),
+            (19, KiCadLayerNames.CmtsUser, KiCadLayerNames.TypeUser, KiCadLayerNames.UserComments),
+            (17, KiCadLayerNames.DwgsUser, KiCadLayerNames.TypeUser, KiCadLayerNames.UserDrawings),
         ];
 
         /// <summary>Creates a new, empty board with the forms KiCad expects at the top of the file.</summary>
@@ -81,13 +79,13 @@ namespace KiCadSharp.Documents
         /// </param>
         public KiCadBoard(string generator = "KiCadSharp", string version = "20241229")
         {
-            _root = new SExpression(RootToken);
-            _root.CreateChild("version", version);
-            _root.CreateChild("generator").AddValue(generator, SQuoteStyle.Quoted);
-            _root.CreateChild("general").CreateChild("thickness", "1.6");
-            _root.CreateChild("paper").AddValue("A4", SQuoteStyle.Quoted);
+            _root = new SExpression(KiCadTokens.Board.Root);
+            _root.CreateChild(KiCadTokens.Common.Version, version);
+            _root.CreateChild(KiCadTokens.Common.Generator).AddValue(generator, SQuoteStyle.Quoted);
+            _root.CreateChild(KiCadTokens.Board.General).CreateChild(KiCadTokens.Common.Thickness, "1.6");
+            _root.CreateChild(KiCadTokens.Common.Paper).AddValue("A4", SQuoteStyle.Quoted);
 
-            var layers = _root.CreateChild("layers");
+            var layers = _root.CreateChild(KiCadTokens.Common.Layers);
             foreach (var (ordinal, name, type, userName) in DefaultLayers)
             {
                 layers.AddChild(new KiCadBoardLayer(ordinal, name, type, userName).Node);
@@ -125,15 +123,15 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the file format version, KiCad's <c>(version …)</c> date stamp.</summary>
         public string Version
         {
-            get => _root.GetChildValue("version") ?? "20241229";
-            set => _root.SetChildValue("version", value, SQuoteStyle.Bare);
+            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? "20241229";
+            set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the name of the program that wrote the file.</summary>
         public string Generator
         {
-            get => _root.GetChildValue("generator") ?? "KiCadSharp";
-            set => _root.SetChildValue("generator", value, SQuoteStyle.Quoted);
+            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? "KiCadSharp";
+            set => _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -143,24 +141,24 @@ namespace KiCadSharp.Documents
         /// </summary>
         public string? GeneratorVersion
         {
-            get => _root.GetChildValue("generator_version");
+            get => _root.GetChildValue(KiCadTokens.Common.GeneratorVersion);
             set
             {
                 if (value is null)
                 {
-                    _root.RemoveChild("generator_version");
+                    _root.RemoveChild(KiCadTokens.Common.GeneratorVersion);
                     return;
                 }
 
-                _root.SetChildValue("generator_version", value, SQuoteStyle.Quoted);
+                _root.SetChildValue(KiCadTokens.Common.GeneratorVersion, value, SQuoteStyle.Quoted);
             }
         }
 
         /// <summary>Gets or sets the sheet size, the <c>(paper "A4")</c> token.</summary>
         public string Paper
         {
-            get => _root.GetChildValue("paper") ?? "A4";
-            set => _root.SetChildValue("paper", value, SQuoteStyle.Quoted);
+            get => _root.GetChildValue(KiCadTokens.Common.Paper) ?? "A4";
+            set => _root.SetChildValue(KiCadTokens.Common.Paper, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -168,7 +166,7 @@ namespace KiCadSharp.Documents
         /// <see langword="null"/> when the file has no <c>general</c> form.
         /// </summary>
         public KiCadBoardGeneral? General =>
-            _root.GetChild("general") is { } general ? new KiCadBoardGeneral(general) : null;
+            _root.GetChild(KiCadTokens.Board.General) is { } general ? new KiCadBoardGeneral(general) : null;
 
         /// <summary>
         /// Gets the sheet's title block, or <see langword="null"/>. A board KiCad has never had a
@@ -176,14 +174,14 @@ namespace KiCadSharp.Documents
         /// rather than empty.
         /// </summary>
         public KiCadTitleBlock? TitleBlock =>
-            _root.GetChild("title_block") is { } block ? new KiCadTitleBlock(block) : null;
+            _root.GetChild(KiCadTokens.Common.TitleBlock) is { } block ? new KiCadTitleBlock(block) : null;
 
         /// <summary>
         /// Gets the manufacturing settings — the stackup, the plot parameters, the clearances — or
         /// <see langword="null"/> when the file has no <c>setup</c> form.
         /// </summary>
         public KiCadBoardSetup? Setup =>
-            _root.GetChild("setup") is { } setup ? new KiCadBoardSetup(setup) : null;
+            _root.GetChild(KiCadTokens.Board.Setup) is { } setup ? new KiCadBoardSetup(setup) : null;
 
         /// <summary>
         /// Gets the layer table, in the order the file lists it.
@@ -195,7 +193,7 @@ namespace KiCadSharp.Documents
         /// <c>layers</c> form, read at the moment you ask.
         /// </remarks>
         public IReadOnlyList<KiCadBoardLayer> Layers =>
-            _root.GetChild("layers") is { } layers
+            _root.GetChild(KiCadTokens.Common.Layers) is { } layers
                 ? layers.Children.Select(c => new KiCadBoardLayer(c)).ToArray()
                 : Array.Empty<KiCadBoardLayer>();
 
@@ -207,7 +205,7 @@ namespace KiCadSharp.Documents
         /// <see cref="KiCadTrackItem.NetName"/>, <see cref="KiCadZone.NetName"/> or
         /// <see cref="KiCadPad.Net"/>.
         /// </remarks>
-        public KiCadNodeList<KiCadNet> Nets => new(_root, "net", n => new KiCadNet(n));
+        public KiCadNodeList<KiCadNet> Nets => new(_root, KiCadTokens.Common.Net, n => new KiCadNet(n));
 
         /// <summary>
         /// Gets the placed footprints, as the same <see cref="KiCadFootprint"/> view a
@@ -219,46 +217,46 @@ namespace KiCadSharp.Documents
         /// readable through <see cref="KiCadFootprintLibrary"/>, which accepts both tokens; this
         /// list is the KiCad 6+ <c>footprint</c> spelling only.
         /// </remarks>
-        public KiCadNodeList<KiCadFootprint> Footprints => new(_root, "footprint", n => new KiCadFootprint(n));
+        public KiCadNodeList<KiCadFootprint> Footprints => new(_root, KiCadTokens.Footprint.Root, n => new KiCadFootprint(n));
 
         /// <summary>Gets the straight track segments.</summary>
-        public KiCadNodeList<KiCadTrackSegment> Segments => new(_root, "segment", n => new KiCadTrackSegment(n));
+        public KiCadNodeList<KiCadTrackSegment> Segments => new(_root, KiCadTokens.Board.Segment, n => new KiCadTrackSegment(n));
 
         /// <summary>Gets the curved track segments.</summary>
-        public KiCadNodeList<KiCadTrackArc> TrackArcs => new(_root, "arc", n => new KiCadTrackArc(n));
+        public KiCadNodeList<KiCadTrackArc> TrackArcs => new(_root, KiCadTokens.Board.TrackArc, n => new KiCadTrackArc(n));
 
         /// <summary>Gets the vias.</summary>
-        public KiCadNodeList<KiCadVia> Vias => new(_root, "via", n => new KiCadVia(n));
+        public KiCadNodeList<KiCadVia> Vias => new(_root, KiCadTokens.Board.Via, n => new KiCadVia(n));
 
         /// <summary>Gets the copper zones and keepouts.</summary>
-        public KiCadNodeList<KiCadZone> Zones => new(_root, "zone", n => new KiCadZone(n));
+        public KiCadNodeList<KiCadZone> Zones => new(_root, KiCadTokens.Board.Zone, n => new KiCadZone(n));
 
         /// <summary>Gets the board-level lines — silkscreen, courtyard, board outline.</summary>
-        public KiCadNodeList<KiCadGrLine> GraphicLines => new(_root, "gr_line", n => new KiCadGrLine(n));
+        public KiCadNodeList<KiCadGrLine> GraphicLines => new(_root, KiCadTokens.Board.GrLine, n => new KiCadGrLine(n));
 
         /// <summary>Gets the board-level rectangles.</summary>
-        public KiCadNodeList<KiCadGrRect> GraphicRectangles => new(_root, "gr_rect", n => new KiCadGrRect(n));
+        public KiCadNodeList<KiCadGrRect> GraphicRectangles => new(_root, KiCadTokens.Board.GrRect, n => new KiCadGrRect(n));
 
         /// <summary>Gets the board-level circles.</summary>
-        public KiCadNodeList<KiCadGrCircle> GraphicCircles => new(_root, "gr_circle", n => new KiCadGrCircle(n));
+        public KiCadNodeList<KiCadGrCircle> GraphicCircles => new(_root, KiCadTokens.Board.GrCircle, n => new KiCadGrCircle(n));
 
         /// <summary>Gets the board-level arcs.</summary>
-        public KiCadNodeList<KiCadGrArc> GraphicArcs => new(_root, "gr_arc", n => new KiCadGrArc(n));
+        public KiCadNodeList<KiCadGrArc> GraphicArcs => new(_root, KiCadTokens.Board.GrArc, n => new KiCadGrArc(n));
 
         /// <summary>Gets the board-level polygons.</summary>
-        public KiCadNodeList<KiCadGrPoly> GraphicPolygons => new(_root, "gr_poly", n => new KiCadGrPoly(n));
+        public KiCadNodeList<KiCadGrPoly> GraphicPolygons => new(_root, KiCadTokens.Board.GrPoly, n => new KiCadGrPoly(n));
 
         /// <summary>Gets the board-level Bézier curves.</summary>
-        public KiCadNodeList<KiCadGrCurve> GraphicCurves => new(_root, "gr_curve", n => new KiCadGrCurve(n));
+        public KiCadNodeList<KiCadGrCurve> GraphicCurves => new(_root, KiCadTokens.Board.GrCurve, n => new KiCadGrCurve(n));
 
         /// <summary>Gets the board-level text.</summary>
-        public KiCadNodeList<KiCadGrText> Texts => new(_root, "gr_text", n => new KiCadGrText(n));
+        public KiCadNodeList<KiCadGrText> Texts => new(_root, KiCadTokens.Board.GrText, n => new KiCadGrText(n));
 
         /// <summary>Gets the dimensions — the measured annotations on the drawing layers.</summary>
-        public KiCadNodeList<KiCadDimension> Dimensions => new(_root, "dimension", n => new KiCadDimension(n));
+        public KiCadNodeList<KiCadDimension> Dimensions => new(_root, KiCadTokens.Board.Dimension, n => new KiCadDimension(n));
 
         /// <summary>Gets the groups, each naming the items it holds by their UUIDs.</summary>
-        public KiCadNodeList<KiCadGroup> Groups => new(_root, "group", n => new KiCadGroup(n));
+        public KiCadNodeList<KiCadGroup> Groups => new(_root, KiCadTokens.Board.Group, n => new KiCadGroup(n));
 
         /// <summary>
         /// Gets or sets whether the file carries its fonts inside it, the KiCad 9
@@ -266,8 +264,8 @@ namespace KiCadSharp.Documents
         /// </summary>
         public bool EmbeddedFonts
         {
-            get => _root.GetChild("embedded_fonts") is { } flag && (flag.GetValue(0) is null || flag.GetValueAsBool());
-            set => _root.SetChildValue("embedded_fonts", value ? "yes" : "no", SQuoteStyle.Bare);
+            get => _root.GetChild(KiCadTokens.Common.EmbeddedFonts) is { } flag && (flag.GetValue(0) is null || flag.GetValueAsBool());
+            set => _root.SetChildValue(KiCadTokens.Common.EmbeddedFonts, value ? KiCadTokens.Common.Yes : KiCadTokens.Common.No, SQuoteStyle.Bare);
         }
 
         /// <summary>Loads a board.</summary>
@@ -307,15 +305,15 @@ namespace KiCadSharp.Documents
 
         /// <summary>Gets the <c>general</c> form, adding an empty one when the file has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadBoardGeneral RequireGeneral() => new(_root.GetChild("general") ?? _root.CreateChild("general"));
+        public KiCadBoardGeneral RequireGeneral() => new(_root.GetChild(KiCadTokens.Board.General) ?? _root.CreateChild(KiCadTokens.Board.General));
 
         /// <summary>Gets the title block, adding an empty one when the file has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadTitleBlock RequireTitleBlock() => new(_root.GetChild("title_block") ?? _root.CreateChild("title_block"));
+        public KiCadTitleBlock RequireTitleBlock() => new(_root.GetChild(KiCadTokens.Common.TitleBlock) ?? _root.CreateChild(KiCadTokens.Common.TitleBlock));
 
         /// <summary>Gets the setup, adding an empty one when the file has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadBoardSetup RequireSetup() => new(_root.GetChild("setup") ?? _root.CreateChild("setup"));
+        public KiCadBoardSetup RequireSetup() => new(_root.GetChild(KiCadTokens.Board.Setup) ?? _root.CreateChild(KiCadTokens.Board.Setup));
 
         /// <summary>Gets the layer with the given canonical name, e.g. <c>F.Cu</c>.</summary>
         /// <param name="name">The layer name as the file spells it, not its user name.</param>
@@ -347,12 +345,12 @@ namespace KiCadSharp.Documents
 
         private static void RequireBoardToken(SExpression expression, string? parameterName)
         {
-            if (string.Equals(expression.Token, RootToken, StringComparison.Ordinal))
+            if (string.Equals(expression.Token, KiCadTokens.Board.Root, StringComparison.Ordinal))
             {
                 return;
             }
 
-            var message = $"Expected a ({RootToken} ...) form but got ({expression.Token} ...).";
+            var message = $"Expected a ({KiCadTokens.Board.Root} ...) form but got ({expression.Token} ...).";
             throw parameterName is null
                 ? new InvalidOperationException(message)
                 : new ArgumentException(message, parameterName);
@@ -374,8 +372,8 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the finished board thickness in millimetres.</summary>
         public double Thickness
         {
-            get => ReadChildDouble("thickness", 0, 1.6);
-            set => WriteChildDouble("thickness", value);
+            get => ReadChildDouble(KiCadTokens.Common.Thickness, 0, 1.6);
+            set => WriteChildDouble(KiCadTokens.Common.Thickness, value);
         }
 
         /// <summary>
@@ -385,8 +383,8 @@ namespace KiCadSharp.Documents
         /// </summary>
         public bool LegacyTeardrops
         {
-            get => ReadFlag("legacy_teardrops");
-            set => WriteFlag("legacy_teardrops", value);
+            get => ReadFlag(KiCadTokens.Board.LegacyTeardrops);
+            set => WriteFlag(KiCadTokens.Board.LegacyTeardrops, value);
         }
     }
 
@@ -411,41 +409,41 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the sheet title.</summary>
         public string? Title
         {
-            get => ReadChild("title");
-            set => WriteChild("title", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Title);
+            set => WriteChild(KiCadTokens.Common.Title, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the sheet date, as free text — KiCad does not parse it.</summary>
         public string? Date
         {
-            get => ReadChild("date");
-            set => WriteChild("date", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Date);
+            set => WriteChild(KiCadTokens.Common.Date, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the revision, the <c>(rev "…")</c> token.</summary>
         public string? Revision
         {
-            get => ReadChild("rev");
-            set => WriteChild("rev", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Rev);
+            set => WriteChild(KiCadTokens.Common.Rev, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the company name.</summary>
         public string? Company
         {
-            get => ReadChild("company");
-            set => WriteChild("company", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Company);
+            set => WriteChild(KiCadTokens.Common.Company, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets the numbered comment lines, as a live view over the <c>comment</c> children.</summary>
         public KiCadNodeList<KiCadTitleBlockComment> Comments =>
-            new(Node, "comment", n => new KiCadTitleBlockComment(n));
+            new(Node, KiCadTokens.Common.Comment, n => new KiCadTitleBlockComment(n));
 
         /// <summary>
         /// The numbers of the comment lines the file actually carries, in document order. KiCad's
         /// dialog offers nine slots and writes only the ones that were filled in.
         /// </summary>
         public IReadOnlyList<int> CommentNumbers =>
-            Node.GetChildren("comment")
+            Node.GetChildren(KiCadTokens.Common.Comment)
                 .Select(c => c.TryGetValue<int>(0, out var number) ? number : 0)
                 .Where(number => number > 0)
                 .ToArray();
@@ -500,7 +498,7 @@ namespace KiCadSharp.Documents
         /// <param name="number">The comment line, 1 to 9.</param>
         /// <param name="text">The text.</param>
         public KiCadTitleBlockComment(int number, string text)
-            : base(new SExpression("comment"))
+            : base(new SExpression(KiCadTokens.Common.Comment))
         {
             ArgumentNullException.ThrowIfNull(text);
             Node.AddValue(number.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
@@ -579,7 +577,7 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the layer type: <c>signal</c>, <c>power</c>, <c>mixed</c>, <c>jumper</c> or <c>user</c>.</summary>
         public string Type
         {
-            get => Node.GetValue(1) ?? "user";
+            get => Node.GetValue(1) ?? KiCadLayerNames.TypeUser;
             set => WriteValue(1, value, SQuoteStyle.Bare);
         }
 
@@ -608,7 +606,7 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>True when the layer carries copper, which is what <c>signal</c>, <c>power</c>, <c>mixed</c> and <c>jumper</c> all mean.</summary>
-        public bool IsCopper => !string.Equals(Type, "user", StringComparison.Ordinal);
+        public bool IsCopper => !string.Equals(Type, KiCadLayerNames.TypeUser, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -635,32 +633,32 @@ namespace KiCadSharp.Documents
         /// derived from the layer table.
         /// </summary>
         public KiCadStackup? Stackup =>
-            Node.GetChild("stackup") is { } stackup ? new KiCadStackup(stackup) : null;
+            Node.GetChild(KiCadTokens.Board.Stackup) is { } stackup ? new KiCadStackup(stackup) : null;
 
         /// <summary>Gets or sets how far the solder mask is pulled back from a pad, in millimetres.</summary>
         public double PadToMaskClearance
         {
-            get => ReadChildDouble("pad_to_mask_clearance");
-            set => WriteChildDouble("pad_to_mask_clearance", value);
+            get => ReadChildDouble(KiCadTokens.Board.PadToMaskClearance);
+            set => WriteChildDouble(KiCadTokens.Board.PadToMaskClearance, value);
         }
 
         /// <summary>Gets or sets how far the paste stencil aperture is inset from a pad, in millimetres.</summary>
         public double PadToPasteClearance
         {
-            get => ReadChildDouble("pad_to_paste_clearance");
-            set => WriteChildDouble("pad_to_paste_clearance", value);
+            get => ReadChildDouble(KiCadTokens.Board.PadToPasteClearance);
+            set => WriteChildDouble(KiCadTokens.Board.PadToPasteClearance, value);
         }
 
         /// <summary>Gets or sets whether mask slivers between a footprint's own pads are allowed.</summary>
         public bool AllowSoldermaskBridgesInFootprints
         {
-            get => ReadFlag("allow_soldermask_bridges_in_footprints");
-            set => WriteFlag("allow_soldermask_bridges_in_footprints", value);
+            get => ReadFlag(KiCadTokens.Board.AllowSoldermaskBridgesInFootprints);
+            set => WriteFlag(KiCadTokens.Board.AllowSoldermaskBridgesInFootprints, value);
         }
 
         /// <summary>Gets the stackup, adding an empty one when the setup has none.</summary>
         /// <returns>The view.</returns>
-        public KiCadStackup RequireStackup() => new(Require("stackup"));
+        public KiCadStackup RequireStackup() => new(Require(KiCadTokens.Board.Stackup));
     }
 
     /// <summary>
@@ -682,20 +680,20 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets the stackup layers, top to bottom, as a live view over the <c>layer</c> children.</summary>
-        public KiCadNodeList<KiCadStackupLayer> Layers => new(Node, "layer", n => new KiCadStackupLayer(n));
+        public KiCadNodeList<KiCadStackupLayer> Layers => new(Node, KiCadTokens.Common.Layer, n => new KiCadStackupLayer(n));
 
         /// <summary>Gets or sets the surface finish, e.g. <c>HASL</c>, <c>ENIG</c>.</summary>
         public string? CopperFinish
         {
-            get => ReadChild("copper_finish");
-            set => WriteChild("copper_finish", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Board.CopperFinish);
+            set => WriteChild(KiCadTokens.Board.CopperFinish, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets whether the fabricator must hold the declared dielectric constants.</summary>
         public bool DielectricConstraints
         {
-            get => ReadFlag("dielectric_constraints");
-            set => WriteFlag("dielectric_constraints", value);
+            get => ReadFlag(KiCadTokens.Board.DielectricConstraints);
+            set => WriteFlag(KiCadTokens.Board.DielectricConstraints, value);
         }
 
         /// <summary>Gets the total of every layer thickness the stackup declares, in millimetres.</summary>
@@ -739,8 +737,8 @@ namespace KiCadSharp.Documents
         /// </summary>
         public string? Type
         {
-            get => ReadChild("type");
-            set => WriteChild("type", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Type);
+            set => WriteChild(KiCadTokens.Common.Type, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>
@@ -749,40 +747,40 @@ namespace KiCadSharp.Documents
         /// </summary>
         public double Thickness
         {
-            get => ReadChildDouble("thickness");
-            set => WriteChildDouble("thickness", value);
+            get => ReadChildDouble(KiCadTokens.Common.Thickness);
+            set => WriteChildDouble(KiCadTokens.Common.Thickness, value);
         }
 
         /// <summary>Gets or sets the material name, e.g. <c>FR4</c>.</summary>
         public string? Material
         {
-            get => ReadChild("material");
-            set => WriteChild("material", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Board.Material);
+            set => WriteChild(KiCadTokens.Board.Material, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>Gets or sets the relative permittivity of a dielectric layer, 0 when it declares none.</summary>
         public double EpsilonR
         {
-            get => ReadChildDouble("epsilon_r");
-            set => WriteChildDouble("epsilon_r", value);
+            get => ReadChildDouble(KiCadTokens.Board.EpsilonR);
+            set => WriteChildDouble(KiCadTokens.Board.EpsilonR, value);
         }
 
         /// <summary>Gets or sets the dielectric loss tangent, 0 when the layer declares none.</summary>
         public double LossTangent
         {
-            get => ReadChildDouble("loss_tangent");
-            set => WriteChildDouble("loss_tangent", value);
+            get => ReadChildDouble(KiCadTokens.Board.LossTangent);
+            set => WriteChildDouble(KiCadTokens.Board.LossTangent, value);
         }
 
         /// <summary>Gets or sets the colour the fabricator should use, e.g. the mask's <c>green</c>.</summary>
         public string? Color
         {
-            get => ReadChild("color");
-            set => WriteChild("color", value, SQuoteStyle.Quoted);
+            get => ReadChild(KiCadTokens.Common.Color);
+            set => WriteChild(KiCadTokens.Common.Color, value, SQuoteStyle.Quoted);
         }
 
         /// <summary>True when the layer is copper rather than dielectric or a surface finish.</summary>
-        public bool IsCopper => string.Equals(Type, "copper", StringComparison.Ordinal);
+        public bool IsCopper => string.Equals(Type, KiCadLayerNames.TypeCopper, StringComparison.Ordinal);
     }
 
     /// <summary>A net: <c>(net 1 "GND")</c>.</summary>
@@ -809,7 +807,7 @@ namespace KiCadSharp.Documents
         /// <param name="code">The net code.</param>
         /// <param name="name">The net name.</param>
         public KiCadNet(int code, string name)
-            : base(new SExpression("net"))
+            : base(new SExpression(KiCadTokens.Common.Net))
         {
             ArgumentNullException.ThrowIfNull(name);
             Node.AddValue(code.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
