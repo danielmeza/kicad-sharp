@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-using nng;
 namespace KiCadSharp
 {
     public static class KiCadServicesExtensions
@@ -14,9 +13,8 @@ namespace KiCadSharp
             services.AddKeyedSingleton(clientName, (provider, key) =>
             {
                 var settings = provider.GetRequiredService<IOptionsFactory<KiCadClientSettings>>().Create(clientName);
-                var factory = provider.GetRequiredService<IAPIFactory<INngMsg>>();
                 var logger = provider.GetRequiredService<ILogger<KiCadIPCClient>>();
-                return new KiCadIPCClient(factory, settings, logger);
+                return new KiCadIPCClient(settings, logger);
             });
 
             var optioinsBuilder = services.AddOptions<KiCadClientSettings>(clientName)
@@ -39,13 +37,12 @@ namespace KiCadSharp
 
             services.AddKeyedSingleton(clientName, (provider, key) => new KiCad(provider.GetRequiredKeyedService<KiCadIPCClient>(key)));
 
-            services.AddSingleton((provider) =>
-            {
-                var path = Path.GetDirectoryName(typeof(KiCadServicesExtensions).Assembly.Location);
-                var ctx = new NngLoadContext(path);
-                return NngLoadContext.Init(ctx);
-            });
-
+            // There used to be an IAPIFactory<INngMsg> singleton here, built from an
+            // nng.NET NngLoadContext rooted at this assembly's directory: that binding loaded its
+            // own managed assembly and the native library out of runtimes/<rid>/ by hand, and every
+            // client had to be handed the factory. nng is now called directly (KiCadSharp.Interop),
+            // the native library is found by KiCadSharp.Interop.NngLibraryResolver, and there is
+            // nothing to register.
 
             services.AddSingleton<IKiCadFactory, KiCadFactory>();
 

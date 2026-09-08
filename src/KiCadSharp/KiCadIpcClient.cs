@@ -1,11 +1,14 @@
-﻿using Google.Protobuf;
+using System.Diagnostics;
+
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
+
+using KiCadSharp.Interop;
 
 using Kiapi.Common;
 
 using Microsoft.Extensions.Logging;
 
-using nng;
 namespace KiCadSharp
 {
 
@@ -19,19 +22,55 @@ namespace KiCadSharp
 
         public const string DefaultClientName = "kicad.client";
 
+        /// <summary>
+        /// How long one request may wait for its reply before
+        /// <see cref="KiCadConnectionException"/> is thrown.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Defaults to <see cref="Timeout.InfiniteTimeSpan"/>, which is what this client has always
+        /// done and what nng itself defaults to. It is a setting rather than a constant because
+        /// there is no one right number: <c>Ping</c> comes back in under a millisecond, while
+        /// <c>RefillZones</c> on a large board is a long-running operation, and a default short
+        /// enough to protect the first would abort the second.
+        /// </para>
+        /// <para>
+        /// Waiting is no longer the same as hanging, though: the wait is cancellable, so a caller
+        /// that wants a bound can pass a <see cref="CancellationTokenSource"/> with a deadline
+        /// instead of setting this globally.
+        /// </para>
+        /// </remarks>
+        public TimeSpan RequestTimeout { get; set; } = Timeout.InfiniteTimeSpan;
+
     }
     public class KiCadIPCClient : IDisposable
     {
-        private readonly ILogger<KiCadIPCClient> _logger;
-        private readonly IAPIFactory<INngMsg> _messageFactory;
-        private KiCadClientSettings _settings;
-        private EventWaitHandle sync = new EventWaitHandle(false, EventResetMode.ManualReset);
+        // How long to look for the reply on the calling thread before yielding it. KiCad answers a
+        // Ping in well under a millisecond over a unix socket, so the overwhelming majority of
+        // requests finish inside this window and never see a timer.
+        private static readonly TimeSpan SpinWindow = TimeSpan.FromMilliseconds(2);
 
-        private IReqSocket? _socket;
+        // After that, poll on a timer with a doubling delay. Long enough to cost nothing over a
+        // multi-second command, short enough that a cancellation is noticed promptly.
+        private const int MaximumPollDelayMilliseconds = 25;
+
+        private readonly ILogger<KiCadIPCClient> _logger;
+        private readonly KiCadClientSettings _settings;
+        private readonly SemaphoreSlim _exchange = new(1, 1);
+
+        private NngRequestSocket? _socket;
         private CancellationTokenSource _connectionCancellationSource;
-        public KiCadIPCClient(IAPIFactory<INngMsg> messageFactory, KiCadClientSettings settings, ILogger<KiCadIPCClient> logger)
+        private bool _disposed;
+
+        /// <param name="settings">Socket path, token and client name.</param>
+        /// <param name="logger">Where dial and error detail goes.</param>
+        /// <remarks>
+        /// This used to take an <c>IAPIFactory&lt;INngMsg&gt;</c> as its first argument -- the
+        /// factory type of the <c>nng.NET</c> managed binding. nng is now reached by P/Invoke
+        /// (<see cref="Interop.Nng"/>) and there is no factory to hand in.
+        /// </remarks>
+        public KiCadIPCClient(KiCadClientSettings settings, ILogger<KiCadIPCClient> logger)
         {
-            _messageFactory = messageFactory;
             _settings = settings;
             _logger = logger;
             _connectionCancellationSource = new CancellationTokenSource();
@@ -55,12 +94,30 @@ namespace KiCadSharp
                 throw new KiCadConnectionException("Pipename not provided");
             }
 
-            _socket = _messageFactory.RequesterOpen()
-                .ThenDial(_settings.PipeName, nng.Native.Defines.NngFlag.NNG_FLAG_ALLOC)
-                .Unwrap();
+            cancellationToken.ThrowIfCancellationRequested();
 
+            NngRequestSocket socket;
+            try
+            {
+                // Sending is a blocking nng call, so it is bounded by a socket option; receiving is
+                // polled and bounded by the loop in Receive. The dial itself is blocking, as before:
+                // nng bounds it at about 10 s against a socket that is bound but not answering, and
+                // fails immediately against a path that is not there.
+                socket = NngRequestSocket.Dial(_settings.PipeName, _settings.RequestTimeout, _settings.RequestTimeout);
+            }
+            catch (NngException exception)
+            {
+                // nng's failures are the ones worth renaming here. A KiCadConnectionException from
+                // the loader -- no libnng for this platform -- already says everything it can, and
+                // goes past untouched.
+                throw new KiCadConnectionException(
+                    $"Failed to connect to KiCad at '{_settings.PipeName}': {exception.Message}", exception);
+            }
+
+            _socket = socket;
             _connectionCancellationSource = new CancellationTokenSource();
             IsConnected = true;
+            _logger.LogDebug("Connected to KiCad at {Socket} using nng {NngVersion}.", _settings.PipeName, Nng.Version());
             return ValueTask.CompletedTask;
         }
 
@@ -76,10 +133,9 @@ namespace KiCadSharp
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(_connectionCancellationSource.Token, cancellationToken);
 
             // The linked token used to be built and then never looked at, so nothing this client did
-            // could be cancelled or would even notice a disconnect. The nng round trip below is
-            // synchronous and cannot be interrupted once the request is on the wire, so what is
-            // honest here is to refuse to start and to notice on the way out -- not to pretend the
-            // send itself is cancellable.
+            // could be cancelled or would even notice a disconnect. It is now honoured for the whole
+            // round trip: the reply is polled for rather than blocked on, so cancelling while the
+            // request is on the wire returns here instead of waiting for KiCad.
             linked.Token.ThrowIfCancellationRequested();
 
             if (!IsConnected)
@@ -107,26 +163,39 @@ namespace KiCadSharp
 
             var socket = _socket ?? throw new KiCadConnectionException("Not connected to KiCad: the request socket has not been opened.");
 
-            try
-            {
-                var request = _messageFactory.CreateMessage();
-                request.Append(envelope.ToByteArray());
-                socket.SendMsg(request).Unwrap();
-            }
-            catch (Exception ex)
-            {
-                throw new KiCadConnectionException($"Failed to send command to KiCad: {ex.Message}", ex);
-            }
-
             ApiResponse? reply;
+
+            // REQ carries one request at a time. Two callers sharing a client would otherwise
+            // interleave their sends and take each other's replies.
+            await _exchange.WaitAsync(linked.Token);
             try
             {
-                var response = socket.RecvMsg().Unwrap();
-                reply = ApiResponse.Parser.ParseFrom(response.AsSpan());
+                try
+                {
+                    socket.Send(envelope.ToByteArray());
+                }
+                catch (NngException exception)
+                {
+                    throw new KiCadConnectionException($"Failed to send command to KiCad: {exception.Message}", exception);
+                }
+
+                try
+                {
+                    var response = await Receive(socket, linked.Token);
+                    reply = ApiResponse.Parser.ParseFrom(response);
+                }
+                catch (Exception exception) when (exception is NngException or InvalidProtocolBufferException)
+                {
+                    // The two things this block can produce that a caller should see as a connection
+                    // failure: nng refused, or KiCad sent something that is not an ApiResponse. A
+                    // cancellation and a RequestTimeout are already the exceptions they should be,
+                    // and re-wrapping them would only bury them.
+                    throw new KiCadConnectionException($"Error receiving reply from KiCad: {exception.Message}", exception);
+                }
             }
-            catch (Exception ex)
+            finally
             {
-                throw new KiCadConnectionException($"Error receiving reply from KiCad: {ex.Message}", ex);
+                _exchange.Release();
             }
 
             if (reply.Status.Status != ApiStatusCode.AsOk)
@@ -148,6 +217,51 @@ namespace KiCadSharp
             return result;
         }
 
+        /// <summary>
+        /// Waits for the reply to the request just sent, without blocking on nng.
+        /// </summary>
+        /// <remarks>
+        /// A blocking <c>nng_recvmsg</c> with a timeout cannot be used for this: measured, a receive
+        /// that times out destroys the outstanding request, and the reply that arrives afterwards is
+        /// discarded rather than returned by a second receive. Polling a non-blocking receive leaves
+        /// the request standing between looks, which is what gives the token somewhere to be
+        /// observed.
+        /// </remarks>
+        private async ValueTask<byte[]> Receive(NngRequestSocket socket, CancellationToken cancellationToken)
+        {
+            var elapsed = Stopwatch.StartNew();
+            var timeout = _settings.RequestTimeout;
+            var delay = 0;
+
+            while (true)
+            {
+                // Before the receive, not after: Disconnect() cancels this token and then closes the
+                // socket, so a poll that reads the token first reports the disconnect as a
+                // cancellation rather than as a use of a closed socket.
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (socket.TryReceive(out var payload))
+                {
+                    return payload;
+                }
+
+                if (timeout != Timeout.InfiniteTimeSpan && elapsed.Elapsed >= timeout)
+                {
+                    throw new KiCadConnectionException(
+                        $"KiCad did not reply within {timeout}. The request is still outstanding and will be replaced by the next one.");
+                }
+
+                if (elapsed.Elapsed < SpinWindow)
+                {
+                    Thread.SpinWait(64);
+                    continue;
+                }
+
+                delay = delay == 0 ? 1 : Math.Min(delay * 2, MaximumPollDelayMilliseconds);
+                await Task.Delay(delay, cancellationToken);
+            }
+        }
+
         public async ValueTask Send(IMessage command, CancellationToken cancellationToken = default)
         {
             await Send<Empty>(command, cancellationToken);
@@ -155,14 +269,27 @@ namespace KiCadSharp
 
         public void Disconnect()
         {
-            _connectionCancellationSource.Cancel();
+            if (!_disposed)
+            {
+                _connectionCancellationSource.Cancel();
+            }
+
             IsConnected = false;
             _socket?.Dispose();
+            _socket = null;
         }
 
         public void Dispose()
         {
+            if (_disposed)
+            {
+                return;
+            }
+
             Disconnect();
+            _disposed = true;
+            _exchange.Dispose();
+            _connectionCancellationSource.Dispose();
         }
     }
 }
