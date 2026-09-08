@@ -90,7 +90,7 @@ namespace KiCadSharp.Interop
                 throw new KiCadConnectionException(NngLibraryResolver.DescribeFailure(), exception);
             }
 
-            Check("nng_req0_open", result);
+            Check(nameof(Nng.nng_req0_open), result);
             return new NngRequestSocket(socket);
         }
 
@@ -107,7 +107,7 @@ namespace KiCadSharp.Interop
         internal void Dial(string url)
         {
             ObjectDisposedException.ThrowIf(_closed, this);
-            Check("nng_dial", Nng.nng_dial(_socket, url, out _, 0));
+            Check(nameof(Nng.nng_dial), Nng.nng_dial(_socket, url, out _, 0));
         }
 
         /// <summary>Bounds <c>nng_sendmsg</c>. <see cref="Timeout.InfiniteTimeSpan"/> removes the bound, which is nng's default.</summary>
@@ -128,7 +128,7 @@ namespace KiCadSharp.Interop
                 ? -1
                 : (int)Math.Clamp(timeout.TotalMilliseconds, 0, int.MaxValue);
 
-            Check("nng_socket_set_ms", Nng.nng_socket_set_ms(_socket, option, milliseconds));
+            Check(nameof(Nng.nng_socket_set_ms), Nng.nng_socket_set_ms(_socket, option, milliseconds));
         }
 
         /// <summary>
@@ -146,16 +146,16 @@ namespace KiCadSharp.Interop
             ObjectDisposedException.ThrowIf(_closed, this);
             ArgumentNullException.ThrowIfNull(payload);
 
-            Check("nng_msg_alloc", Nng.nng_msg_alloc(out var message, 0));
+            Check(nameof(Nng.nng_msg_alloc), Nng.nng_msg_alloc(out var message, 0));
 
             try
             {
-                Check("nng_msg_append", Nng.nng_msg_append(message, payload, (nuint)payload.Length));
+                Check(nameof(Nng.nng_msg_append), Nng.nng_msg_append(message, payload, (nuint)payload.Length));
 
                 var result = Nng.nng_sendmsg(_socket, message, 0);
                 if (result != 0)
                 {
-                    throw new NngException("nng_sendmsg", result);
+                    throw new NngException(nameof(Nng.nng_sendmsg), result);
                 }
 
                 // nng took ownership; freeing it here would be a double free.
@@ -187,7 +187,7 @@ namespace KiCadSharp.Interop
 
             if (result != 0)
             {
-                throw new NngException("nng_recvmsg", result);
+                throw new NngException(nameof(Nng.nng_recvmsg), result);
             }
 
             try
