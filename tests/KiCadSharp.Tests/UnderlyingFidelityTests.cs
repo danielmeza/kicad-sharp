@@ -9,10 +9,22 @@ namespace KiCadSharp.Tests;
 /// </summary>
 public class UnderlyingFidelityTests
 {
+    /// <summary>
+    /// The extensions of the KiCad files that are s-expressions. Selected rather than excluded on
+    /// purpose: the fixture directory also holds a README and the upstream licences of the vendored
+    /// third-party boards, and a deny-list would have to grow every time one of those does. It did
+    /// not, which is how two licence files came to be parsed as s-expressions and to fail on the
+    /// first unbalanced bracket in their prose.
+    /// </summary>
+    private static readonly string[] SExpressionExtensions =
+        [".kicad_pcb", ".kicad_sch", ".kicad_sym", ".kicad_mod", ".kicad_dru", ".kicad_wks"];
+
     public static TheoryData<string> EveryFixture()
     {
         var data = new TheoryData<string>();
-        foreach (var file in Directory.GetFiles(TestData.Root, "*", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+        foreach (var file in Directory.GetFiles(TestData.Root, "*", SearchOption.AllDirectories)
+                     .Where(f => SExpressionExtensions.Contains(Path.GetExtension(f), StringComparer.Ordinal))
+                     .OrderBy(f => f, StringComparer.Ordinal))
         {
             data.Add(Path.GetRelativePath(TestData.Root, file));
         }
@@ -20,16 +32,19 @@ public class UnderlyingFidelityTests
         return data;
     }
 
+    [Fact]
+    public void EveryFixture_FindsTheFilesThatAreThere()
+    {
+        // A discovery gate that passes over an empty set proves nothing. Nine s-expression fixtures
+        // shipped before the third-party boards arrived; the three of them make twelve.
+        Assert.Equal(12, EveryFixture().Count);
+    }
+
     [Theory]
     [MemberData(nameof(EveryFixture))]
     public void EveryFixture_RoundTripsByteForByte(string relativePath)
     {
         var path = Path.Combine(TestData.Root, relativePath);
-        if (Path.GetExtension(path) is ".kicad_pro")
-        {
-            return; // JSON, not an s-expression.
-        }
-
         var original = File.ReadAllBytes(path);
         var document = SDocument.Load(path);
 

@@ -1,0 +1,5 @@
+# The test fixtures are measured: assertions name their exact byte length and compare a saved copy
+# byte for byte against the original. Git must never translate their line endings — a clone with
+# core.autocrlf=true would rewrite every LF in them and fail every one of those assertions with a
+# diff no one can see. They are treated as binary for that reason, not because they are.
+tests/KiCadSharp.Tests/data/** -text

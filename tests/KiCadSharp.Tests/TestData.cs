@@ -1,7 +1,7 @@
 namespace KiCadSharp.Tests;
 
 /// <summary>
-/// Locates the vendored KiCad 10 fixtures, and gives a test a scratch directory it owns.
+/// Locates the vendored fixtures, and gives a test a scratch directory it owns.
 /// </summary>
 /// <remarks>
 /// The fixtures are copied to the output directory by the project file, so a test can hand a real
@@ -41,8 +41,38 @@ public static class TestData
     /// </summary>
     public static string Kicad10Board => Path.Combine(Root, "kicad10-pcbnew.kicad_pcb");
 
+    /// <summary>
+    /// A 1,865,463-byte KiCad 9 PCIe x4 adapter from Antmicro: 66 net rows, 571 segments, 216
+    /// routed arcs, 92 vias, 5 filled zones over 4 copper layers, 20 footprints with 17 3D models,
+    /// a 13-layer stackup and a title block. Apache-2.0; see the directory's README for provenance.
+    /// </summary>
+    public static string M2PcieAdapterBoard => Path.Combine(Root, "antmicro-m2-pcie-adapter", "m2-pcie-adapter.kicad_pcb");
+
+    /// <summary>
+    /// A 1,221,219-byte KiCad 9 Bitaxe Gamma miner: 102 net rows, 825 segments, 200 vias, 17 zones
+    /// of which 16 are filled and one is a 5-layer keepout, and 147 footprints carrying 479 pads,
+    /// 97 3D models and 913 properties. CERN-OHL-S-2.0; see the directory's README.
+    /// </summary>
+    public static string BitaxeGammaBoard => Path.Combine(Root, "bitaxe-gamma", "bitaxeGamma.kicad_pcb");
+
+    /// <summary>
+    /// A 333,929-byte board written by KiCad 10 itself: <c>(version 20260206)</c>, no board-level
+    /// net table at all, every net named on the item that carries it, 6 <c>(generated …)</c>
+    /// length-tuning patterns, 37 routed arcs and a zone the filler filled into 14 polygons.
+    /// CERN-OHL-W-2.0; see the directory's README.
+    /// </summary>
+    public static string SNEdgeBoard => Path.Combine(Root, "snedge", "SNEdge.kicad_pcb");
+
+    /// <summary>
+    /// The three boards vendored from real, third-party hardware projects. They are the fixtures
+    /// nobody here wrote, which is the whole point of them: everything else under
+    /// <see cref="Root"/> was produced by one project's own tools and therefore agrees with itself.
+    /// </summary>
+    public static IEnumerable<string> RealWorldBoards => new[] { M2PcieAdapterBoard, BitaxeGammaBoard, SNEdgeBoard };
+
     /// <summary>Every <c>.kicad_pcb</c> fixture, for the tests that must hold for all of them.</summary>
-    public static IEnumerable<string> Boards => new[] { PowerInputBoard, ProbeBoard, StackupBoard, Kicad10Board };
+    public static IEnumerable<string> Boards =>
+        new[] { PowerInputBoard, ProbeBoard, StackupBoard, Kicad10Board }.Concat(RealWorldBoards);
 
     /// <summary>The hierarchy that instantiates one child sheet twice, so every designator is used twice.</summary>
     public static string DuplicateRefsRoot => Path.Combine(Root, "duplicate-refs", "duplicate-refs.kicad_sch");
