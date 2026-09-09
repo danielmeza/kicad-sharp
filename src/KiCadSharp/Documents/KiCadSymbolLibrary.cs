@@ -30,7 +30,7 @@ namespace KiCadSharp.Documents
         /// </summary>
         /// <param name="generator">The value of the <c>generator</c> token.</param>
         /// <param name="version">The value of the <c>version</c> token.</param>
-        public KiCadSymbolLibrary(string generator = "KiCad Library Importer", string version = "20211014")
+        public KiCadSymbolLibrary(string generator = "KiCad Library Importer", string version = KiCadDefaults.SymbolLibraryVersion)
         {
             _root = new SExpression(KiCadTokens.Symbol.LibraryRoot);
             _root.CreateChild(KiCadTokens.Common.Version, version);
@@ -66,7 +66,7 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the library format version.</summary>
         public string Version
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? "20211014";
+            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.SymbolLibraryVersion;
             set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
         }
 

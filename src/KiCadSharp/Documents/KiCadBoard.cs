@@ -77,13 +77,13 @@ namespace KiCadSharp.Documents
         /// (MEASURED: pcbnew 10.0.6 rewrites a 20241229 file as 20260206 with no net table at all),
         /// so passing that here would claim a spelling this type does not produce. KiCad reads both.
         /// </param>
-        public KiCadBoard(string generator = "KiCadSharp", string version = "20241229")
+        public KiCadBoard(string generator = "KiCadSharp", string version = KiCadDefaults.BoardVersion)
         {
             _root = new SExpression(KiCadTokens.Board.Root);
             _root.CreateChild(KiCadTokens.Common.Version, version);
             _root.CreateChild(KiCadTokens.Common.Generator).AddValue(generator, SQuoteStyle.Quoted);
-            _root.CreateChild(KiCadTokens.Board.General).CreateChild(KiCadTokens.Common.Thickness, "1.6");
-            _root.CreateChild(KiCadTokens.Common.Paper).AddValue("A4", SQuoteStyle.Quoted);
+            _root.CreateChild(KiCadTokens.Board.General).CreateChild(KiCadTokens.Common.Thickness, KiCadDefaults.BoardThickness);
+            _root.CreateChild(KiCadTokens.Common.Paper).AddValue(KiCadDefaults.Paper, SQuoteStyle.Quoted);
 
             var layers = _root.CreateChild(KiCadTokens.Common.Layers);
             foreach (var (ordinal, name, type, userName) in DefaultLayers)
@@ -123,7 +123,7 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the file format version, KiCad's <c>(version …)</c> date stamp.</summary>
         public string Version
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? "20241229";
+            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.BoardVersion;
             set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
         }
 
@@ -157,7 +157,7 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the sheet size, the <c>(paper "A4")</c> token.</summary>
         public string Paper
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Paper) ?? "A4";
+            get => _root.GetChildValue(KiCadTokens.Common.Paper) ?? KiCadDefaults.Paper;
             set => _root.SetChildValue(KiCadTokens.Common.Paper, value, SQuoteStyle.Quoted);
         }
 

@@ -483,7 +483,7 @@ namespace KiCadSharp.Schematics
         }
 
         /// <summary>True when this is a power or flag symbol, whose designator starts with <c>#</c>.</summary>
-        public bool IsPowerSymbol => ReferenceProperty?.StartsWith('#') == true;
+        public bool IsPowerSymbol => ReferenceProperty?.StartsWith(KiCadDefaults.GeneratedReferencePrefix) == true;
 
         /// <summary>Gets the value of a named field.</summary>
         /// <param name="key">The field key.</param>
