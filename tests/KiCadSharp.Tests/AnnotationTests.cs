@@ -57,7 +57,7 @@ public class AnnotationTests
         Assert.Equal(14, duplicates.Count);
         Assert.Equal(
             new[] { "C90", "D90", "D91", "F1", "J90", "Q90", "R90" },
-            duplicates.Select(d => d.Key).Where(k => !k.StartsWith('#')));
+            duplicates.Select(d => d.Key).Where(k => !k.StartsWith(KiCadDefaults.GeneratedReferencePrefix)));
         Assert.All(duplicates, d => Assert.Equal(new[] { "/PWR1", "/PWR2" }, d.Value));
     }
 
@@ -123,7 +123,7 @@ public class AnnotationTests
 
         Assert.Equal(
             new[] { "C90", "D90", "D91", "F1", "J90", "Q90", "R90" },
-            references.Where(r => r is not null && !r.StartsWith('#')).Order(StringComparer.Ordinal));
+            references.Where(r => r is not null && !r.StartsWith(KiCadDefaults.GeneratedReferencePrefix)).Order(StringComparer.Ordinal));
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class AnnotationTests
         var child = hierarchy.SheetInstances[1].Schematic;
         Assert.Equal(
             new[] { "C90", "D90", "D91", "F1", "J90", "Q90", "R90" },
-            child.Symbols.Select(s => s.ReferenceProperty).Where(r => r is not null && !r.StartsWith('#')).Order(StringComparer.Ordinal));
+            child.Symbols.Select(s => s.ReferenceProperty).Where(r => r is not null && !r.StartsWith(KiCadDefaults.GeneratedReferencePrefix)).Order(StringComparer.Ordinal));
     }
 
     [Fact]

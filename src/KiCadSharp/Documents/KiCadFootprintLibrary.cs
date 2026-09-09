@@ -34,13 +34,16 @@ namespace KiCadSharp.Documents
         /// <summary>Creates a new, empty board-shaped library.</summary>
         /// <param name="generator">The value of the <c>generator</c> token.</param>
         /// <param name="version">The value of the <c>version</c> token.</param>
-        public KiCadFootprintLibrary(string generator = "KiCad Library Importer", string version = "20211014")
+        public KiCadFootprintLibrary(string? generator = null, string? version = null)
         {
+            generator ??= KiCadDefaults.LibraryGenerator;
+            version ??= KiCadDefaults.FootprintLibraryVersion;
+
             _root = new SExpression(KiCadTokens.Board.Root);
             _root.CreateChild(KiCadTokens.Common.Version, version);
             _root.CreateChild(KiCadTokens.Common.Generator).AddValue(generator, SQuoteStyle.Quoted);
             _root.CreateChild(KiCadTokens.Board.General);
-            _root.CreateChild(KiCadTokens.Common.Paper).AddValue("A4", SQuoteStyle.Quoted);
+            _root.CreateChild(KiCadTokens.Common.Paper).AddValue(KiCadDefaults.Paper, SQuoteStyle.Quoted);
             _root.CreateChild(KiCadTokens.Common.Layers);
             _document = new SDocument();
             _document.Add(_root);
@@ -77,14 +80,14 @@ namespace KiCadSharp.Documents
         /// <summary>Gets or sets the file format version.</summary>
         public string Version
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? "20211014";
+            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.FootprintLibraryVersion;
             set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the name of the program that wrote the file.</summary>
         public string Generator
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? "KiCad Library Importer";
+            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? KiCadDefaults.LibraryGenerator;
             set => _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
         }
 
