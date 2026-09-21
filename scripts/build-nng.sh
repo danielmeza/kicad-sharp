@@ -12,12 +12,19 @@
 # The nng workflow (.github/workflows/nng.yml) runs --check for both, on GitHub's macos-14 and
 # windows-11-arm runners, and uploads what it built.
 #
-# The flags are nng.NET's own, from scripts/build_nng.ps1 and dockerfiles/build_nng/Dockerfile in
-# jeikabu/nng.NETCore, which is how the other six libraries in the package were built:
+# The flags are the ones the other six libraries in the package were built with. nng.NET's
+# scripts/build_nng.ps1 and dockerfiles/build_nng/Dockerfile (jeikabu/nng.NETCore) say:
 #
 #   -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DNNG_ELIDE_DEPRECATED=ON -DNNG_TESTS=OFF -DNNG_TOOLS=OFF
 #
-# plus what the platform needs and nothing else:
+# with one correction, taken from the binaries rather than the script: NNG_ELIDE_DEPRECATED is off.
+# nng 1.3.2 has no such option, and nng.NET's Windows nng.dll came from an nng snapshot whose CMake
+# never passed it to the compiler (nng fixed that in 44b8e23f), so all six export nng's deprecated
+# nng_getopt/nng_setopt family. Built from the 1.4.0 tag with the flag on, win-arm64 exported 427
+# nng functions where win-x64 and win-x86 export 497; with it off, it exports the same 497. KiCadSharp
+# calls none of the 70, and a platform should not be the one where a function is missing.
+#
+# Beyond that, only what the platform needs:
 #   osx-arm64   -DCMAKE_OSX_ARCHITECTURES=arm64, and a deployment target of 11.0, the first macOS on
 #               Apple silicon. Left unset it would be the build machine's macOS, and the library would
 #               not load on anything older.
@@ -86,7 +93,7 @@ if [[ "$ACTUAL_COMMIT" != "$COMMIT" ]]; then
     exit 1
 fi
 
-FLAGS=(-DBUILD_SHARED_LIBS=ON -DNNG_ELIDE_DEPRECATED=ON -DNNG_TESTS=OFF -DNNG_TOOLS=OFF)
+FLAGS=(-DBUILD_SHARED_LIBS=ON -DNNG_TESTS=OFF -DNNG_TOOLS=OFF)
 
 echo "Building nng $TAG ($COMMIT) for $RID with $(cmake --version | head -n 1) ..."
 case "$RID" in
@@ -102,7 +109,7 @@ case "$RID" in
         # -Brepro, not /Brepro: Git Bash would rewrite an argument that starts with a slash into a
         # Windows path. MSVC takes either spelling.
         cmake -S "$WORK/src" -B "$WORK/build" -G "Visual Studio 17 2022" -A ARM64 \
-            "${FLAGS[@]}" \
+            "${FLAGS[@]}" -DNNG_ELIDE_DEPRECATED=OFF \
             -DCMAKE_C_FLAGS_INIT=-Brepro -DCMAKE_SHARED_LINKER_FLAGS_INIT=-Brepro
         cmake --build "$WORK/build" --config Release
         BUILT="$WORK/build/Release/nng.dll"

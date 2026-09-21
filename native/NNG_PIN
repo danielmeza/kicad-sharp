@@ -17,5 +17,5 @@
 # the nng workflow uploads), and commit the new file and its SHA-256 together.
 #
 # rid       tag     commit                                    file          sha256
-osx-arm64   v1.3.2  32b12a311e1f490f0d5c629ce887edfbf18f2d2c  libnng.dylib  0000000000000000000000000000000000000000000000000000000000000000
+osx-arm64   v1.3.2  32b12a311e1f490f0d5c629ce887edfbf18f2d2c  libnng.dylib  0d4acb34f085a67aec7e770bc0d0bad668990b5f798b3211d4b910dfd5b4c3bc
 win-arm64   v1.4.0  d020adda8f0348d094790618703b8341a26007a3  nng.dll       0000000000000000000000000000000000000000000000000000000000000000
