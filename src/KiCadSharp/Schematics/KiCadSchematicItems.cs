@@ -426,7 +426,10 @@ namespace KiCadSharp.Schematics
     /// </summary>
     /// <remarks>
     /// The same token as the text inside a symbol, so this is the symbol view plus the two things a
-    /// sheet adds: a UUID, and the simulator exclusion flag KiCad 8 introduced.
+    /// sheet adds: a UUID, and the simulator exclusion flag KiCad 8 introduced. One thing differs:
+    /// on a sheet KiCad writes the angle in degrees, not tenths (KiCad 10.0.6 reads it with
+    /// <c>DEGREES_T</c> in <c>parseSchText</c>), so <see cref="KiCadText.RotationDegrees"/> here is
+    /// the file's own number.
     /// </remarks>
     public sealed class KiCadSchematicText : KiCadText
     {
@@ -436,6 +439,9 @@ namespace KiCadSharp.Schematics
             : base(node)
         {
         }
+
+        /// <summary>A sheet's text angle is stored in degrees.</summary>
+        private protected override double FileUnitsPerDegree => 1;
 
         /// <summary>Gets or sets whether the simulator ignores this text.</summary>
         public bool ExcludeFromSim

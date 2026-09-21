@@ -15,7 +15,11 @@ namespace KiCadSharp.Documents
     /// </remarks>
     /// <param name="X">Millimetres, KiCad's own axis.</param>
     /// <param name="Y">Millimetres.</param>
-    /// <param name="Rotation">Degrees.</param>
+    /// <param name="Rotation">
+    /// The angle as the file stores it, which is degrees everywhere except a symbol's
+    /// <c>(text ...)</c>: KiCad stores that one in tenths of a degree. See
+    /// <see cref="KiCadText.RotationDegrees"/>.
+    /// </param>
     public readonly record struct KiCadPosition(double X, double Y, double Rotation = 0)
     {
         internal static KiCadPosition Read(SExpression? at) => at is null
