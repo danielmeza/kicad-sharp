@@ -53,7 +53,12 @@ namespace KiCadSharp
         /// </remarks>
         public const string FootprintLibraryVersion = "20211014";
 
-        /// <summary>The format stamp <see cref="Documents.KiCadSymbolLibrary"/> writes.</summary>
+        /// <summary>The format stamp a new <see cref="Documents.KiCadSymbolLibrary"/> starts with.</summary>
+        /// <remarks>
+        /// It describes symbols built in memory. The first symbol a new library takes from another
+        /// library replaces it with that library's stamp, because KiCad reads some content differently
+        /// by version; see <see cref="Documents.KiCadSymbolLibrary.AddSymbol(Documents.KiCadSymbol)"/>.
+        /// </remarks>
         public const string SymbolLibraryVersion = "20211014";
 
         /// <summary>The board thickness a new board is created with, in millimetres.</summary>

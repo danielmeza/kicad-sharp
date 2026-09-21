@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -120,15 +121,39 @@ namespace KiCadSharp.Documents
         /// <param name="symbol">The symbol to append.</param>
         /// <returns>The symbol, now a child of this library.</returns>
         /// <remarks>
+        /// <para>
         /// A symbol taken from another library leaves that library: the node itself moves, bytes and
         /// all, so the view you passed is the symbol in this one (see <see cref="KiCadNode"/>).
         /// <c>foreach (var s in source.Symbols) AddSymbol(s)</c> moves every symbol and leaves
         /// <c>source</c> with none. To keep the source as it was, add
         /// <c>new KiCadSymbol(s.Node.Clone())</c> instead.
+        /// </para>
+        /// <para>
+        /// <b>The first symbol taken from another library sets this library's <see cref="Version"/>.</b>
+        /// When this library holds no symbols yet and <paramref name="symbol"/> still sits in another
+        /// <c>kicad_symbol_lib</c>, this library takes that one's version. KiCad reads some content
+        /// differently by version, so a symbol is read as it was written only under the stamp it was
+        /// written under. In KiCad 10.0.6, a lone <c>~</c> in a property value, pin name or pin number
+        /// is an empty string before <c>20250318</c>; an arc over 180° is replaced by a shorter arc
+        /// between the same end points up to <c>20230121</c>; and a second body style is inferred from
+        /// the drawings before <c>20250827</c>, but dropped from then on unless the symbol declares
+        /// <c>(body_styles demorgan)</c>.
+        /// </para>
+        /// <para>
+        /// A library that already holds symbols keeps its version, because changing it would change how
+        /// KiCad reads them. Symbols from libraries of different versions therefore cannot all be read
+        /// as written from one file, and this library does not convert between versions. A symbol that
+        /// is in no library leaves the version alone: one built in memory, a clone, or one taken from a
+        /// schematic's <c>lib_symbols</c>, whose version is a schematic format version rather than a
+        /// library one. A copy made with <c>Node.Clone()</c> is in no library either, so when copying,
+        /// set <see cref="Version"/> to the source's. Set it after adding to choose the stamp yourself.
+        /// <c>Symbols.Add</c> moves the node without touching the version.
+        /// </para>
         /// </remarks>
         public KiCadSymbol AddSymbol(KiCadSymbol symbol)
         {
             ArgumentNullException.ThrowIfNull(symbol);
+            TakeVersionOfSourceLibrary(symbol.Node.Parent);
             _root.AddChild(symbol.Node);
             return symbol;
         }
@@ -137,6 +162,27 @@ namespace KiCadSharp.Documents
         /// <param name="id">The symbol's name.</param>
         /// <returns>The new symbol.</returns>
         public KiCadSymbol AddSymbol(string id) => AddSymbol(new KiCadSymbol(id));
+
+        /// <summary>
+        /// Takes the version of <paramref name="source"/> when it is another symbol library and this
+        /// one holds no symbols yet. See <see cref="AddSymbol(KiCadSymbol)"/>.
+        /// </summary>
+        /// <param name="source">The form the symbol is being taken out of, if any.</param>
+        private void TakeVersionOfSourceLibrary(SExpression? source)
+        {
+            if (source is null
+                || ReferenceEquals(source, _root)
+                || !string.Equals(source.Token, KiCadTokens.Symbol.LibraryRoot, StringComparison.Ordinal)
+                || Symbols.Count > 0
+                || source.GetChildValue(KiCadTokens.Common.Version) is not { } version
+                || !long.TryParse(version, NumberStyles.None, CultureInfo.InvariantCulture, out _)
+                || string.Equals(version, _root.GetChildValue(KiCadTokens.Common.Version), StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Version = version;
+        }
 
         /// <summary>Removes the first symbol with the given name.</summary>
         /// <param name="id">The symbol's name.</param>
