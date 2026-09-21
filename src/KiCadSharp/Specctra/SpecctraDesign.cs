@@ -336,11 +336,11 @@ namespace KiCadSharp.Specctra
                 return structure;
             }
 
-            private (SpecctraNode Placement, SpecctraNode Library, Dictionary<string, List<string>> Pins) Parts()
+            private (SpecctraNode Placement, SpecctraNode Library, Dictionary<string, List<SpecctraPinRef>> Pins) Parts()
             {
                 var placement = new SpecctraNode("placement");
                 var library = new SpecctraNode("library");
-                var pins = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+                var pins = new Dictionary<string, List<SpecctraPinRef>>(StringComparer.Ordinal);
                 var components = new Dictionary<string, SpecctraNode>(StringComparer.Ordinal);
                 var images = new Dictionary<string, (string Signature, string Name)>(StringComparer.Ordinal);
                 var imageCount = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -391,7 +391,7 @@ namespace KiCadSharp.Specctra
                             pins[net] = list = [];
                         }
 
-                        list.Add(id + "-" + pin);
+                        list.Add(new SpecctraPinRef(id, pin));
                     }
 
                     if (!components.TryGetValue(imageName, out var component))

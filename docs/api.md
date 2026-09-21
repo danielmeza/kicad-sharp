@@ -131,12 +131,23 @@ board.Save("board.kicad_pcb");
 | `SpecctraOptions`, `SpecctraNetClass` | The net classes — which live in the project file, not the board — and the hole clearance. |
 | `SpecctraSession` | `Parse(text)`, `Wires`, `Vias`, `ApplyTo(board, viaDrill)`: replaces every unlocked track, arc and via with the session's, keeps the locked ones, writes nets in whichever spelling the board uses. |
 | `SpecctraNode`, `SpecctraReader` | The format itself: its own `string_quote`, and KiCad's rule for which words are quoted. |
+| `SpecctraPinRef` | A pin in a net's `(pins …)`: written as KiCad's `PIN_REF` writes it — part and pin each quoted only if they need it, joined by a bare `-` — and read back the same way. |
 
 **Judged against KiCad.** `Specctra/SpecctraDesignOracleTests` compares the design with the one
 pcbnew 10.0.6 writes for five boards, item by item — every pin's position, rotation and padstack
 geometry, every placement, net, class, plane, keepout, wire and via — and
 `SpecctraSessionOracleTests` compares an import with pcbnew's own import of the same Freerouting
 session, track by track. `data/oracles/README.md` records how each oracle was made.
+
+**And SPELLED as KiCad spells it.** Those comparisons parse both files, and a parser strips quotes;
+Freerouting does not. 0.3.0 quoted every pin reference whole — `"U10-1"` where KiCad writes
+`U10-1` — and Freerouting 2.4.1 read no pins from it at all: 0 connections on a board with 95.
+`SpecctraSpellingTests` now compares every token's quoting with KiCad's for all five boards.
+
+Freerouting logs *"exported from an old KiCad version"* for these designs: it calls any host whose
+name contains "kicad" with a leading version number of 5 or less old, and this one is KiCadSharp
+0.x. Read from Freerouting 2.4.1's source, `Communication.hostIsOldKicad` feeds that one log line
+and nothing else.
 
 ### Annotation
 
