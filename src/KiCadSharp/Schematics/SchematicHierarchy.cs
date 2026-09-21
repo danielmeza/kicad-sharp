@@ -119,6 +119,7 @@ namespace KiCadSharp.Schematics
         /// <param name="rootSchematicPath">Path to the root <c>.kicad_sch</c>.</param>
         /// <returns>The hierarchy.</returns>
         /// <exception cref="FileNotFoundException">A sheet names a file that is not there.</exception>
+        /// <exception cref="Documents.KiCadDocumentTypeException">The root file, or a sheet file it names, is not a schematic.</exception>
         /// <exception cref="InvalidOperationException">The hierarchy is deeper than 64 sheets, which means it is recursive.</exception>
         public static SchematicHierarchy Load(string rootSchematicPath)
         {

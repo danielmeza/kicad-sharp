@@ -104,17 +104,16 @@ namespace KiCadSharp.Documents
         public KiCadBoard(SExpression expression)
         {
             ArgumentNullException.ThrowIfNull(expression);
-            RequireBoardToken(expression, nameof(expression));
+            KiCadDocumentRoot.RequireArgument(expression, nameof(expression), KiCadTokens.Board.Root);
             _root = expression;
             _document = new SDocument();
             _document.Add(expression);
         }
 
-        private KiCadBoard(SDocument document)
+        private KiCadBoard(SDocument document, string? filePath)
         {
             _document = document;
-            _root = document.Root ?? throw new InvalidOperationException("The file holds no s-expression.");
-            RequireBoardToken(_root, null);
+            _root = KiCadDocumentRoot.Require(document, filePath, "board", KiCadTokens.Board.Root);
         }
 
         /// <summary>Gets the whole parsed file, comments and all.</summary>
@@ -274,19 +273,31 @@ namespace KiCadSharp.Documents
         /// <summary>Loads a board.</summary>
         /// <param name="filePath">Path to a <c>.kicad_pcb</c>.</param>
         /// <returns>The board.</returns>
-        public static KiCadBoard Load(string filePath) => new(SDocument.Load(filePath));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a board: its root is not <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
+        public static KiCadBoard Load(string filePath) => new(SDocument.Load(filePath), filePath);
 
         /// <summary>Loads a board asynchronously.</summary>
         /// <param name="filePath">Path to a <c>.kicad_pcb</c>.</param>
         /// <param name="cancellationToken">Cancels the read.</param>
         /// <returns>The board.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a board: its root is not <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static async Task<KiCadBoard> LoadAsync(string filePath, CancellationToken cancellationToken = default) =>
-            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false));
+            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false), filePath);
 
         /// <summary>Parses a board from text.</summary>
         /// <param name="text">The file contents.</param>
         /// <returns>The board.</returns>
-        public static KiCadBoard Parse(string text) => new(SDocument.Parse(text));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The text is not a board: its root is not <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
+        public static KiCadBoard Parse(string text) => new(SDocument.Parse(text), null);
 
         /// <summary>
         /// Writes the board back out. An untouched board comes out byte for byte; a changed one
@@ -344,19 +355,6 @@ namespace KiCadSharp.Documents
             var net = new KiCadNet(code, name);
             _root.AddChild(net.Node);
             return net;
-        }
-
-        private static void RequireBoardToken(SExpression expression, string? parameterName)
-        {
-            if (string.Equals(expression.Token, KiCadTokens.Board.Root, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            var message = $"Expected a ({KiCadTokens.Board.Root} ...) form but got ({expression.Token} ...).";
-            throw parameterName is null
-                ? new InvalidOperationException(message)
-                : new ArgumentException(message, parameterName);
         }
     }
 

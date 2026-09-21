@@ -209,7 +209,10 @@ namespace KiCadSharp.Schematics
         /// <summary>Loads a schematic from a file.</summary>
         /// <param name="filePath">Path to the <c>.kicad_sch</c>.</param>
         /// <returns>The schematic.</returns>
-        /// <exception cref="InvalidOperationException">The file is not a schematic.</exception>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a schematic: its root is not <c>(kicad_sch …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static KiCadSchematic Load(string filePath)
         {
             ArgumentNullException.ThrowIfNull(filePath);
@@ -221,6 +224,10 @@ namespace KiCadSharp.Schematics
         /// <param name="filePath">Path to the <c>.kicad_sch</c>.</param>
         /// <param name="cancellationToken">Cancels the read.</param>
         /// <returns>The schematic.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a schematic: its root is not <c>(kicad_sch …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static async Task<KiCadSchematic> LoadAsync(string filePath, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(filePath);
@@ -231,6 +238,10 @@ namespace KiCadSharp.Schematics
         /// <summary>Parses a schematic from text.</summary>
         /// <param name="text">The file contents.</param>
         /// <returns>The schematic.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The text is not a schematic: its root is not <c>(kicad_sch …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
         public static KiCadSchematic Parse(string text) => From(SDocument.Parse(text), null);
 
         /// <summary>Writes the schematic back out.</summary>
@@ -247,19 +258,8 @@ namespace KiCadSharp.Schematics
         /// <returns>The file contents.</returns>
         public string ToText() => _document.ToText();
 
-        private static KiCadSchematic From(SDocument document, string? filePath)
-        {
-            var root = document.Root
-                ?? throw new InvalidOperationException($"'{filePath ?? "<text>"}' holds no s-expression.");
-
-            if (!string.Equals(root.Token, KiCadTokens.Schematic.Root, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException(
-                    $"Expected a ({KiCadTokens.Schematic.Root} ...) file but the root form is ({root.Token} ...).");
-            }
-
-            return new KiCadSchematic(document, root, filePath);
-        }
+        private static KiCadSchematic From(SDocument document, string? filePath) =>
+            new(document, KiCadDocumentRoot.Require(document, filePath, "schematic", KiCadTokens.Schematic.Root), filePath);
     }
 
     /// <summary>
