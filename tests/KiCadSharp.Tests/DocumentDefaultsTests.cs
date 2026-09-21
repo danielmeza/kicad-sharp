@@ -45,6 +45,10 @@ public class DocumentDefaultsTests
         Assert.Equal("20211014", new KiCadSymbolLibrary().Version);
 
     [Fact]
+    public void TheFootprintStampIsTheKiCad10Format() =>
+        Assert.Equal("20260206", new KiCadFootprint("F").Version);
+
+    [Fact]
     public void ANewDocumentIsA4AndOnePointSixMillimetresThick()
     {
         var board = new KiCadBoard();
@@ -59,6 +63,7 @@ public class DocumentDefaultsTests
         Assert.Equal("KiCadSharp", new KiCadBoard().Generator);
         Assert.Equal("KiCad Library Importer", new KiCadFootprintLibrary().Generator);
         Assert.Equal("KiCad Library Importer", new KiCadSymbolLibrary().Generator);
+        Assert.Equal("KiCad Library Importer", new KiCadFootprint("F").Node.GetChildValue(KiCadTokens.Common.Generator));
     }
 
     // ── The wiring: both halves route through the constant ───────────────────
@@ -90,6 +95,15 @@ public class DocumentDefaultsTests
 
         Assert.Equal(KiCadDefaults.BoardVersion, board.Version);
         Assert.Equal(KiCadDefaults.BoardThicknessMm, board.General!.Thickness);
+    }
+
+    [Fact]
+    public void ANewFootprintCarriesTheFootprintStampAndTheLibraryGenerator()
+    {
+        var footprint = new KiCadFootprint("F");
+
+        Assert.Equal(KiCadDefaults.FootprintVersion, footprint.Version);
+        Assert.Equal(KiCadDefaults.LibraryGenerator, footprint.Node.GetChildValue(KiCadTokens.Common.Generator));
     }
 
     [Fact]

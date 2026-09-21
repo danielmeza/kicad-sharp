@@ -101,7 +101,7 @@ plus `Document` and `Name`.
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
 | `KiCadText` | — | Text inside a symbol: `Text`, `Position`, `RotationDegrees`, `FontEffects`. KiCad stores this angle in **tenths of a degree**, so a vertical text is `(at x y 900)` and `Position.Rotation` reads 900. `RotationDegrees` converts. The four-argument constructor writes its angle unchanged and is obsolete. `KiCadSchematicText`, which is text on a sheet, stores degrees, so there `RotationDegrees` is the number in the file. |
 | `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). |
-| `KiCadFootprint` | — | `Id`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
+| `KiCadFootprint` | — | `Id`, `Version`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
 | `KiCadSchematic` | `.kicad_sch` | `Load`/`LoadAsync`/`Parse`, `Save`, `ToText`, `Uuid`, `Symbols`, `Sheets`, `FilePath`, `IsModified`. |
 | `KiCadSchematicSymbol` | — | `Uuid`, `LibId`, `Unit`, `Properties`, `ReferenceProperty`, `IsPowerSymbol`, `GetInstanceReference`, `SetInstanceReference`, `PruneInstances`. |
 | `KiCadSheet` | — | `Uuid`, `SheetName`, `SheetFile`, `Properties`. |
@@ -201,6 +201,18 @@ because changing it would change how those symbols read. A symbol built in memor
 or the `Node.Clone()` above) and one from a schematic leave the version alone, so when you copy, set
 `Version` to the source's. Nothing converts symbols between versions, so symbols from libraries
 of different versions cannot all be read as written from one file.
+
+**A footprint built in memory carries KiCad 10's format stamp.** `new KiCadFootprint(id)` starts with
+`(version 20260206)` and `(generator "KiCad Library Importer")`, where KiCad 10.0.6 writes them in a
+footprint library (#63). Without a version, KiCad reads a `.kicad_mod` as format 0, which is KiCad 5's:
+it refuses an arc drawn by `start`, `mid` and `end`, and it makes a footprint with no `attr` a
+through-hole one. A footprint read from a file keeps the version it has, or none, and so does a copy
+of one. A KiCad 5 module's `start`/`end`/`angle` arcs depend on having none. `KiCadFootprint.Version`
+reads it and sets it, and `null` removes it. KiCad writes a footprint inside a board without a
+version. A footprint that has one there makes KiCad read the rest of the board under the greater of
+the two versions. For example, a via after a new footprint on a `new KiCadBoard()` (`20241229`) loses
+its explicit "no" covering and plugging. To place a new footprint on a board stamped with an older
+format, set its `Version` to `null` first (#73).
 
 ### Copper geometry — `KiCadSharp.Geometry`
 

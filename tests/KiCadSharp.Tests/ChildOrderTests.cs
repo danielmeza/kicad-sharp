@@ -242,7 +242,7 @@ public class ChildOrderTests
     [Fact]
     public void AVersionAddedToAFileThatHadNone_GoesFirst()
     {
-        var footprint = new KiCadFootprint("F");
+        var footprint = new KiCadFootprint("F") { Version = null }; // a new footprint has one (#63)
         footprint.Arcs.Add().Start = new KiCadPosition(0, 0);
         new KiCadFootprintLibrary(footprint.Node).Version = "20260206";
         Assert.Equal("version", footprint.Node.Children[0].Token);
@@ -393,9 +393,9 @@ public class ChildOrderTests
     /// kicad-cli 10.0.6. Before #59 each of these made KiCad refuse the whole file.
     /// </summary>
     /// <remarks>
-    /// The files carry the version pcbnew 10.0.6 stamps, taken from the board it wrote. KiCad reads
-    /// some geometry differently under older stamps (a 270° arc, for one), and a footprint with no
-    /// version at all is read by KiCad 5 rules, which reject a modern arc outright.
+    /// The board carries the version pcbnew 10.0.6 stamps, taken from the board it wrote. The
+    /// footprint carries the one it was built with, which is the same (#63); before that it had
+    /// none, and KiCad read it by KiCad 5 rules, which reject a modern arc outright.
     /// </remarks>
     [Fact]
     public void KiCadLoadsEveryFormBuiltInTheWrongOrder()
@@ -431,7 +431,6 @@ public class ChildOrderTests
         arc.End = new KiCadPosition(1, 1);
         arc.Mid = new KiCadPosition(0.292893, 0.707107);
         arc.Start = new KiCadPosition(0, 0);
-        new KiCadFootprintLibrary(footprint.Node).Version = version;
 
         var pretty = Directory.CreateDirectory(Path.Combine(scratch, "WrongOrder.pretty")).FullName;
         KiCadFootprintLibrary.SaveFootprint(footprint, Path.Combine(pretty, "WrongOrder.kicad_mod"));
