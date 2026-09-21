@@ -206,12 +206,19 @@ stripping those blocks from the file before and after leaves two identical texts
 
 ## `KiCadSharp.Protos`
 
-12 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by
-[`protos/KICAD_PIN`](protos/KICAD_PIN) to a KiCad **release tag** — never a branch, because the
-generated client speaks one KiCad version's wire format and a moving branch would desynchronise it
-silently.
+15 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by
+[`protos/KICAD_PIN`](protos/KICAD_PIN) to one KiCad **commit**, recorded together with the tag or
+branch it was taken from. The commit is what the sync script fetches and what CI compares against,
+so a branch pin cannot float: the generated client speaks one KiCad version's wire format, and the
+vendored files change only when someone edits the pin on purpose.
 
-Currently pinned to **KiCad 10.0.6** (`caf7377e9cb6fa1535ec3596dcb8c99bf44a996e`).
+A release tag is the preferred ref, because it is the only ref a user's KiCad build can be matched
+against. Currently pinned to the **KiCad `10.0` branch** at
+`a51420ea006adad3155619e1fdbd4cb0aae90f91` (2026-09-21), which builds as `10.0.6-unknown` and
+carries the 10.0.7 API additions ahead of any 10.0.7 tag: embedded files, design variants, PCB
+tables, reference points, pad and via teardrops, and the document header on `BeginCommit` /
+`EndCommit`. The pin moves to the 10.0.7 tag once KiCad cuts it
+([#47](https://github.com/danielmeza/kicad-sharp/issues/47)).
 
 They used to arrive through a `submodules/kicad` git submodule pointed at the full KiCad source
 tree. Measured, at the same tag:
@@ -220,17 +227,18 @@ tree. Measured, at the same tag:
 |---|---|
 | Submodule, `git clone --depth 1 --branch 10.0.6` | **1.4 GB** on disk (248 MB `.git` + 1.1 GB working tree), 18,347 files, 18.7 s |
 | Sparse checkout of `api/proto` only | 3.5 MB, 2.2 s — but `actions/checkout` does a plain clone for submodules, so CI pays the full 1.4 GB anyway |
-| **Vendored (this repo)** | **128 KB**, 12 files, already present — no fetch, builds offline |
+| **Vendored (this repo)** | **~100 KB**, 15 files, already present — no fetch, builds offline |
 
 Vendoring wins on the numbers and loses nothing, because the pin is enforced rather than trusted:
 
 ```
-scripts/sync-protos.sh            # re-fetch protos/ from the pinned tag
+scripts/sync-protos.sh            # re-fetch protos/ from the pinned commit
 scripts/sync-protos.sh --check    # fail if protos/ has drifted from the pin  (runs in CI)
 ```
 
-`--check` also fails if the upstream tag itself has been moved to a different commit. Both use a
-blobless sparse clone, so the check costs about 3 MB, not 1.4 GB.
+`--check` also fails if the pinned ref is a tag that has been moved to a different commit, or no
+longer exists; a branch that has moved past the pinned commit is only reported. Both modes fetch the
+one commit as a blobless sparse checkout, so the check costs about 3 MB, not 1.4 GB.
 
 To move to a newer KiCad: edit both lines of `protos/KICAD_PIN`, run `scripts/sync-protos.sh`, and
 commit the result.

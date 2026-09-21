@@ -1,9 +1,18 @@
-# The KiCad release whose api/proto tree is vendored in this directory.
+# The KiCad commit whose api/proto tree is vendored in this directory.
 #
-# This MUST be a release tag, never a branch: the generated client speaks the wire format of one
-# KiCad version, and tracking a moving branch would silently desynchronise the messages this library
-# sends from the KiCad the user is running.
+# KICAD_COMMIT is the exact commit: it is what scripts/sync-protos.sh fetches and what its --check
+# mode verifies against, so the vendored copies never drift, whatever the ref does upstream.
+# KICAD_REF is the tag or branch that commit was taken from, kept for humans and for the guard in
+# the script: a tag must still resolve to KICAD_COMMIT (an upstream tag that moves is an error), and
+# a branch that has moved on is only reported, because the pin is the commit, not the branch.
+#
+# Prefer a release tag: the generated client speaks the wire format of one KiCad version, and a tag
+# is the only ref a user's KiCad build can be matched against. A branch is acceptable when the API
+# work this library needs is merged upstream but not yet tagged, pinned at one commit, and moved to
+# the release tag as soon as one exists. This is that case: the 10.0 branch carries the 10.0.7 API
+# additions (embedded files, design variants, PCB tables, reference points, pad/via teardrops,
+# BeginCommit/EndCommit document headers) ahead of any 10.0.7 tag. See issue #47.
 #
 # To move the pin: edit both lines, run scripts/sync-protos.sh, and commit the result.
-KICAD_TAG=10.0.6
-KICAD_COMMIT=caf7377e9cb6fa1535ec3596dcb8c99bf44a996e
+KICAD_REF=10.0
+KICAD_COMMIT=a51420ea006adad3155619e1fdbd4cb0aae90f91

@@ -119,7 +119,7 @@ cd kicad-sharp
 dotnet test
 ```
 
-KiCad's `.proto` files are vendored under `protos/`, pinned to a release tag — no submodule, no
+KiCad's `.proto` files are vendored under `protos/`, pinned to one KiCad commit — no submodule, no
 1.4 GB checkout. To build against a local SExpressions checkout, see
 [docs/building.md](docs/building.md).
 

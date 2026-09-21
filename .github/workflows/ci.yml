@@ -22,9 +22,9 @@ jobs:
           global-json-file: global.json
 
       # The pin is only worth having if drift is caught. This re-fetches api/proto from the pinned
-      # tag (a blobless sparse clone, ~3 MB) and fails if the vendored copies differ, or if the tag
-      # itself has been moved to a different commit.
-      - name: Verify vendored protos match the pinned KiCad tag
+      # commit (a blobless sparse fetch, ~3 MB) and fails if the vendored copies differ, or if the
+      # pinned ref is a tag that has been moved to a different commit.
+      - name: Verify vendored protos match the pinned KiCad commit
         run: ./scripts/sync-protos.sh --check
 
       - name: Restore
