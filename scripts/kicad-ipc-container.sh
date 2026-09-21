@@ -2,156 +2,161 @@
 # Runs a real KiCad with its IPC API server enabled, for the integration tests.
 #
 # There is no way to test the IPC client without a running KiCad, and KiCad is a GUI application, so
-# this starts one headless in a container: Xvfb, then pcbnew, with the API socket bind-mounted back
-# out so a test process on the host can dial it. A unix socket on a bind mount works across the
-# container boundary -- same kernel, same inode.
+# this starts one headless in a container: Xvfb, then pcbnew or eeschema, with the API socket
+# bind-mounted back out so a test process on the host can dial it. A unix socket on a bind mount
+# works across the container boundary -- same kernel, same inode.
 #
 #   eval "$(scripts/kicad-ipc-container.sh start board.kicad_pcb)"   # exports KICADSHARP_IPC_SOCKET
-#   eval "$(scripts/kicad-ipc-container.sh start sheet.kicad_sch)"   # eeschema instead of pcbnew
+#   eval "$(scripts/kicad-ipc-container.sh start sheet.kicad_sch)"   # exports KICADSHARP_IPC_SCHEMATIC_SOCKET
 #   dotnet test KiCadSharp.slnx -c Release
 #   scripts/kicad-ipc-container.sh stop
 #
-# Everything lives under .kicad-ipc/ (git-ignored). The KiCad configuration in there is bootstrapped
-# once and reused: see `bootstrap_config`.
+# One container per editor, so a board and a schematic can be up at the same time and the tests for
+# each find their own socket. Each `start` also exports KICADSHARP_IPC_PROJECT (or
+# KICADSHARP_IPC_SCHEMATIC_PROJECT): the host directory that the container sees as /project, which
+# is where a test that asks KiCad to write a file can go and look for it.
+#
+# WHICH KICAD. KICADSHARP_KICAD_FLAVOR=stable (the default) runs the 10.0.6 release image;
+# KICADSHARP_KICAD_FLAVOR=nightly runs KiCad master (10.99, the 11.0 line) from the dev image,
+# which carries the nightly PPA build beside 10.0.6 under suffixed names (pcbnew-nightly,
+# eeschema-nightly) with its own configuration directory (kicad/10.99). Everything the client added
+# for the master proto pin is only measurable against nightly; see docs/ipc.md.
+#
+# Inside the container the image's own `kicad-ipc-server` does the work: it seeds a configuration
+# that will not stop to ask a human anything (the KiCad 10 start wizard is modal and makes the API
+# answer AS_NOT_READY to everything while it is up), clears a lock our own killed session left,
+# starts the editor under xvfb-run, and only reports "answering" once a GetVersion came back.
+#
+# Everything lives under .kicad-ipc/ (git-ignored). Short names in there on purpose: a unix socket
+# path is limited to 107 bytes, and a checkout under a long directory ran into that.
 set -euo pipefail
 
-IMAGE="${KICADSHARP_KICAD_IMAGE:-ghcr.io/danielmeza/orbion-kicad-release:10.0.6}"
+FLAVOR="${KICADSHARP_KICAD_FLAVOR:-stable}"
+case "$FLAVOR" in
+  stable)  DEFAULT_IMAGE="ghcr.io/danielmeza/orbion-kicad-release:10.0.6" ;;
+  nightly) DEFAULT_IMAGE="ghcr.io/danielmeza/orbion-kicad-dev:10.99" ;;
+  *) echo "KICADSHARP_KICAD_FLAVOR must be 'stable' or 'nightly', not '$FLAVOR'" >&2; exit 2 ;;
+esac
+
+IMAGE="${KICADSHARP_KICAD_IMAGE:-$DEFAULT_IMAGE}"
 CONTAINER="${KICADSHARP_KICAD_CONTAINER:-kicad-sharp-ipc}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STATE="${KICADSHARP_IPC_STATE:-$ROOT/.kicad-ipc}"
-CONFIG="$STATE/config"
-PROJECT="$STATE/project"
-SOCKET="$STATE/socket"
 RUNTIME="${KICADSHARP_CONTAINER_RUNTIME:-podman}"
 
 log() { printf '%s\n' "$*" >&2; }
 
-# KiCad shows a first-run wizard when its configuration is incomplete, and a modal dialog makes the
-# API answer AS_NOT_READY to everything -- so the config has to be complete before pcbnew starts.
-# kicad-cli writes the whole set without a GUI, which is the headless way in.
-bootstrap_config() {
-  [[ -f "$CONFIG/kicad/10.0/kicad_common.json" ]] && return 0
-
-  log "bootstrapping KiCad configuration (once)"
-  mkdir -p "$CONFIG"
-  "$RUNTIME" run --rm \
-    -v "$CONFIG":/config:z -v "$PROJECT":/project:z \
-    --entrypoint bash "$IMAGE" -c '
-      export HOME=/root XDG_CONFIG_HOME=/config
-      kicad-cli version >/dev/null 2>&1 || true
-      kicad-cli pcb export svg --output /tmp/discard.svg --layers F.Cu /project/*.kicad_pcb >/dev/null 2>&1 || true
-    '
-
-  local common="$CONFIG/kicad/10.0/kicad_common.json"
-  [[ -f "$common" ]] || { log "kicad-cli wrote no configuration; cannot continue"; return 1; }
-
-  python3 - "$common" <<'PY'
-import json, sys
-path = sys.argv[1]
-with open(path) as handle:
-    config = json.load(handle)
-config.setdefault("api", {})["enable_server"] = True
-with open(path, "w") as handle:
-    json.dump(config, handle, indent=2)
-PY
-
-  # Empty library tables, so KiCad does not offer to install the default ones on first run.
-  printf '(fp_lib_table\n  (version 7)\n)\n'  > "$CONFIG/kicad/10.0/fp-lib-table"
-  printf '(sym_lib_table\n  (version 7)\n)\n' > "$CONFIG/kicad/10.0/sym-lib-table"
-}
-
-# The wizard still appears the very first time pcbnew itself runs. There is no window manager on the
-# Xvfb display, so keyboard events have nowhere to go -- but pointer events do not need one, and the
-# dialog's buttons are in a fixed place. Once it has been walked through, KiCad writes the rest of
-# its configuration and it never comes back.
-dismiss_first_run() {
-  "$RUNTIME" exec "$CONTAINER" bash -c '
-    export DISPLAY=:99
-    for attempt in 1 2 3 4 5 6; do
-      window=$(xdotool search --name "^(KiCad Setup|Information|Load Schematic)$" 2>/dev/null | head -1)
-      [ -z "$window" ] && exit 0
-      eval $(xdotool getwindowgeometry --shell "$window")
-
-      # Two candidate button positions, clicked in turn. The wizard is a fixed 680x416 with
-      # "Next >" at 148px in from the right edge; the small "Information" / "Load Schematic"
-      # dialogs put their one button in the middle. Clicking dead space costs nothing, and this
-      # beats guessing one point that fits both -- the midpoint of the wizard lands between
-      # "< Back" and "Next >" and dismisses nothing, which is how this was got wrong once already.
-      xdotool mousemove --sync $((X + WIDTH - 148)) $((Y + HEIGHT - 28)) click 1
+# The KiCad 10 start wizard is seeded away by kicad-first-run, but a one-button dialog can still
+# appear when an editor opens a file: eeschema's "Information" ("an error was found when loading
+# the schematic that has been automatically fixed") and "Load Schematic", or a "File Open Warning"
+# over a lock. Each holds the main loop, and the API answers AS_NOT_READY until it is gone.
+#
+# MEASURED 2026-09-21: giving the dialog focus and sending Return dismisses it, window manager or
+# not -- but only with the display's auth file. xvfb-run guards its display with an Xauthority it
+# creates under /tmp, and a `podman exec` does not inherit it, so without XAUTHORITY xdotool never
+# connects and silently finds no windows. That is why an earlier version of this, which only
+# clicked, appeared to do nothing.
+dismiss_dialogs() {
+  local container="$1"
+  "$RUNTIME" exec "$container" bash -c '
+    display=$(ls /tmp/.X11-unix/ 2>/dev/null | head -1 | tr -d X)
+    [ -n "$display" ] || exit 0
+    export DISPLAY=":$display"
+    export XAUTHORITY=$(ls /tmp/xvfb-run.*/Xauthority 2>/dev/null | head -1)
+    for window in $(xdotool search --name "^(KiCad Setup|Information|Load Schematic|File Open Warning)$" 2>/dev/null); do
+      xdotool windowfocus --sync "$window" 2>/dev/null || continue
+      xdotool key --window "$window" Return 2>/dev/null || true
       sleep 1
-      xdotool mousemove --sync $((X + WIDTH / 2)) $((Y + HEIGHT - 30)) click 1
-      sleep 2
     done
   ' 2>/dev/null || true
 }
 
 start() {
-  local board="${1:-}"
-  mkdir -p "$PROJECT" "$SOCKET"
+  local document="${1:-}"
+  [[ -n "$document" && -f "$document" ]] || { log "usage: $0 start <board.kicad_pcb|sheet.kicad_sch>"; return 2; }
 
-  if [[ -n "$board" ]]; then
-    cp "$board" "$PROJECT/"
-  fi
-  # Which editor to run follows the file. pcbnew answers the whole common command set; eeschema
-  # answers almost none of it -- see the README -- but it is still the only way to reach a
-  # schematic over IPC at all, so the harness can start it.
-  shopt -s nullglob
-  local documents=("$PROJECT"/*.kicad_pcb "$PROJECT"/*.kicad_sch)
-  shopt -u nullglob
-  [[ ${#documents[@]} -gt 0 ]] || { log "no .kicad_pcb or .kicad_sch in $PROJECT; pass one to 'start'"; return 1; }
+  # Which editor to run follows the file, and so does the variable the socket is exported as.
+  local editor variable project_variable
+  case "$document" in
+    *.kicad_pcb) editor=pcb; variable=KICADSHARP_IPC_SOCKET; project_variable=KICADSHARP_IPC_PROJECT ;;
+    *.kicad_sch) editor=sch; variable=KICADSHARP_IPC_SCHEMATIC_SOCKET; project_variable=KICADSHARP_IPC_SCHEMATIC_PROJECT ;;
+    *) log "$document is neither a .kicad_pcb nor a .kicad_sch"; return 2 ;;
+  esac
 
-  local target="${documents[0]}"
-  if [[ -n "$board" ]]; then
-    target="$PROJECT/$(basename "$board")"
+  local project="$STATE/$editor/p" socket="$STATE/$editor/s" container="$CONTAINER-$editor"
+  if [[ ${#socket} -gt 96 ]]; then
+    log "socket path '$socket/api.sock' is too long for a unix socket (107 bytes); set KICADSHARP_IPC_STATE to a shorter directory"
+    return 2
   fi
 
-  local editor=pcbnew
-  [[ "$target" == *.kicad_sch ]] && editor=eeschema
-
-  # A previous run that did not shut down cleanly leaves a lock file, and KiCad then opens a modal
-  # "File Open Warning" -- which is another way to get AS_NOT_READY forever.
-  rm -f "$PROJECT"/~*.lck
-  rm -f "$SOCKET"/api.sock "$SOCKET"/api.lock
-
-  bootstrap_config
-
-  "$RUNTIME" rm -f "$CONTAINER" >/dev/null 2>&1 || true
-  "$RUNTIME" run -d --name "$CONTAINER" \
-    -v "$CONFIG":/config:z -v "$PROJECT":/project:z -v "$SOCKET":/tmp/kicad:z \
-    --entrypoint bash "$IMAGE" -c "
-      export HOME=/root XDG_CONFIG_HOME=/config XDG_RUNTIME_DIR=/tmp/xdg
-      mkdir -p /tmp/xdg && chmod 700 /tmp/xdg
-      Xvfb :99 -screen 0 1280x1024x24 >/dev/null 2>&1 &
-      sleep 2
-      export DISPLAY=:99
-      exec $editor '/project/$(basename "$target")'
-    " >/dev/null
-
-  local socket="$SOCKET/api.sock"
-  for _ in $(seq 1 60); do
-    [[ -S "$socket" ]] && break
-    sleep 1
+  # A fresh copy every time. The tests modify the document (variants, embedded files, exports),
+  # and a schematic needs its sub-sheets and project file beside it.
+  rm -rf "$project"
+  mkdir -p "$project" "$socket"
+  cp "$document" "$project/"
+  local sibling
+  for sibling in "$(dirname "$document")"/*.kicad_sch "$(dirname "$document")"/*.kicad_pro; do
+    [[ -f "$sibling" && ! -e "$project/$(basename "$sibling")" ]] && cp "$sibling" "$project/"
   done
-  [[ -S "$socket" ]] || { log "KiCad did not open its API socket; check '$RUNTIME logs $CONTAINER'"; return 1; }
+  rm -f "$socket"/api.sock "$socket"/api.lock
 
-  sleep 6
-  dismiss_first_run
-  sleep 3
+  "$RUNTIME" rm -f "$container" >/dev/null 2>&1 || true
+  # A fixed hostname, so the image'"'"'s kicad-unlock recognises a lock left by our own killed
+  # session and removes it; a lock with any other hostname is left alone, and KiCad then asks.
+  "$RUNTIME" run -d --name "$container" --hostname orbion-kicad-ipc \
+    -e KICAD_FLAVOR="$FLAVOR" \
+    -v "$project":/project:z -v "$socket":/tmp/kicad:z \
+    "$IMAGE" kicad-ipc-server "/project/$(basename "$document")" >/dev/null
 
-  log "KiCad is up; socket at $socket"
-  printf 'export KICADSHARP_IPC_SOCKET=%s\n' "ipc://$socket"
+  # kicad-ipc-server prints "answering on" only after a GetVersion round trip succeeded, which is
+  # the readiness that matters: the socket alone appears while a modal dialog can still hold the
+  # main loop. If the editor dies first, say so and show why.
+  local i
+  for i in $(seq 1 60); do
+    if "$RUNTIME" logs "$container" 2>&1 | grep -q "answering on"; then
+      break
+    fi
+    if [[ "$("$RUNTIME" inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" != "true" ]]; then
+      log "KiCad ($FLAVOR, $editor) exited before its API answered:"
+      "$RUNTIME" logs "$container" 2>&1 | tail -20 >&2
+      return 1
+    fi
+    dismiss_dialogs "$container"
+    sleep 2
+  done
+  [[ -S "$socket/api.sock" ]] || { log "KiCad did not open its API socket; check '$RUNTIME logs $container'"; return 1; }
+  if ! "$RUNTIME" logs "$container" 2>&1 | grep -q "answering on"; then
+    log "KiCad opened its socket but never answered; check '$RUNTIME logs $container'"
+    return 1
+  fi
+
+  log "KiCad ($FLAVOR, $editor) is up; socket at $socket/api.sock"
+  printf 'export %s=%s\n' "$variable" "ipc://$socket/api.sock"
+  printf 'export %s=%s\n' "$project_variable" "$project"
 }
 
-case "${1:-start}" in
-  start)  start "${2:-}" ;;
-  stop)   "$RUNTIME" rm -f "$CONTAINER" >/dev/null 2>&1 || true; log "stopped" ;;
-  status)
-    if "$RUNTIME" inspect "$CONTAINER" >/dev/null 2>&1 && [[ -S "$SOCKET/api.sock" ]]; then
-      log "running; socket at $SOCKET/api.sock"
-    else
-      log "not running"
-      exit 1
+stop() {
+  local editor
+  for editor in pcb sch; do
+    "$RUNTIME" rm -f "$CONTAINER-$editor" >/dev/null 2>&1 || true
+  done
+  log "stopped"
+}
+
+status() {
+  local editor running=0
+  for editor in pcb sch; do
+    if "$RUNTIME" inspect "$CONTAINER-$editor" >/dev/null 2>&1 && [[ -S "$STATE/$editor/s/api.sock" ]]; then
+      log "$editor: running; socket at $STATE/$editor/s/api.sock"
+      running=1
     fi
-    ;;
-  *) log "usage: $0 {start [board.kicad_pcb]|stop|status}"; exit 2 ;;
+  done
+  [[ "$running" == 1 ]] || { log "not running"; return 1; }
+}
+
+case "${1:-}" in
+  start)  start "${2:-}" ;;
+  stop)   stop ;;
+  status) status ;;
+  *) log "usage: $0 {start <board.kicad_pcb|sheet.kicad_sch>|stop|status}   (KICADSHARP_KICAD_FLAVOR=stable|nightly)"; exit 2 ;;
 esac

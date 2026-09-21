@@ -35,6 +35,9 @@ public class IpcCommandTests
         Project = new ProjectSpecifier { Name = "probe", Path = "/work/probe" },
     };
 
+    /// <summary>What <see cref="Project"/> sends for <see cref="BoardDocument"/>'s project: the path with the separator KiCad compares against.</summary>
+    private static readonly ProjectSpecifier BoardProject = new() { Name = "probe", Path = "/work/probe/" };
+
     private static readonly DocumentSpecifier SchematicDocument = new()
     {
         Type = DocumentType.DoctypeSchematic,
@@ -423,7 +426,7 @@ public class IpcCommandTests
     [Fact]
     public async Task PlaceSymbolFromLibrary_UnpacksTheSymbol()
     {
-        var placed = new SchematicSymbol();
+        var placed = new SchematicSymbolInstance { Id = new KIID { Value = "sym1" } };
         using var peer = NngTestPeer.Start(new PlaceFromLibraryResponse { Item = Any.Pack(placed) });
         using var client = Client(peer);
         var libraryId = new LibraryIdentifier { LibraryNickname = "Device", EntryName = "R" };
@@ -640,9 +643,9 @@ public class IpcCommandTests
         await project.SetNetClasses(classes, MapMergeMode.MmmReplace);
 
         Assert.Equal("Default", Assert.Single(classes).Name);
-        Assert.Equal(BoardDocument.Project, peer.Requests[0].Message.Unpack<GetNetClasses>().Project);
+        Assert.Equal(BoardProject, peer.Requests[0].Message.Unpack<GetNetClasses>().Project);
         var set = peer.Requests[1].Message.Unpack<SetNetClasses>();
-        Assert.Equal(BoardDocument.Project, set.Project);
+        Assert.Equal(BoardProject, set.Project);
         Assert.Equal(MapMergeMode.MmmReplace, set.MergeMode);
     }
 
@@ -663,9 +666,9 @@ public class IpcCommandTests
         await project.SetNetClassAssignments(reply.Assignments, reply.PatternAssignments, MapMergeMode.MmmReplace);
         await project.SetNetClassAssignments([new NetClassAssignment { Net = "/X" }]);
 
-        Assert.Equal(BoardDocument.Project, peer.Requests[0].Message.Unpack<GetNetClassAssignments>().Project);
+        Assert.Equal(BoardProject, peer.Requests[0].Message.Unpack<GetNetClassAssignments>().Project);
         var set = peer.Requests[1].Message.Unpack<SetNetClassAssignments>();
-        Assert.Equal(BoardDocument.Project, set.Project);
+        Assert.Equal(BoardProject, set.Project);
         Assert.Equal(MapMergeMode.MmmReplace, set.MergeMode);
         Assert.Equal(reply.Assignments, set.Assignments);
         Assert.Equal(reply.PatternAssignments, set.PatternAssignments);
@@ -684,10 +687,34 @@ public class IpcCommandTests
         Assert.Equal("/work/probe/x", await project.ExpandTextVariables("${KIPRJMOD}/x", expandEnvironmentVariables: true));
         await project.ExpandTextVariables(["a", "b"]);
 
-        Assert.True(peer.Requests[0].Message.Unpack<ExpandTextVariables>().ExpandEnvVars);
+        var withEnv = peer.Requests[0].Message.Unpack<ExpandTextVariables>();
+        Assert.True(withEnv.ExpandEnvVars);
         var plain = peer.Requests[1].Message.Unpack<ExpandTextVariables>();
         Assert.False(plain.ExpandEnvVars);
         Assert.Equal(["a", "b"], plain.Text);
+
+        // The project proxy sends a bare project document: type PROJECT and the project, no board
+        // file name. KiCad's project handler wants exactly that, and pcbnew's handler answers
+        // "not open" to a project-typed specifier that still names a board.
+        Assert.Equal(DocumentType.DoctypeProject, withEnv.Document.Type);
+        Assert.Equal(DocumentSpecifier.IdentifierOneofCase.None, withEnv.Document.IdentifierCase);
+        Assert.Equal(BoardProject, withEnv.Document.Project);
+    }
+
+    [Fact]
+    public void Project_DoesNotChangeTheBoardsOwnSpecifier()
+    {
+        using var peer = NngTestPeer.Start(new Empty());
+        using var client = Client(peer);
+        var board = new Board(client, BoardDocument.Clone());
+
+        var project = board.GetProject();
+
+        // It used to flip the shared specifier's type to PROJECT, so every board command after
+        // GetProject() went out as a project.
+        Assert.Equal(DocumentType.DoctypePcb, board.Document.Type);
+        Assert.Equal("probe.kicad_pcb", board.Document.BoardFilename);
+        Assert.Equal(DocumentType.DoctypeProject, project.Document.Type);
     }
 
     // -------------------------------------------------------------------------------- status

@@ -64,8 +64,9 @@ namespace KiCadSharp
         /// <param name="orientation">Its rotation and mirroring, or null for the default.</param>
         /// <param name="unit">Which unit of a multi-unit symbol, or null for the first.</param>
         /// <param name="reference">Its reference designator, or null to leave annotation to KiCad's current preference.</param>
-        /// <returns>The placed symbol.</returns>
-        public async ValueTask<SchematicSymbol> PlaceSymbolFromLibrary(
+        /// <returns>The placed symbol: an instance on the sheet, not the library definition.</returns>
+        /// <remarks>MEASURED against KiCad master: a symbol on a sheet serializes as <see cref="SchematicSymbolInstance"/>, the way a footprint on a board is a <c>FootprintInstance</c>.</remarks>
+        public async ValueTask<SchematicSymbolInstance> PlaceSymbolFromLibrary(
             LibraryIdentifier libraryId,
             Vector2 position,
             SchematicSymbolOrientation? orientation = null,
@@ -95,9 +96,9 @@ namespace KiCadSharp
             }
 
             var response = await Send<PlaceFromLibraryResponse>(command, cancellationToken);
-            if (!response.Item.TryUnpack<SchematicSymbol>(out var symbol))
+            if (!response.Item.TryUnpack<SchematicSymbolInstance>(out var symbol))
             {
-                throw new ApiException($"KiCad placed the symbol but returned a {response.Item.TypeUrl}, not a SchematicSymbol.");
+                throw new ApiException($"KiCad placed the symbol but returned a {response.Item.TypeUrl}, not a SchematicSymbolInstance.");
             }
 
             return symbol;

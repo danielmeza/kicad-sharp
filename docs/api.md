@@ -91,6 +91,9 @@ KiCad 11 says it will require; `GetNetClassAssignments()` /
 — the flag also expands `${KIPRJMOD}`-style environment variables (10.0.7+);
 `GetTextVariables()` / `SetTextVariables(vars, mergeMode)`; plus `Document`, `Name`, `Path`. Every
 command in `project_commands.proto` is wrapped; the document open/close ones live on `KiCad`.
+`Project` builds its own specifier — type `DOCTYPE_PROJECT` and the project, with the path ending
+in a separator the way KiCad's own validation compares it — and no longer changes the specifier
+of the `Board` that created it.
 
 ### `EmbeddedFileCodec` — bytes in, `EmbeddedFile` out
 

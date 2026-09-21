@@ -39,8 +39,9 @@ KiCad 11. What we measured is in [docs/ipc.md](docs/ipc.md).
 
 Against KiCad master (`10.99.0`, the 11.0 line) `eeschema` does answer, and `kicad.GetSchematic()`
 wraps it, along with the embedded-file, variant, library, job and cross-probe commands master added.
-`KiCadVersion.SupportsSchematic` and its sibling flags say which KiCad you are talking to; see
-[docs/ipc.md](docs/ipc.md) for what master handles and what it only declares.
+`KiCadVersion.SupportsSchematic` and its sibling flags say which KiCad you are talking to. All of
+it is measured live against a master nightly in CI (`KICADSHARP_KICAD_FLAVOR=nightly` with the
+test harness); see [docs/ipc.md](docs/ipc.md) for what master handles and what it only declares.
 
 For **lossless** work on `.kicad_sch` and `.kicad_pcb` files, reach for
 [SExpressions](https://github.com/danielmeza/sexpressions) or the `kicadsharp` CLI below. The typed

@@ -22,6 +22,11 @@ namespace KiCadSharp.Tests;
 /// scripts/kicad-ipc-container.sh stop
 /// </code>
 /// <para>
+/// With <c>KICADSHARP_KICAD_FLAVOR=nightly</c> the harness starts KiCad master instead of 10.0.6;
+/// these tests pass against both. What master added is in <see cref="IpcMasterTests"/> and
+/// <see cref="IpcSchematicTests"/>, gated on what the running KiCad reports it supports.
+/// </para>
+/// <para>
 /// The wiring tests above them need no KiCad at all, and they are the ones that pin the three bugs
 /// that stopped this client from ever completing a single request.
 /// </para>
@@ -105,8 +110,11 @@ public class IpcTests
 
         var version = await Connect().GetVersion();
 
-        Assert.Equal(10u, version.Major);
-        Assert.Equal("10.0.6", $"{version.Major}.{version.Minor}.{version.Patch}");
+        // Whichever KiCad the harness started -- 10.0.6 from the release image, or master (10.99)
+        // from the dev image with KICADSHARP_KICAD_FLAVOR=nightly -- the numbers have to be the
+        // ones its full version string starts with.
+        Assert.True(version.IsAtLeast(10, 0, 6), version.ToString());
+        Assert.StartsWith($"{version.Major}.{version.Minor}.{version.Patch}", version.FullVersion);
     }
 
     [Fact]
@@ -202,7 +210,7 @@ public class IpcTests
         await Assert.ThrowsAsync<KiCadConnectionException>(async () => await impatient.Ping());
 
         var version = await Connect().GetVersion();
-        Assert.Equal("10.0.6", $"{version.Major}.{version.Minor}.{version.Patch}");
+        Assert.True(version.IsAtLeast(10, 0, 6), version.ToString());
     }
 
     [Fact]
