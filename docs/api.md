@@ -206,19 +206,19 @@ stripping those blocks from the file before and after leaves two identical texts
 
 ## `KiCadSharp.Protos`
 
-15 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by
+24 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by
 [`protos/KICAD_PIN`](protos/KICAD_PIN) to one KiCad **commit**, recorded together with the tag or
 branch it was taken from. The commit is what the sync script fetches and what CI compares against,
 so a branch pin cannot float: the generated client speaks one KiCad version's wire format, and the
 vendored files change only when someone edits the pin on purpose.
 
 A release tag is the preferred ref, because it is the only ref a user's KiCad build can be matched
-against. Currently pinned to the **KiCad `10.0` branch** at
-`a51420ea006adad3155619e1fdbd4cb0aae90f91` (2026-09-21), which builds as `10.0.6-unknown` and
-carries the 10.0.7 API additions ahead of any 10.0.7 tag: embedded files, design variants, PCB
-tables, reference points, pad and via teardrops, and the document header on `BeginCommit` /
-`EndCommit`. The pin moves to the 10.0.7 tag once KiCad cuts it
-([#47](https://github.com/danielmeza/kicad-sharp/issues/47)).
+against. Currently pinned to **KiCad `master`** at `965fb68075b53cd4eaf2244954c9ef54ae0b433c`
+(2026-09-21), which builds as `10.99.0-unknown` and is the 11.0 line. It carries what no tag has
+yet: the library-table commands, embedded files, design variants, jobs, rules, cross-probe and
+wizard messages, PCB tables, reference points, teardrops, and the document header on `BeginCommit`
+/ `EndCommit`. The `10.99.0` tag dates from March 2026 and predates all of it. The pin moves to the
+11.0 tag once KiCad cuts it ([#47](https://github.com/danielmeza/kicad-sharp/issues/47)).
 
 They used to arrive through a `submodules/kicad` git submodule pointed at the full KiCad source
 tree. Measured, at the same tag:
@@ -227,7 +227,7 @@ tree. Measured, at the same tag:
 |---|---|
 | Submodule, `git clone --depth 1 --branch 10.0.6` | **1.4 GB** on disk (248 MB `.git` + 1.1 GB working tree), 18,347 files, 18.7 s |
 | Sparse checkout of `api/proto` only | 3.5 MB, 2.2 s — but `actions/checkout` does a plain clone for submodules, so CI pays the full 1.4 GB anyway |
-| **Vendored (this repo)** | **~100 KB**, 15 files, already present — no fetch, builds offline |
+| **Vendored (this repo)** | **~198 KB**, 24 files, already present — no fetch, builds offline |
 
 Vendoring wins on the numbers and loses nothing, because the pin is enforced rather than trusted:
 

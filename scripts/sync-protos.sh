@@ -11,7 +11,7 @@
 # too: a tag that no longer resolves to the pinned commit is an error (an upstream tag was moved),
 # a branch that has moved on is reported so the drift is visible.
 #
-# Why vendored instead of a submodule: KiCadSharp.Protos needs 15 files totalling ~100 KB. Getting
+# Why vendored instead of a submodule: KiCadSharp.Protos needs 24 files totalling ~198 KB. Getting
 # them through a submodule costs a 1.4 GB checkout of the whole KiCad source tree on every clone and
 # every CI run (measured, `git clone --depth 1 --branch 10.0.6`). The files change only when KiCad
 # adds to its API, and --check makes the pin enforceable, so vendoring loses nothing and the build
@@ -69,7 +69,7 @@ else
 fi
 
 echo "Fetching KiCad api/proto at $KICAD_COMMIT ..."
-# A blobless, sparse, depth-1 fetch of the one commit: this pulls ~100 KB of .proto and nothing else.
+# A blobless, sparse, depth-1 fetch of the one commit: this pulls ~198 KB of .proto and nothing else.
 # GitLab serves a fetch by commit hash, which is what makes a commit pin (rather than a ref) work.
 git init --quiet "$WORK/kicad"
 git -C "$WORK/kicad" remote add origin "$UPSTREAM"
