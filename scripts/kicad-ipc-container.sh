@@ -130,6 +130,13 @@ start() {
     return 1
   fi
 
+  # Connecting to a unix socket needs write permission on the socket file. KiCad creates it
+  # 0755 as the container's root; under rootless podman that root is the host user and it works,
+  # under a rootful docker (a GitHub runner) the host user is someone else and gets EACCES
+  # (measured: "nng_dial failed: Permission denied"). Opening it from inside is the one way that
+  # works for both, since on the host the file is root's.
+  "$RUNTIME" exec "$container" chmod a+rw /tmp/kicad/api.sock
+
   log "KiCad ($FLAVOR, $editor) is up; socket at $socket/api.sock"
   printf 'export %s=%s\n' "$variable" "ipc://$socket/api.sock"
   printf 'export %s=%s\n' "$project_variable" "$project"
