@@ -149,6 +149,22 @@ and symbol-library grammar has no such form: a `polyline`'s, `bezier`'s or `wire
 anywhere. `src/KiCadSharp/Documents/KiCadChildOrder.cs` cites KiCad 10.0.6's parser line for each
 rule.
 
+**A fill is spelled the way its file's parser reads it.** KiCad 10 spells `(fill …)` two ways, and
+each parser refuses the whole file when it meets the other's (#64). `RequireFill()` adds an empty
+`(fill)`, which both read, and the first `Type` set writes the owner's spelling:
+
+| Owner | `RequireFill().Type = "no"` writes | Words `Type` takes |
+|---|---|---|
+| a board's `gr_*` shapes; a footprint's `fp_rect`, `fp_circle`, `fp_poly` | `(fill no)` | `yes`, `no`, `solid`, `none`, `hatch`, `reverse_hatch`, `cross_hatch` |
+| a symbol's or a schematic's shapes, text boxes and sheets | `(fill (type none))` | `none`, `outline`, `background`, `color`, `hatch`, `reverse_hatch`, `cross_hatch` |
+
+A word from the other row that means the same fill in KiCad's own model is written as this row's
+word: `no` becomes `none` in a symbol, `yes` and `solid` become `outline`, and `outline` becomes
+`yes` on a board. Any other word throws `ArgumentException`, and so do `background` and `color` on a
+board, which has neither fill. A fill loaded from a file keeps the spelling it has. A zone's fill,
+`(fill yes (thermal_gap …) …)`, is a third form, `KiCadZoneFill`. `KiCadFillSpelling` cites KiCad
+10.0.6's parser and writer lines for each spelling.
+
 **Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
 `KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of
 wherever it was, another file included. The view you hold is then the element in the destination,

@@ -299,11 +299,20 @@ namespace KiCadSharp.Schematics
         public KiCadStroke RequireStroke() => new(Require(KiCadTokens.Common.Stroke));
 
         /// <summary>Gets the box's fill, or <see langword="null"/> when it carries no <c>(fill ...)</c>.</summary>
-        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Schematic) : null;
 
-        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the sheet has none.</summary>
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the sheet has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the schematic's way, <c>(fill (type none))</c>; see
+        /// <see cref="KiCadFillSpelling.Schematic"/>.
+        /// </summary>
+        /// <remarks>
+        /// KiCad 10 writes a sheet's fill as a colour alone, <c>(fill (color r g b a))</c>, and reads
+        /// only the colour back: <c>parseSheet</c> takes a <c>(type …)</c> but ignores it
+        /// (<c>sch_io_kicad_sexpr_parser.cpp</c>, lines 3775–3777).
+        /// </remarks>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Schematic);
 
         /// <summary>Gets or sets whether the sheet's contents are excluded from the simulator.</summary>
         public bool ExcludeFromSim

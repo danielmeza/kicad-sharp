@@ -808,11 +808,15 @@ namespace KiCadSharp.Documents
 
         /// <summary>Gets the fill, or <see langword="null"/> when the shape has no <c>fill</c> form.</summary>
         /// <remarks>An open shape — a line, an arc, a curve — has none, and reading this does not give it one.</remarks>
-        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } fill ? new KiCadFill(fill) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } fill ? new KiCadFill(fill, KiCadFillSpelling.Board) : null;
 
-        /// <summary>Gets the fill, adding a <c>(fill …)</c> form when the shape has none.</summary>
+        /// <summary>
+        /// Gets the fill, adding a <c>(fill …)</c> form when the shape has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the board's way, <c>(fill no)</c>; see
+        /// <see cref="KiCadFillSpelling.Board"/>.
+        /// </summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
     }
 
     /// <summary>A board line: <c>(gr_line (start x y) (end x y) (stroke …) (layer "Edge.Cuts"))</c>.</summary>
