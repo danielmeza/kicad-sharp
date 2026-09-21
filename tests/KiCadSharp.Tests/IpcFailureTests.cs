@@ -244,7 +244,11 @@ public class IpcFailureTests
         // asserted: either way it is the same cancellation.
         using var client = await AClientWhoseKiCadWentAway();
 
-        var call = Task.Run(async () => await client.Send(new Ping()));
+        // Called directly, not through Task.Run, so the send is waiting before the Disconnect below.
+        // Through Task.Run, a thread pool slow to start it could run the send after the Disconnect.
+        // The send would then connect again, to a peer that is gone, and fail with "Connection
+        // refused" instead of being cancelled (#68).
+        var call = client.Send(new Ping()).AsTask();
         await Task.Delay(TimeSpan.FromMilliseconds(500));
         Assert.False(call.IsCompleted, "the send was expected to be waiting for a peer");
 
