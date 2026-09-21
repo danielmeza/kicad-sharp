@@ -35,6 +35,14 @@ namespace KiCadSharp.Interop
     /// build), which turns "unsupported" into "supply the binary". Without it there is no way in at
     /// all.
     /// </para>
+    /// <para>
+    /// <b>What that variable names is checked.</b> A library that loads is not necessarily nng, and
+    /// the runtime looks an entry point up only when it is first called. So a wrong one used to
+    /// surface as a bare <see cref="EntryPointNotFoundException"/> from whichever call came first
+    /// (#70). The resolver now looks up every entry point in <see cref="EntryPoints"/> as it loads the
+    /// library. If one is missing, it refuses the library with a <see cref="KiCadConnectionException"/>
+    /// that names the variable, the path and what is missing.
+    /// </para>
     /// </remarks>
     internal static class NngLibraryResolver
     {
@@ -47,6 +55,29 @@ namespace KiCadSharp.Interop
         /// </summary>
         internal static readonly string[] ShippedRuntimeIdentifiers =
             ["linux-x64", "linux-arm64", "linux-arm", "osx-x64", "win-x64", "win-x86"];
+
+        /// <summary>
+        /// Every nng function <see cref="Nng"/> declares, which is every one this client calls. A
+        /// library named by <see cref="LibraryPathVariableName"/> has to export all of them.
+        /// <c>NngLibraryVariableTests</c> compares this list with the declarations, so an entry
+        /// point cannot be added to <see cref="Nng"/> without being added here.
+        /// </summary>
+        internal static readonly string[] EntryPoints =
+        [
+            nameof(Nng.nng_req0_open),
+            nameof(Nng.nng_close),
+            nameof(Nng.nng_dial),
+            nameof(Nng.nng_sendmsg),
+            nameof(Nng.nng_recvmsg),
+            nameof(Nng.nng_msg_alloc),
+            nameof(Nng.nng_msg_free),
+            nameof(Nng.nng_msg_append),
+            nameof(Nng.nng_msg_body),
+            nameof(Nng.nng_msg_len),
+            nameof(Nng.nng_strerror),
+            nameof(Nng.nng_socket_set_ms),
+            nameof(Nng.nng_version),
+        ];
 
         private static IntPtr _handle;
 
@@ -62,6 +93,10 @@ namespace KiCadSharp.Interop
         /// -- by returning <see cref="IntPtr.Zero"/> -- the runtime's own probing, which is what
         /// resolves the NuGet native asset from <c>.deps.json</c>.
         /// </summary>
+        /// <exception cref="KiCadConnectionException">
+        /// <see cref="LibraryPathVariableName"/> names a library that loads and lacks one of the
+        /// <see cref="EntryPoints"/>.
+        /// </exception>
         internal static IntPtr Resolve(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
         {
             if (!string.Equals(libraryName, Nng.Library, StringComparison.Ordinal))
@@ -79,6 +114,19 @@ namespace KiCadSharp.Interop
             var configured = Environment.GetEnvironmentVariable(LibraryPathVariableName);
             if (!string.IsNullOrWhiteSpace(configured) && NativeLibrary.TryLoad(configured, out var overridden))
             {
+                // Loading it proves that it is a shared library, not that it is nng. Every entry
+                // point is looked up now, so a wrong library is refused here with one message. It
+                // does not fail later, on its first call, or halfway through a dial for a library
+                // that has some of them. Thrown from the resolver, the exception reaches the caller
+                // of the first nng call, which is NngRequestSocket.Open. Nothing is cached: the next
+                // call looks again, and fails the same way until the variable changes.
+                var missing = MissingEntryPoints(overridden);
+                if (missing.Length > 0)
+                {
+                    NativeLibrary.Free(overridden);
+                    throw NotNng(configured, missing);
+                }
+
                 return _handle = overridden;
             }
 
@@ -244,6 +292,39 @@ namespace KiCadSharp.Interop
                 + $"Set {LibraryPathVariableName} to the full path of a libnng to use instead. Looked in: "
                 + string.Join(", ", paths)
                 + ", then the runtime's own native library probing.";
+        }
+
+        /// <summary>
+        /// The <see cref="EntryPoints"/> that <paramref name="library"/> does not export, in the
+        /// order they are listed. Empty for an nng this client can use.
+        /// </summary>
+        internal static string[] MissingEntryPoints(IntPtr library) =>
+            EntryPoints.Where(name => !NativeLibrary.TryGetExport(library, name, out _)).ToArray();
+
+        /// <summary>
+        /// The failure for a <see cref="LibraryPathVariableName"/> that names a library which loads
+        /// and is not nng. It is the type the other two load failures reach the caller as (see
+        /// <see cref="NngRequestSocket.Open"/>). Inside it is the
+        /// <see cref="EntryPointNotFoundException"/> the runtime would have thrown for the first
+        /// missing function.
+        /// </summary>
+        internal static KiCadConnectionException NotNng(string configured, string[] missing)
+        {
+            var what = missing.Length == EntryPoints.Length
+                ? $"is not nng: it exports none of the {EntryPoints.Length} nng functions KiCadSharp calls, "
+                    + $"starting with {missing[0]}."
+                : $"is not an nng KiCadSharp can use: it does not export {string.Join(", ", missing)} "
+                    + $"({missing.Length} of the {EntryPoints.Length} nng functions KiCadSharp calls).";
+
+            var identifier = PortableRuntimeIdentifier();
+            var way = ShippedRuntimeIdentifiers.Contains(identifier)
+                ? $"Point {LibraryPathVariableName} at a libnng, or unset it to use the {FileName} this package ships for {identifier}."
+                : $"Point {LibraryPathVariableName} at a libnng; this package ships none for {identifier}.";
+
+            return new KiCadConnectionException(
+                $"{LibraryPathVariableName} names '{configured}', which loads but {what} {way}",
+                new EntryPointNotFoundException(
+                    $"Unable to find an entry point named '{missing[0]}' in shared library '{configured}'."));
         }
     }
 }

@@ -53,6 +53,11 @@ does not have libnng's own dependencies, set **`KICADSHARP_NNG_LIBRARY`** to the
 `libnng` to load instead (`brew install nng`, a distribution package, your own build). Nothing else
 has to be shipped: on the six above the file arrives with the package and is found by the runtime.
 
+The library that variable names is checked as it loads: it has to export all thirteen functions
+above. One that loads and lacks any of them is refused, and every connection attempt fails with a
+`KiCadConnectionException` that names the variable, the path and the functions it lacks. The
+runtime's `EntryPointNotFoundException` for the first missing function is its inner exception.
+
 **What libnng itself links against**, read out of the shipped binaries. Nothing here is bundled —
 these are the host's own libraries, and the only ones a consumer may have to install are on the
 right:

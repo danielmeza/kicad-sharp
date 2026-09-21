@@ -11,6 +11,9 @@
          nng_socket - needs runtime marshalling switched off (SYSLIB1051). Neither affects any other
          test: this project has no other interop. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Microsoft.NET.Test.Sdk would generate an empty Main. ChildProcess.Main replaces it, so a test
+         can start this assembly again as a process of its own; see ChildProcess.cs. -->
+    <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
 
   <ItemGroup>

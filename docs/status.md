@@ -94,10 +94,6 @@ What has no view round-trips intact and is reachable through `Node`.
 - **A KiCad that goes away *after* taking the request is not reported by nng.** Measured against
   the in-process peer: the receive goes on answering "not yet", and the token or `RequestTimeout` is
   what ends the call. With neither, it waits.
-- **A `KICADSHARP_NNG_LIBRARY` that names something other than nng** surfaces as the runtime's
-  `EntryPointNotFoundException`, not a `KiCadConnectionException`. Only the loader's two failures
-  (`DllNotFoundException`, `BadImageFormatException`) are converted. It is untested: the process
-  loads one libnng and keeps it, so a test cannot load a second one.
 - **No `Async` suffixes, and one sync/async asymmetry**: `GetProject(DocumentSpecifier)` is
   synchronous while the parameterless `GetProject()` is not.
 
