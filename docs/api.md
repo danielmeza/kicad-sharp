@@ -30,23 +30,77 @@ a client-wide one. There is no useful single default — `Ping` returns in under
 ### `KiCad` — the connection handle
 
 `Ping()`, `GetVersion()`, `GetKiCadBinaryPath(name)`, `GetPluginSettingsPath(id)`,
-`GetOpenDocuments(DocumentType)`, `GetBoard()`, `GetProject()` / `GetProject(DocumentSpecifier)`,
-`RunAction(name)`, `RefreshEditor(FrameType)`, `GetTextVariables()`.
+`GetOpenDocuments(DocumentType)`, `GetBoard()`, `GetSchematic()` / `GetSchematic(DocumentSpecifier)`,
+`GetProject()` / `GetProject(DocumentSpecifier)`, `RunAction(name)`, `RefreshEditor(FrameType)`,
+`GetTextVariables()`.
+
+Added with the master pin (KiCad 10.99, the 11.0 line; see [docs/ipc.md](ipc.md) for which of
+these KiCad actually handles): `GetPaths()`; `OpenDocument(type, path)`, `CreateDocument(type, path)`,
+`CloseDocument(document)`, `CloseAllDocuments(force)`, `OpenLibraryItem(type, libraryId)`; the
+library commands `GetLibraryTable(type, scope, substituted)`, `AddLibraryTableEntry(entry, scope)`,
+`UpdateLibraryTableEntry(...)`, `DeleteLibraryTableEntry(type, nickname, scope)`,
+`ImportLibrary(path, nickname, type, scope, description)`, `GetLibraryStatuses(scope, ct, params types)`,
+`ReloadLibrary(type, scope, ct, params nicknames)`, `LoadAllLibraries(params types)`,
+`GetLibraryItems(type, params nicknames)`, `GetItemsFromLibrary(type, document, ct, params ids)`,
+`SearchLibraries(type, query)`; and cross-probe: `SyncSelection(...)`, `HighlightNets(params nets)`,
+`FocusOnItem(spec)`, `CrossProbeAnnounce(...)`.
+
+`KiCadVersion`, what `GetVersion()` returns, gained `IsAtLeast(major, minor, patch)`,
+`IsDevelopmentBuild` (master reports `10.99.0`) and the capability flags `SupportsEmbeddedFiles`,
+`SupportsVariants` (10.0.7+), `SupportsSchematic`, `SupportsLibraryCommands`, `SupportsJobs`
+(10.99+), so a caller can fall back on an older KiCad instead of sending a command it will answer
+with `AS_UNHANDLED`.
+
+### `KiCadDocument` — what a board and a schematic share
+
+The base of `Board` and `Schematic`; every command here goes out with the proxy's `Document`.
+`Save()`, `SaveAs(filename, overwrite, includeProject)`, `Revert()`, `GetAsString()`,
+`GetModifiedState()`; `BeginCommit()` / `PushCommit(commit, message)` / `DropCommit(commit)` — the
+commit messages now carry the document, which KiCad 10.0.7 introduced and says it will require;
+`GetItems(params KiCadObjectType[])`, `GetSelection(...)`, `ClearSelection()`,
+`CreateItems(params IMessage[])`, `UpdateItems(...)`, `DeleteItems(params KIID[])`,
+`FocusOnItems(ids, margin)`; `GetPageSettings()` / `SetPageSettings(settings)`; the design variants
+`GetVariants()`, `AddVariant(name, description)`, `DeleteVariant(name)`, `RenameVariant(old, new)`,
+`SetVariantDescription(name, description)`, `CopyVariant(old, new, description)`,
+`SetCurrentVariant(name)` / `GetCurrentVariant()`; and `RunJob(job, outputPath)`, which takes any of
+the 22 `Run*Job*` messages from `board_jobs.proto` and `schematic_jobs.proto`, fills in its
+`job_settings` with the document and the output path, and returns the `RunJobResponse`.
 
 ### `Board` — the PCB, over IPC
 
-`Save()`, `SaveAs(filename, overwrite, includeProject)`, `Revert()`,
-`BeginCommit()` / `PushCommit(commit, message)` / `DropCommit(commit)`,
-`GetItems(params KiCadObjectType[])`, `GetSelection(...)`, `ClearSelection()`,
-`GetActiveLayer()` / `SetActiveLayer(BoardLayer)`, `GetAsString()`, `RefillZones()`,
-`CreateItems(params IMessage[])`, `UpdateItems(...)`, `DeleteItems(params KIID[])`,
-plus `Document` and `Name`.
+Everything on `KiCadDocument`, plus `GetActiveLayer()` / `SetActiveLayer(BoardLayer)`,
+`RefillZones()`, `Name`, `GetProject()`. Added with the master pin: `GetEmbeddedFiles()`,
+`AddEmbeddedFiles(params files)`, `AddEmbeddedFile(name, bytes, type)`, `SetEmbeddedFiles(params files)`
+(10.0.7+); `GetDesignRules()` / `SetDesignRules(rules)`, `GetCustomDesignRules()` /
+`SetCustomDesignRules(params rules)`, `ImportNetlist(path, dryRun, matchMode, ...)`,
+`GetPlotSettings()` / `SetPlotSettings(settings)`,
+`PlaceFootprintFromLibrary(libraryId, position, orientation, layer)` (10.99+).
+
+### `Schematic` — the schematic, over IPC (KiCad 10.99+)
+
+Everything on `KiCadDocument`, plus `GetHierarchy()`, `GetNetlist(params KiCadObjectType[])`,
+`PlaceSymbolFromLibrary(libraryId, position, orientation, unit, reference)`, `Name`, `GetProject()`.
+On KiCad 10.0.x eeschema does not answer the API at all; see [docs/ipc.md](ipc.md).
 
 ### `Project` — settings, over IPC
 
-`GetNetClasses()` / `SetNetClasses(netClasses, mergeMode)`, `ExpandTextVariables(string)` and
-`ExpandTextVariables(string[])`, `GetTextVariables()` / `SetTextVariables(vars, mergeMode)`, plus
-`Document`, `Name`, `Path`. Every command in `project_commands.proto` is wrapped.
+`GetNetClasses()` / `SetNetClasses(netClasses, mergeMode)` — both now name the project, which
+KiCad 11 says it will require; `GetNetClassAssignments()` /
+`SetNetClassAssignments(assignments, patterns, mergeMode)` (10.99+);
+`ExpandTextVariables(string, expandEnvironmentVariables)` and `ExpandTextVariables(string[], ...)`
+— the flag also expands `${KIPRJMOD}`-style environment variables (10.0.7+);
+`GetTextVariables()` / `SetTextVariables(vars, mergeMode)`; plus `Document`, `Name`, `Path`. Every
+command in `project_commands.proto` is wrapped; the document open/close ones live on `KiCad`.
+
+### `EmbeddedFileCodec` — bytes in, `EmbeddedFile` out
+
+KiCad's `EmbeddedFile` message does not carry the file. Its `data` is the zstd frame of the content,
+base64-encoded, as ASCII bytes; its `data_hash` is MurmurHash3 x64-128 of the raw content with seed
+`0xABBA2345`, as two uppercase 16-digit hex words. KiCad checks the hash when it unpacks the
+message and rejects the request on a mismatch. `Pack(name, bytes, type)` builds a message that
+passes; `Unpack(file)` decodes one and verifies the hash (also accepting the SHA-256 that files
+from older KiCad versions carry); `ComputeHash(bytes)` is the hash alone. The hash is checked
+against the reference implementation's vectors in the tests.
 
 ### On-disk documents
 

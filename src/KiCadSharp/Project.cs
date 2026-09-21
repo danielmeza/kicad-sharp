@@ -1,5 +1,3 @@
-﻿using Google.Protobuf.WellKnownTypes;
-
 using Kiapi.Common.Commands;
 using Kiapi.Common.Project;
 using Kiapi.Common.Types;
@@ -43,14 +41,18 @@ namespace KiCadSharp
         /// Gets the path of the project
         /// </summary>
         public string Path => _document.Project.Path;
-        
+
         /// <summary>
         /// Gets the net classes defined in the project
         /// </summary>
         /// <returns>Array of net classes</returns>
+        /// <remarks>
+        /// Names the project in the request. KiCad 11.0 added that field and says a request
+        /// without it will be deprecated; a 10.0.x KiCad ignores it.
+        /// </remarks>
         public async ValueTask<NetClass[]> GetNetClasses(CancellationToken cancellationToken = default)
         {
-            var command = new GetNetClasses();
+            var command = new GetNetClasses { Project = _document.Project };
             var response = await Send<NetClassesResponse>(command, cancellationToken);
             return [.. response.NetClasses];
         }
@@ -64,39 +66,70 @@ namespace KiCadSharp
         {
             var command = new SetNetClasses
             {
-                MergeMode = mergeMode
+                MergeMode = mergeMode,
+                Project = _document.Project,
             };
             command.NetClasses.AddRange(netClasses);
             await Send(command, cancellationToken);
         }
-        
+
+        /// <summary>Which net classes each net is assigned to, directly and by pattern.</summary>
+        /// <returns>The per-net assignments and the wildcard patterns.</returns>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask<NetClassAssignmentsResponse> GetNetClassAssignments(CancellationToken cancellationToken = default)
+        {
+            return await Send<NetClassAssignmentsResponse>(new GetNetClassAssignments { Project = _document.Project }, cancellationToken);
+        }
+
+        /// <summary>Assigns nets to net classes, directly and by pattern.</summary>
+        /// <param name="assignments">Per-net assignments. In merge mode, a net with an empty list loses all its assignments.</param>
+        /// <param name="patternAssignments">Wildcard patterns. In merge mode, a pattern with an empty net class is removed.</param>
+        /// <param name="mergeMode">Merge into, or replace, what the project has.</param>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask SetNetClassAssignments(
+            IEnumerable<NetClassAssignment> assignments,
+            IEnumerable<NetClassPatternAssignment>? patternAssignments = null,
+            MapMergeMode mergeMode = MapMergeMode.MmmMerge,
+            CancellationToken cancellationToken = default)
+        {
+            var command = new SetNetClassAssignments
+            {
+                Project = _document.Project,
+                MergeMode = mergeMode,
+            };
+            command.Assignments.AddRange(assignments);
+            if (patternAssignments is not null)
+            {
+                command.PatternAssignments.AddRange(patternAssignments);
+            }
+
+            await Send(command, cancellationToken);
+        }
+
         /// <summary>
         /// Expands text variables in a string
         /// </summary>
         /// <param name="text">Text containing variables to expand</param>
+        /// <param name="expandEnvironmentVariables">Also expand environment variables such as <c>${KIPRJMOD}</c>, after the text variables. KiCad 10.0.7 and later; ignored before.</param>
         /// <returns>Text with variables expanded</returns>
-        public async ValueTask<string> ExpandTextVariables(string text, CancellationToken cancellationToken = default)
+        public async ValueTask<string> ExpandTextVariables(string text, bool expandEnvironmentVariables = false, CancellationToken cancellationToken = default)
         {
-            var command = new ExpandTextVariables
-            {
-                Document = _document
-            };
-            command.Text.Add(text);
-            
-            var response = await Send<ExpandTextVariablesResponse>(command, cancellationToken);
-            return response.Text.Count > 0 ? response.Text[0] : string.Empty;
+            var expanded = await ExpandTextVariables([text], expandEnvironmentVariables, cancellationToken);
+            return expanded.Length > 0 ? expanded[0] : string.Empty;
         }
         
         /// <summary>
         /// Expands text variables in multiple strings
         /// </summary>
         /// <param name="texts">Array of texts containing variables to expand</param>
+        /// <param name="expandEnvironmentVariables">Also expand environment variables such as <c>${KIPRJMOD}</c>, after the text variables. KiCad 10.0.7 and later; ignored before.</param>
         /// <returns>Array of texts with variables expanded</returns>
-        public async ValueTask<string[]> ExpandTextVariables(string[] texts, CancellationToken cancellationToken = default)
+        public async ValueTask<string[]> ExpandTextVariables(string[] texts, bool expandEnvironmentVariables = false, CancellationToken cancellationToken = default)
         {
             var command = new ExpandTextVariables
             {
-                Document = _document
+                Document = _document,
+                ExpandEnvVars = expandEnvironmentVariables,
             };
             command.Text.AddRange(texts);
             

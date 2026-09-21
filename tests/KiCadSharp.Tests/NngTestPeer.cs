@@ -34,15 +34,18 @@ internal sealed partial class NngTestPeer : IDisposable
     private readonly Nng.NngSocket _socket;
     private readonly CancellationTokenSource _stopping = new();
     private readonly Task _serving;
+    private readonly Func<ApiRequest, ApiResponse> _respond;
+    private readonly List<ApiRequest> _requests = [];
 
     static NngTestPeer() =>
         // This assembly's own P/Invokes need the same libnng the library found, and by the same
         // rules -- runtimes/<rid>/native next to the test binaries.
         NativeLibrary.SetDllImportResolver(typeof(NngTestPeer).Assembly, NngLibraryResolver.Resolve);
 
-    private NngTestPeer(Nng.NngSocket socket, string url, TimeSpan delay, bool answer)
+    private NngTestPeer(Nng.NngSocket socket, string url, TimeSpan delay, bool answer, Func<ApiRequest, ApiResponse> respond)
     {
         _socket = socket;
+        _respond = respond;
         Url = url;
         _serving = Task.Factory.StartNew(
             () => Serve(delay, answer, _stopping.Token),
@@ -55,14 +58,64 @@ internal sealed partial class NngTestPeer : IDisposable
     /// <summary>How many requests this peer has taken off the wire.</summary>
     internal int RequestsReceived;
 
+    /// <summary>Every request this peer has parsed, in order.</summary>
+    internal ApiRequest[] Requests
+    {
+        get
+        {
+            lock (_requests)
+            {
+                return [.. _requests];
+            }
+        }
+    }
+
+    /// <summary>The one request a single-command test expects, unpacked to the command it sent.</summary>
+    internal T Single<T>() where T : IMessage, new()
+    {
+        var request = Assert.Single(Requests);
+        Assert.True(request.Message.Is(new T().Descriptor), $"expected {typeof(T).Name}, got {request.Message.TypeUrl}");
+        return request.Message.Unpack<T>();
+    }
+
     /// <summary>Starts a peer that answers each request after <paramref name="delay"/>.</summary>
-    internal static NngTestPeer Start(TimeSpan delay, bool answer = true)
+    internal static NngTestPeer Start(TimeSpan delay, bool answer = true) =>
+        Start(delay, answer, _ => Ok(new Empty()));
+
+    /// <summary>
+    /// Starts a peer that answers at once, with whatever <paramref name="respond"/> returns for
+    /// the request it parsed. This is what the command tests use: they send one command through
+    /// the real client and transport, then look at what arrived.
+    /// </summary>
+    internal static NngTestPeer Start(Func<ApiRequest, ApiResponse> respond) =>
+        Start(TimeSpan.Zero, answer: true, respond);
+
+    /// <summary>Starts a peer that answers every request with <paramref name="reply"/>.</summary>
+    internal static NngTestPeer Start(IMessage reply) => Start(_ => Ok(reply));
+
+    private static NngTestPeer Start(TimeSpan delay, bool answer, Func<ApiRequest, ApiResponse> respond)
     {
         var path = Path.Combine(Path.GetTempPath(), $"kicadsharp-test-{Guid.NewGuid():N}.sock");
         Check("nng_rep0_open", nng_rep0_open(out var socket));
         Check("nng_listen", nng_listen(socket, $"ipc://{path}", out _, 0));
-        return new NngTestPeer(socket, $"ipc://{path}", delay, answer);
+        return new NngTestPeer(socket, $"ipc://{path}", delay, answer, respond);
     }
+
+    /// <summary>An OK reply carrying <paramref name="message"/>.</summary>
+    internal static ApiResponse Ok(IMessage message) => new()
+    {
+        Header = new ApiResponseHeader { KicadToken = "test-peer-token" },
+        Status = new ApiResponseStatus { Status = ApiStatusCode.AsOk },
+        Message = Any.Pack(message),
+    };
+
+    /// <summary>A reply with a non-OK status, as a KiCad that does not know a command answers.</summary>
+    internal static ApiResponse Fail(ApiStatusCode status, string errorMessage = "") => new()
+    {
+        Header = new ApiResponseHeader { KicadToken = "test-peer-token" },
+        Status = new ApiResponseStatus { Status = status, ErrorMessage = errorMessage },
+        Message = Any.Pack(new Empty()),
+    };
 
     private void Serve(TimeSpan delay, bool answer, CancellationToken stopping)
     {
@@ -89,9 +142,31 @@ internal sealed partial class NngTestPeer : IDisposable
                 stopping.WaitHandle.WaitOne(delay);
             }
 
+            ApiResponse reply;
+            try
+            {
+                var body = Nng.nng_msg_body(message);
+                var length = (int)Nng.nng_msg_len(message);
+                var bytes = new byte[length];
+                Marshal.Copy(body, bytes, 0, length);
+                var request = ApiRequest.Parser.ParseFrom(bytes);
+                lock (_requests)
+                {
+                    _requests.Add(request);
+                }
+
+                reply = _respond(request);
+            }
+            catch (Exception exception)
+            {
+                // A responder that throws must not take the serving thread down with it; the client
+                // would then wait forever. Answer with the failure instead, so the test sees it.
+                reply = Fail(ApiStatusCode.AsBadRequest, exception.ToString());
+            }
+
             // The received message is reused rather than replaced: REP routes a reply by the
             // backtrace header the request arrived with.
-            var payload = Reply().ToByteArray();
+            var payload = reply.ToByteArray();
             nng_msg_clear(message);
             Nng.nng_msg_append(message, payload, (nuint)payload.Length);
 
@@ -101,13 +176,6 @@ internal sealed partial class NngTestPeer : IDisposable
             }
         }
     }
-
-    private static ApiResponse Reply() => new()
-    {
-        Header = new ApiResponseHeader { KicadToken = "test-peer-token" },
-        Status = new ApiResponseStatus { Status = ApiStatusCode.AsOk },
-        Message = Any.Pack(new Empty()),
-    };
 
     public void Dispose()
     {

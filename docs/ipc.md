@@ -76,6 +76,39 @@ are the same requirements it always had. What is new is that the exception says 
 Either way the exception says which of the two it is, names every path that was tried, and names the
 environment variable — rather than the loader's bare `DllNotFoundException`.
 
+### What the master pin adds, and what KiCad answers
+
+`protos/KICAD_PIN` points at KiCad `master` (builds as `10.99.0`, the 11.0 line). Every command
+that master declares and 10.0.6 did not has a typed method now; the table is which ones KiCad
+registers a handler for at the pinned commit `965fb680`, read out of `api_handler_*.cpp`. A command
+without a handler is answered `AS_UNHANDLED`, which the client throws as `ApiException`.
+
+| Area | Methods | Handled on master |
+|---|---|---|
+| Embedded files (10.0.7+) | `Board.GetEmbeddedFiles` / `AddEmbeddedFiles` / `AddEmbeddedFile` / `SetEmbeddedFiles`, `EmbeddedFileCodec` | yes, pcbnew |
+| Design variants (10.0.7+) | `KiCadDocument.GetVariants` … `GetCurrentVariant` | yes, pcbnew and eeschema |
+| Commit document header (10.0.7+) | `BeginCommit` / `PushCommit` / `DropCommit` carry `Document` | yes; KiCad says it will require it |
+| Jobs | `KiCadDocument.RunJob` with any of the 15 `RunBoardJob*` and 7 `RunSchematicJob*` messages | yes, all 22 |
+| Design rules, plot settings, netlist | `Board.GetDesignRules` / `SetDesignRules` / `GetCustomDesignRules` / `SetCustomDesignRules` / `GetPlotSettings` / `SetPlotSettings` / `ImportNetlist` | yes, pcbnew |
+| Page settings, modified state, focus | `KiCadDocument.GetPageSettings` / `SetPageSettings` / `GetModifiedState` / `FocusOnItems` | yes, both editors |
+| Schematic | `KiCad.GetSchematic`, `Schematic.GetHierarchy` / `GetNetlist` / `PlaceSymbolFromLibrary`, and everything on `KiCadDocument` | yes, eeschema |
+| Placing from a library | `Board.PlaceFootprintFromLibrary`, `Schematic.PlaceSymbolFromLibrary` | yes |
+| Library queries | `KiCad.GetLibraryStatuses` / `ReloadLibrary` / `LoadAllLibraries` / `GetLibraryItems` / `GetItemsFromLibrary` | yes, `api_handler_libraries.cpp` |
+| Library **table editing** | `KiCad.GetLibraryTable` / `AddLibraryTableEntry` / `UpdateLibraryTableEntry` / `DeleteLibraryTableEntry` / `ImportLibrary` / `SearchLibraries` | **no** — declared `Since: 11.0`, no handler yet |
+| Documents | `KiCad.OpenDocument` / `CreateDocument` / `CloseDocument` / `CloseAllDocuments` | yes, but only in `kicad-cli api-server` mode |
+| Library items in their editor | `KiCad.OpenLibraryItem` | footprint editor only |
+| Paths, net class assignments | `KiCad.GetPaths`, `Project.GetNetClassAssignments` / `SetNetClassAssignments` | yes |
+| Cross-probe | `KiCad.SyncSelection` / `HighlightNets` / `CrossProbeAnnounce` | yes, both editors; `CrossProbeAnnounce` is marked internal by KiCad |
+| | `KiCad.FocusOnItem` (by reference or pad; `FocusOnItems` by id is the handled one) | **no** |
+
+Every method's wire shape — which message, which document or header, how the reply unpacks — is
+pinned in `tests/KiCadSharp.Tests/IpcCommandTests.cs` against an in-process nng peer. What KiCad
+does with them is only measurable against a KiCad built from master; the container images this
+repository uses are 10.0.6, so the live half is still to come.
+
+`GetVersion()` is how to tell the two apart at runtime: master reports `10.99.0`, and
+`KiCadVersion.SupportsLibraryCommands` and friends turn that into a check a caller can branch on.
+
 ### It does not work against eeschema on KiCad 10.0.6
 
 Measured against KiCad 10.0.6, and the reason there is no schematic API here:
@@ -90,5 +123,7 @@ Measured against KiCad 10.0.6, and the reason there is no schematic API here:
 - Upstream is in the same place: `kipy`'s own `kipy.schematic` fails to import against its generated
   protos, and its `Schematic` class carries `versionadded:: (KiCad 11)`.
 
-So a schematic API is a KiCad 11 story, and nothing in `KiCadSharp` pretends otherwise. `.kicad_sch`
-files are read and written on disk instead, through `SExpressions` or the CLI.
+So on 10.0.x a schematic API is a KiCad 11 story. `.kicad_sch` files are read and written on disk
+instead, through `SExpressions` or the CLI. Against master, `eeschema` registers handlers for the
+whole editor surface plus hierarchy, netlist, variants, jobs and symbol placement, and that is what
+`Schematic` wraps; it has not been measured against a running master build yet.

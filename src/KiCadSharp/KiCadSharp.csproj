@@ -28,6 +28,8 @@ SExpressions. The schematic side of KiCad's IPC API does not answer on KiCad 10;
          $(SExpressionsVersion) defaults to the released version; see README "Developing against local
          SExpressions sources" for the local-feed loop. -->
     <PackageReference Include="SExpressions" />
+    <!-- zstd for EmbeddedFileCodec: KiCad stores an embedded file as base64 of the zstd frame. Pure managed, no native asset. -->
+    <PackageReference Include="ZstdSharp.Port" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
