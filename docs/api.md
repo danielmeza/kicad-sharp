@@ -176,6 +176,15 @@ the `(mode …)`, and `hatch`, `polygon` and `segment` are written as they are. 
 A new mode does not refill the zone: its `filled_polygon`s keep the old copper until KiCad fills it
 again. `Mode` cites KiCad 10.0.6's parser and writer lines.
 
+**A zone's pad connection and outline hatch also take only KiCad's words.** `KiCadZone.ConnectPadsMode`
+reads `""` for thermal reliefs, which KiCad writes as `(connect_pads (clearance …))` with no word.
+Setting `""` removes the word, and `yes`, `no` and `thru_hole_only` go before the clearance, where
+KiCad writes them (#89). `HatchStyle` takes `none`, `edge` and `full` (#90). KiCad needs both values
+of `(hatch style pitch)`, so setting either one on a zone that has no `(hatch …)` writes both. The
+other value is the one KiCad reads for a zone without a `(hatch …)`: `none`, or 0.5 mm, which is also
+what `HatchPitch` reads there. Any other word throws `ArgumentException` and writes nothing, and
+writing back the values just read leaves the file as it was.
+
 **Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
 `KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of
 wherever it was, another file included. The view you hold is then the element in the destination,
