@@ -820,6 +820,13 @@ namespace KiCadSharp.Documents
     }
 
     /// <summary>Free text inside a symbol: <c>(text "..." (at x y r) (effects ...))</c>.</summary>
+    /// <remarks>
+    /// <b>KiCad writes this angle in tenths of a degree</b>, unlike every other angle in a symbol: a
+    /// vertical text is <c>(at x y 900)</c>. KiCad 10.0.6 reads it with <c>TENTHS_OF_A_DEGREE_T</c>
+    /// (<c>sch_io_kicad_sexpr_parser.cpp</c>, <c>parseSymbolText</c>) and writes it with
+    /// <c>AsTenthsOfADegree()</c> (<c>sch_io_kicad_sexpr_lib_cache.cpp</c>, <c>saveText</c>).
+    /// <see cref="RotationDegrees"/> converts; <see cref="Position"/> carries the number in the file.
+    /// </remarks>
     public class KiCadText : KiCadGraphicalItem
     {
         /// <summary>Creates a view over a <c>(text ...)</c> form.</summary>
@@ -829,11 +836,32 @@ namespace KiCadSharp.Documents
         {
         }
 
-        /// <summary>Creates a text item.</summary>
+        /// <summary>Creates a horizontal text item. Set <see cref="RotationDegrees"/> to turn it.</summary>
         /// <param name="text">The text.</param>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
-        /// <param name="rotation">Rotation, degrees.</param>
+        public KiCadText(string text, double x, double y)
+            : base(new SExpression(KiCadTokens.Common.Text))
+        {
+            Node.AddValue(text, SQuoteStyle.Quoted);
+            Position = new KiCadPosition(x, y);
+        }
+
+        /// <summary>Creates a text item, writing <paramref name="rotation"/> into the file unchanged.</summary>
+        /// <param name="text">The text.</param>
+        /// <param name="x">X, millimetres.</param>
+        /// <param name="y">Y, millimetres.</param>
+        /// <param name="rotation">
+        /// Written unchanged, and KiCad reads it in tenths of a degree: 900 is 90°, and 90 is 9°.
+        /// </param>
+        /// <remarks>
+        /// This parameter used to be documented as degrees while it was written unchanged, so
+        /// <c>90</c> gave a text KiCad reads as 9°. The behaviour is kept so that no caller's
+        /// output changes silently, and the constructor is obsolete so that every caller hears
+        /// about it. Use <see cref="KiCadText(string, double, double)"/> and
+        /// <see cref="RotationDegrees"/> instead.
+        /// </remarks>
+        [Obsolete("KiCad reads a symbol text's angle in tenths of a degree, and this constructor writes 'rotation' unchanged, so 90 gives 9 degrees. Use KiCadText(text, x, y) and set RotationDegrees.")]
         public KiCadText(string text, double x, double y, double rotation = 0)
             : base(new SExpression(KiCadTokens.Common.Text))
         {
@@ -848,12 +876,33 @@ namespace KiCadSharp.Documents
             set => WriteValue(0, value, SQuoteStyle.Quoted);
         }
 
-        /// <summary>Gets or sets where the text sits.</summary>
+        /// <summary>
+        /// Gets or sets where the text sits, with the angle as the file stores it: tenths of a degree
+        /// inside a symbol, degrees on a sheet (<see cref="Schematics.KiCadSchematicText"/>). Use
+        /// <see cref="RotationDegrees"/> for degrees in both.
+        /// </summary>
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
             set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
         }
+
+        /// <summary>Gets or sets the text's angle in degrees, converting to what the file stores.</summary>
+        /// <remarks>
+        /// Reads 0 when the form has no <c>(at ...)</c>, and does not add one. Setting it keeps the
+        /// position and adds an <c>(at 0 0 r)</c> when there is none.
+        /// </remarks>
+        public double RotationDegrees
+        {
+            get => Position.Rotation / FileUnitsPerDegree;
+            set => Position = Position with { Rotation = value * FileUnitsPerDegree };
+        }
+
+        /// <summary>
+        /// How many units of the file's angle make one degree: 10 inside a symbol, where KiCad stores
+        /// tenths of a degree.
+        /// </summary>
+        private protected virtual double FileUnitsPerDegree => 10;
 
         /// <summary>
         /// Gets the text rendering, or <see langword="null"/> when the form carries no
