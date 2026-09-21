@@ -23,20 +23,33 @@ A standalone `.kicad_mod` loads as one footprint and saves byte-identical, `desc
 
 What is still missing here:
 
-- **`KiCadSchematic` models symbols, sheets and instances only** — enough to walk a hierarchy and
-  annotate it. Wires, junctions, labels, buses, no-connects and text are reachable through `Node`
-  and round-trip intact, but have no typed view.
-- **`KiCadUtils` has no footprint half** — no `ParseFootprintLibrary`, `ValidateFootprintLibrary` or
-  `CloneFootprint`. `KiCadFootprint.CloneAs` covers the last of those.
-- **Board-level content has no views.** Zones, groups, tracks, vias and the `setup` block round-trip
-  intact but are only reachable as raw s-expressions.
+- **A zone's `KiCadZoneFill.Mode` can write a word KiCad refuses** (#72). It reads `solid` when the
+  fill has no `(mode …)`, and the setter writes any word, so writing it back unchanged gives
+  `(mode solid)`. pcbnew 10.0.6 reads only `segment`, `hatch` or `polygon` there, and refuses the
+  board.
+- **`KiCadSchematic` has no view for rule areas, tables, groups or embedded files** (`rule_area`,
+  `table`, `group`, `embedded_files`), all of which KiCad 10.0.6 writes at a sheet's top level.
+  Everything else it writes there has one: symbols, sheets, wires, buses, bus entries, junctions,
+  no-connects, the four kinds of label, text, text boxes, graphics, images, the symbol cache and the
+  page map.
+- **`KiCadBoard` has no view for text boxes, tables, reference images, targets, points, barcodes or
+  generated items** (`gr_text_box`, `table`, `image`, `target`, `point`, `barcode`, `generated`),
+  nor for the board's `property`, `variants` and `embedded_files`. KiCad 10.0.6 writes all of them at
+  a board's top level. Of `setup`, `KiCadBoardSetup` names the stackup, the mask and paste clearances
+  and whether footprints may bridge solder mask; the via tenting and plugging, the zone defaults, the
+  origins and the plot parameters are raw.
+
+What has no view round-trips intact and is reachable through `Node`.
 
 **Copper geometry and Specctra.**
 
 - **A padstack that differs per layer** (KiCad 9's `(padstack (mode custom) …)`) is described by its
   main shape on every layer, in both `CopperGeometry` and the design a board exports.
 - **A custom pad** is exported to a design as the convex hull of its primitives, which covers it;
-  KiCad exports the outline of their union. Its geometry in `CopperGeometry` is exact.
+  KiCad exports the outline of their union. In `CopperGeometry` its lines, polygons, square-cornered
+  rectangles and filled circles are exact, and an arc or a stroked circle among them is grown by
+  `maxError`, as a track arc is. **A Bézier primitive is dropped from both, and a rounded rectangle
+  is drawn with square corners** (#77).
 - **A session's `placement` is not applied.** A router does not move parts.
 - **Net classes are an input, not something read.** They live in the `.kicad_pro`, resolved through
   patterns and priorities; `SpecctraOptions` takes them resolved.
@@ -69,10 +82,11 @@ What is still missing here:
   `GetVisibleLayers`/`SetVisibleLayers`, `GetBoardEnabledLayers`/`SetBoardEnabledLayers`,
   `GetBoardStackup`/`UpdateBoardStackup`, `GetGraphicsDefaults`, `GetPadShapeAsPolygon`,
   `CheckPadstackPresenceOnLayers`, `InjectDrcError`, `FlipItems`, `InteractiveMoveItems`,
-  `GetBoardEditorAppearanceSettings`/`SetBoardEditorAppearanceSettings`, and from
+  `GetBoardEditorAppearanceSettings`/`SetBoardEditorAppearanceSettings`; from
   `editor_commands.proto`: `GetItemsById`, `GetBoundingBox`, `AddToSelection`,
   `RemoveFromSelection`, `HitTest`, `GetTitleBlockInfo`/`SetTitleBlockInfo`,
-  `SaveSelectionToString`, `ParseAndCreateItemsFromString`. Send them by hand with
+  `SaveSelectionToString`, `ParseAndCreateItemsFromString`; and from `base_commands.proto`:
+  `GetTextExtents`, `GetTextAsShapes`. Send them by hand with
   `KiCadIPCClient.Send<TResult>` — the message types are all in `KiCadSharp.Protos`.
 - **`KiCad.RefreshPaths()` and `KiCad.ImportLibrary(...)` are no-ops.** The commands they would send
   do not exist in KiCad's IPC API; the methods return `ValueTask.CompletedTask` and do nothing. A
@@ -84,11 +98,6 @@ What is still missing here:
   `EntryPointNotFoundException`, not a `KiCadConnectionException`. Only the loader's two failures
   (`DllNotFoundException`, `BadImageFormatException`) are converted. It is untested: the process
   loads one libnng and keeps it, so a test cannot load a second one.
-- **The configured client name is not transmitted.** `AddKiCad("my-plugin")` sets
-  `KiCadClientSettings.ClientName`, but the envelope header is populated from `PipeName`.
-- **`KiCadEnvironment.GetDefaultSocketPath()` is never called.** `AddKiCad` wires `PipeName`
-  straight from `KICAD_API_SOCKET`, so with that variable unset `Connect()` throws rather than
-  falling back to the OS default the method computes.
 - **No `Async` suffixes, and one sync/async asymmetry**: `GetProject(DocumentSpecifier)` is
   synchronous while the parameterless `GetProject()` is not.
 
@@ -105,8 +114,9 @@ What is still missing here:
 - **`tests/KiCadSharp.Tests` is the only gate on the document layer.** Tests over the vendored KiCad
   10 fixtures, with the byte counts in the assertions. The IPC surface is covered two ways: the
   transport, its timeout behaviour and every way a call fails against an in-process nng peer
-  (`NngInteropTests`, `IpcTimeoutTests`, `IpcFailureTests`, no KiCad needed), and the client against a real KiCad (`IpcTests`, which returns
-  early unless `KICADSHARP_IPC_SOCKET` names a socket — see `scripts/kicad-ipc-container.sh`). The
+  (`NngInteropTests`, `IpcTimeoutTests`, `IpcFailureTests`, no KiCad needed), and the client against a real KiCad (`IpcTests`, whose
+  live tests return early unless `KICADSHARP_IPC_SOCKET` names a socket — see
+  `scripts/kicad-ipc-container.sh`; the wiring tests at its top need no KiCad). The
   tests that shell out to `kicad-cli` return early unless `KICADSHARP_KICAD_CLI` points at one.
   `tests/KiCadSharp.Fluent.Tests` covers the fluent package: every `With*` against the `Add*` it
   mirrors, a reflection check that the two sets match, and a footprint and a symbol library that
