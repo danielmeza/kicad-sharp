@@ -21,12 +21,6 @@ public class EndToEndTests
     private const string FootprintName = "SOIC-8_3.9x4.9mm_P1.27mm";
     private const string ModelPath = "${KICAD10_3DMODEL_DIR}/Package_SO.3dshapes/SOIC-8_3.9x4.9mm_P1.27mm.step";
 
-    // PolygonPointsFirst: KiCad 10.0.6 reads an (fp_poly …) only when (pts …) is its first child —
-    // MEASURED, `kicad-cli fp upgrade` refuses the library ("Unable to load library", exit 2) when
-    // (layer …) comes first and loads it when the points do. KiCadFpPoly writes its children in the
-    // order they are set, so both builds below add the points before the layer and the width. That
-    // is a property of the core document type, and the same whichever style builds it.
-
     // ── The footprint ────────────────────────────────────────────────────────
 
     private static KiCadFootprint FluentFootprint()
@@ -61,13 +55,13 @@ public class EndToEndTests
             });
 
         // A footprint has no AddPoly: a polygon goes in through the live list, and the list's
-        // With returns the list, so it is its own statement. The points go first — see
-        // PolygonPointsFirst.
+        // With returns the list, so it is its own statement. The layer and width are set before the
+        // points, and KiCad still finds (pts …) first, where it reads it (#59).
         footprint.Polygons.With(marker =>
         {
-            marker.WithPoint(-3.45, -2.465).WithPoint(-3.69, -2.795).WithPoint(-3.21, -2.795).WithPoint(-3.45, -2.465);
             marker.Layer = KiCadLayerNames.FSilkS;
             marker.Width = 0.12;
+            marker.WithPoint(-3.45, -2.465).WithPoint(-3.69, -2.795).WithPoint(-3.21, -2.795).WithPoint(-3.45, -2.465);
         });
 
         return footprint;
@@ -104,12 +98,12 @@ public class EndToEndTests
         model.Rotation = new KiCadXyz(0, 0, 0);
 
         var marker = footprint.Polygons.Add();
+        marker.Layer = KiCadLayerNames.FSilkS;
+        marker.Width = 0.12;
         marker.AddPoint(-3.45, -2.465);
         marker.AddPoint(-3.69, -2.795);
         marker.AddPoint(-3.21, -2.795);
         marker.AddPoint(-3.45, -2.465);
-        marker.Layer = KiCadLayerNames.FSilkS;
-        marker.Width = 0.12;
         return footprint;
     }
 

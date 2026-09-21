@@ -631,8 +631,7 @@ namespace KiCadSharp.Documents
         public void AddPoint(double x, double y)
         {
             var polygon = Node.GetChild(KiCadTokens.Board.Polygon) ?? Node.CreateChild(KiCadTokens.Board.Polygon);
-            var points = polygon.GetChild(KiCadTokens.Common.Pts) ?? polygon.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            KiCadChildOrder.Require(polygon, KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
 
         internal static IReadOnlyList<KiCadPosition> ReadPoints(SExpression? owner) =>
@@ -996,8 +995,7 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
@@ -1026,8 +1024,7 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
@@ -1182,8 +1179,7 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 

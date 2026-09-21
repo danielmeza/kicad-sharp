@@ -127,6 +127,27 @@ re-serialised, so a token this library has never heard of survives the round tri
 save that changed one property differs from the input in exactly that property's bytes. Reach
 anything not modelled through `Node`.
 
+**A new child goes where KiCad reads it.** A property set for the first time adds its child at the
+end of the form, except in the few forms KiCad 10 reads partly by position, where a child anywhere
+else makes it refuse the whole file (#59). There the child goes in KiCad's place, whatever order
+the properties are set in:
+
+| Form | What comes first, in this order |
+|---|---|
+| `fp_poly`, `gr_poly`, `fp_curve`, `gr_curve` | `pts` |
+| `fp_line`, `gr_line`, `fp_rect`, `gr_rect` | `start`, `end` |
+| `fp_circle`, `gr_circle` | `center`, `end` |
+| `fp_arc`, `gr_arc` | `start`, `mid`, `end`, or KiCad 5's `start`, `end`, `angle` |
+| `dimension` | `type` |
+| a zone's `polygon` | `pts`, and nothing else |
+| a zone's `filled_polygon` | `layer`, `island`, then `pts` last |
+| `kicad_pcb`, `kicad_sch`, `kicad_symbol_lib`, `footprint` | `version` |
+
+Nothing that is already in a form moves, so a loaded file still saves byte for byte. The schematic
+and symbol-library grammar has no such form: a `polyline`'s, `bezier`'s or `wire`'s `pts` may go
+anywhere. `src/KiCadSharp/Documents/KiCadChildOrder.cs` cites KiCad 10.0.6's parser line for each
+rule.
+
 **Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
 `KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of
 wherever it was, another file included. The view you hold is then the element in the destination,

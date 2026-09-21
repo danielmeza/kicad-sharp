@@ -109,6 +109,10 @@ namespace KiCadSharp.Documents
         /// <param name="token">The child token.</param>
         /// <param name="value">The new value, or <see langword="null"/> to remove the child.</param>
         /// <param name="quote">How to write the atom.</param>
+        /// <remarks>
+        /// A missing child is created where KiCad reads it, which is the end of the form except in the
+        /// few forms KiCad reads by position; see <see cref="Require"/>.
+        /// </remarks>
         protected void WriteChild(string token, string? value, SQuoteStyle quote = SQuoteStyle.Auto)
         {
             if (value is null)
@@ -117,20 +121,29 @@ namespace KiCadSharp.Documents
                 return;
             }
 
+            KiCadChildOrder.Place(Node, token);
             Node.SetChildValue(token, value, quote);
         }
 
         /// <summary>Writes a number into a child form, invariant culture, KiCad's own formatting.</summary>
         /// <param name="token">The child token.</param>
         /// <param name="value">The number.</param>
-        protected void WriteChildDouble(string token, double value) =>
+        /// <remarks>A missing child is created where KiCad reads it; see <see cref="Require"/>.</remarks>
+        protected void WriteChildDouble(string token, double value)
+        {
+            KiCadChildOrder.Place(Node, token);
             Node.SetChildValue(token, Format(value), SQuoteStyle.Bare);
+        }
 
         /// <summary>Writes a KiCad boolean child as <c>(token yes)</c> / <c>(token no)</c>.</summary>
         /// <param name="token">The child token.</param>
         /// <param name="value">The flag.</param>
-        protected void WriteFlag(string token, bool value) =>
+        /// <remarks>A missing child is created where KiCad reads it; see <see cref="Require"/>.</remarks>
+        protected void WriteFlag(string token, bool value)
+        {
+            KiCadChildOrder.Place(Node, token);
             Node.SetChildValue(token, value ? KiCadTokens.Common.Yes : KiCadTokens.Common.No, SQuoteStyle.Bare);
+        }
 
         /// <summary>Replaces one of this node's own bare values, appending when it is not there yet.</summary>
         /// <param name="index">The value index.</param>
@@ -149,8 +162,22 @@ namespace KiCadSharp.Documents
 
         /// <summary>Gets or creates the child form with the given token.</summary>
         /// <param name="token">The child token.</param>
-        /// <returns>The child, existing or newly appended.</returns>
-        protected SExpression Require(string token) => Node.GetChild(token) ?? Node.CreateChild(token);
+        /// <returns>The child, existing or new.</returns>
+        /// <remarks>
+        /// <para>
+        /// A new child goes at the end of the form, except in the forms KiCad reads partly by
+        /// position. There it goes where KiCad's parser looks for it, whatever order the properties
+        /// are set in: the <c>pts</c> of an <c>fp_poly</c>, <c>gr_poly</c> or curve first; an arc's
+        /// <c>start</c>, <c>mid</c> and <c>end</c> first and in that order; a line's or rectangle's
+        /// <c>start</c> then <c>end</c>; a circle's <c>center</c> then <c>end</c>; a dimension's
+        /// <c>type</c>; a filled polygon's <c>layer</c> before its points; a file's <c>version</c>.
+        /// KiCad 10 refuses the whole file when one of these is anywhere else (#59).
+        /// </para>
+        /// <para>
+        /// Children that are already there never move, so a loaded file keeps its bytes.
+        /// </para>
+        /// </remarks>
+        protected SExpression Require(string token) => KiCadChildOrder.Require(Node, token);
 
         // ------------------------------------------------------------------------------ identity
 
