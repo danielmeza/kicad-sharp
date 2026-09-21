@@ -106,13 +106,19 @@ public class DocumentDefaultsTests
         Assert.Equal(KiCadDefaults.LibraryGenerator, footprint.Node.GetChildValue(KiCadTokens.Common.Generator));
     }
 
+    /// <summary>
+    /// The one document type whose getter no longer falls back to its constructor's stamp (#76).
+    /// KiCad reads a board-shaped file with no version as <c>20201115</c> and a <c>.kicad_mod</c>
+    /// with none as format 0, so reporting <see cref="KiCadDefaults.FootprintLibraryVersion"/> there
+    /// named a format neither the file nor KiCad uses.
+    /// </summary>
     [Fact]
-    public void ALibraryWithNoVersionTokenReportsItsOwnStamp()
+    public void ALibraryWithNoVersionTokenReportsNone()
     {
         var footprints = new KiCadFootprintLibrary();
         footprints.Node.RemoveChild(KiCadTokens.Common.Version);
 
-        Assert.Equal(KiCadDefaults.FootprintLibraryVersion, footprints.Version);
+        Assert.Null(footprints.Version);
         Assert.Equal(KiCadDefaults.Paper, footprints.Node.GetChildValue(KiCadTokens.Common.Paper));
     }
 

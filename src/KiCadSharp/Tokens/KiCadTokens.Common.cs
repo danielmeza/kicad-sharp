@@ -131,6 +131,9 @@ namespace KiCadSharp
             /// <summary>A stroke: <c>(stroke (width w) (type t) [(color …)])</c>.</summary>
             public const string Stroke = "stroke";
 
+            /// <summary>The stroke type of a continuous line, <c>(type solid)</c>.</summary>
+            public const string Solid = "solid";
+
             /// <summary>A fill, spelled either <c>(fill (type …))</c> or <c>(fill no)</c>.</summary>
             public const string Fill = "fill";
 

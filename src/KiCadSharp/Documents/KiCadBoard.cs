@@ -88,14 +88,24 @@ namespace KiCadSharp.Documents
             _root.CreateChild(KiCadTokens.Board.General).CreateChild(KiCadTokens.Common.Thickness, Numbers.Format(KiCadDefaults.BoardThicknessMm));
             _root.CreateChild(KiCadTokens.Common.Paper).AddValue(KiCadDefaults.Paper, SQuoteStyle.Quoted);
 
-            var layers = _root.CreateChild(KiCadTokens.Common.Layers);
+            AddDefaultLayers(_root);
+
+            _document = new SDocument();
+            _document.Add(_root);
+        }
+
+        /// <summary>
+        /// Appends the layer table of a new two-layer board to <paramref name="root"/>, the table a new
+        /// <see cref="KiCadBoard"/> and a new board-shaped <see cref="KiCadFootprintLibrary"/> start with.
+        /// </summary>
+        /// <param name="root">A <c>(kicad_pcb …)</c> form that has no <c>(layers …)</c> yet.</param>
+        internal static void AddDefaultLayers(SExpression root)
+        {
+            var layers = root.CreateChild(KiCadTokens.Common.Layers);
             foreach (var (ordinal, name, type, userName) in DefaultLayers)
             {
                 layers.AddChild(new KiCadBoardLayer(ordinal, name, type, userName).Node);
             }
-
-            _document = new SDocument();
-            _document.Add(_root);
         }
 
         /// <summary>Creates a board over an existing <c>(kicad_pcb …)</c> form.</summary>

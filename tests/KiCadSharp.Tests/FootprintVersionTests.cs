@@ -64,7 +64,7 @@ public class FootprintVersionTests
         var footprint = new KiCadFootprint("R_0603");
 
         Assert.StartsWith(
-            "(footprint \"R_0603\" (version 20260206) (generator \"KiCad Library Importer\") (layer \"F.Cu\") (fp_text reference \"REF**\"",
+            "(footprint \"R_0603\" (version 20260206) (generator \"KiCad Library Importer\") (layer \"F.Cu\") (property \"Reference\" \"REF**\"",
             Flatten(footprint.Node.ToText()),
             StringComparison.Ordinal);
         Assert.Equal(KiCadDefaults.FootprintVersion, footprint.Version);

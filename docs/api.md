@@ -102,7 +102,7 @@ plus `Document` and `Name`.
 | `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. |
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
 | `KiCadText` | — | Text inside a symbol: `Text`, `Position`, `RotationDegrees`, `FontEffects`. KiCad stores this angle in **tenths of a degree**, so a vertical text is `(at x y 900)` and `Position.Rotation` reads 900. `RotationDegrees` converts. The four-argument constructor writes its angle unchanged and is obsolete. `KiCadSchematicText`, which is text on a sheet, stores degrees, so there `RotationDegrees` is the number in the file. |
-| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). |
+| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`, `Version`, `Generator`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). `Version` is the version the file declares, or `null` when it declares none. |
 | `KiCadFootprint` | — | `Id`, `Version`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
 | `KiCadSchematic` | `.kicad_sch` | `Load`/`LoadAsync`/`Parse`, `Save`, `ToText`, `Uuid`, `Symbols`, `Sheets`, `FilePath`, `IsModified`. |
 | `KiCadSchematicSymbol` | — | `Uuid`, `LibId`, `Unit`, `Properties`, `ReferenceProperty`, `IsPowerSymbol`, `GetInstanceReference`, `SetInstanceReference`, `PruneInstances`. |
@@ -224,6 +224,22 @@ version. A footprint that has one there makes KiCad read the rest of the board u
 the two versions. For example, a via after a new footprint on a `new KiCadBoard()` (`20241229`) loses
 its explicit "no" covering and plugging. To place a new footprint on a board stamped with an older
 format, set its `Version` to `null` first (#73).
+
+**A footprint built in memory is written in KiCad 10's forms.** `new KiCadFootprint(id)` starts with
+the four fields KiCad gives every footprint, written as `(property …)`: `Reference` (`REF**`, on
+`F.SilkS`), `Value` (the name, on `F.Fab`), and an empty `Datasheet` and `Description`, hidden, on
+`F.Fab`. So `GetPropertyValue("Reference")` answers on a new footprint as it does on one KiCad wrote,
+and `TextItems` starts empty (#75). The `(fp_text reference …)` and `(fp_text value …)` it wrote
+before date from before format `20230620`, when fields replaced them. A width set on a new `fp_*`
+shape is written as `(stroke (width w) (type solid))`, not as the bare `(width w)` of older files. kicad-cli 10.0.6 reads the old
+and new spellings the same way. A footprint read from a file keeps its forms: its text items stay
+text items, and a bare `width` stays bare when written to.
+
+**A new board-shaped `KiCadFootprintLibrary` starts with a layer table**, the same one a new
+`KiCadBoard` has. It used to write an empty `(layers)`, which KiCad refuses as "0 is not a valid layer
+count" (#74). `KiCadFootprintLibrary.Version` reports only what the file declares: `null` for a file
+with no version, which KiCad reads as format 0 (a `.kicad_mod`) or `20201115` (a board). It used to
+report `20211014` there (#76).
 
 ### Copper geometry — `KiCadSharp.Geometry`
 

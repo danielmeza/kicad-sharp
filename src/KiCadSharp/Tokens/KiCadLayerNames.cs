@@ -92,7 +92,7 @@ namespace KiCadSharp
     }
 
     /// <summary>
-    /// The keys of the properties KiCad itself writes on a symbol or a sheet.
+    /// The keys of the properties KiCad itself writes on a symbol, a footprint or a sheet.
     /// </summary>
     /// <remarks>
     /// A property is looked up by its key, so the key is part of the format: asking for
@@ -111,6 +111,9 @@ namespace KiCadSharp
 
         /// <summary>The datasheet link.</summary>
         public const string Datasheet = "Datasheet";
+
+        /// <summary>The description.</summary>
+        public const string Description = "Description";
 
         /// <summary>A hierarchical sheet's name.</summary>
         public const string SheetName = "Sheetname";
