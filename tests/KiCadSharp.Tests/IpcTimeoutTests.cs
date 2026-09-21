@@ -110,7 +110,7 @@ public class IpcTimeoutTests
     [Fact]
     public async Task ConnectingToAPathThatIsNotThereThrowsAConnectionException()
     {
-        using var client = Client($"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}");
+        using var client = Client(SocketPaths.NewUrl("absent"));
 
         var failure = await Assert.ThrowsAsync<KiCadConnectionException>(async () => await client.Connect());
 

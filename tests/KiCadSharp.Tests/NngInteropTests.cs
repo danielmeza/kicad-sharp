@@ -100,7 +100,7 @@ public class NngInteropTests
         var elapsed = Stopwatch.StartNew();
 
         var failure = Assert.Throws<NngException>(() => NngRequestSocket.Dial(
-            $"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}",
+            SocketPaths.NewUrl("absent"),
             Timeout.InfiniteTimeSpan,
             Timeout.InfiniteTimeSpan));
 
@@ -117,7 +117,7 @@ public class NngInteropTests
         // accepted. It costs nng's own dial timeout, measured at 10.0 s, every attempt. Anything
         // waiting for KiCad to come up has to count seconds rather than attempts, or three
         // "retries" become half a minute of apparent hang.
-        var path = Path.Combine(Path.GetTempPath(), $"kicadsharp-silent-{Guid.NewGuid():N}.sock");
+        var path = SocketPaths.New("silent");
         using var listener = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
         listener.Bind(new UnixDomainSocketEndPoint(path));
         listener.Listen(8);

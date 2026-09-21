@@ -68,10 +68,9 @@ internal sealed partial class NngTestPeer
 
         internal Raw(Func<byte[], byte[]?> respond)
         {
-            var path = Path.Combine(Path.GetTempPath(), $"kicadsharp-test-{Guid.NewGuid():N}.sock");
+            Url = SocketPaths.NewUrl("peer");
             Check("nng_rep0_open", nng_rep0_open(out _socket));
-            Check("nng_listen", nng_listen(_socket, $"ipc://{path}", out _, 0));
-            Url = $"ipc://{path}";
+            Check("nng_listen", nng_listen(_socket, Url, out _, 0));
             _serving = Task.Factory.StartNew(
                 () => Serve(respond, _stopping.Token),
                 TaskCreationOptions.LongRunning);
