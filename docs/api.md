@@ -166,6 +166,15 @@ board, which has neither fill. A fill loaded from a file keeps the spelling it h
 `(fill yes (thermal_gap …) …)`, is a third form, `KiCadZoneFill`. `KiCadFillSpelling` cites KiCad
 10.0.6's parser and writer lines for each spelling.
 
+**A zone is filled solid or hatched, and `solid` is not a word in the file.** KiCad writes
+`(mode hatch)` for a hatched zone and no `(mode …)` for a solid one. Its parser takes `hatch`,
+`polygon` and `segment`, the last two meaning solid, and refuses the whole board over `(mode solid)`
+(#72). `KiCadZoneFill.Mode` reads `solid` when there is no `(mode …)`. Setting it to `"solid"` removes
+the `(mode …)`, and `hatch`, `polygon` and `segment` are written as they are. Any other word throws
+`ArgumentException` and writes nothing. Writing back the value just read leaves the file as it was.
+A new mode does not refill the zone: its `filled_polygon`s keep the old copper until KiCad fills it
+again. `Mode` cites KiCad 10.0.6's parser and writer lines.
+
 **Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
 `KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of
 wherever it was, another file included. The view you hold is then the element in the destination,

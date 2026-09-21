@@ -643,8 +643,24 @@ namespace KiCadSharp.Documents
     /// <summary>
     /// A zone's fill settings: <c>(fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5))</c>.
     /// </summary>
+    /// <remarks>
+    /// This is not the <c>(fill …)</c> of a board shape, <see cref="KiCadFill"/>. KiCad reads a zone's
+    /// with its own loop and its own words (<c>parseZONE</c>,
+    /// <c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr_parser.cpp</c>, lines 8008–8161, KiCad 10.0.6),
+    /// and a word from one is refused in the other.
+    /// </remarks>
     public sealed class KiCadZoneFill : KiCadNode
     {
+        /// <summary>The fill mode of a zone with no <c>(mode …)</c>, which is how KiCad writes a solid zone.</summary>
+        private const string Solid = "solid";
+
+        /// <summary>
+        /// The words KiCad 10.0.6's parser reads in a zone's <c>(mode …)</c>
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 8020–8035). It reads <c>polygon</c> and the
+        /// deprecated <c>segment</c> as a solid fill, and <c>hatch</c> as a hatched one.
+        /// </summary>
+        private static readonly HashSet<string> ModeWords = new(StringComparer.Ordinal) { "hatch", "polygon", "segment" };
+
         /// <summary>Creates a view over a zone's <c>(fill …)</c> form.</summary>
         /// <param name="node">The form.</param>
         public KiCadZoneFill(SExpression node)
@@ -678,11 +694,68 @@ namespace KiCadSharp.Documents
             }
         }
 
-        /// <summary>Gets or sets the fill pattern: <c>solid</c> when the token is absent, or <c>hatch</c>.</summary>
+        /// <summary>
+        /// Gets or sets the fill pattern: <c>solid</c> when the form has no <c>(mode …)</c>, which is how
+        /// KiCad writes a solid zone, and otherwise the word the file has: <c>hatch</c>, or
+        /// <c>polygon</c> or <c>segment</c>, which KiCad reads as solid.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// KiCad 10 fills a zone one of two ways, solid or hatched (<c>ZONE_FILL_MODE</c>,
+        /// <c>pcbnew/zone_settings.h</c>, line 44). It writes <c>(mode hatch)</c> for a hatched zone and
+        /// nothing for a solid one (<c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.cpp</c>, lines
+        /// 2993–2995), and a zone it reads with no <c>(mode …)</c> is solid (<c>pcbnew/zone.cpp</c>,
+        /// lines 72 and 89; <c>pcbnew/zone_settings.cpp</c>, line 47). Its parser takes <c>hatch</c>,
+        /// <c>polygon</c> and <c>segment</c>, and refuses the whole board over any other word,
+        /// <c>solid</c> included (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 8020–8035).
+        /// </para>
+        /// <para>
+        /// So a set takes those three words, and <c>solid</c>. <c>"solid"</c> removes the
+        /// <c>(mode …)</c>, as KiCad does. The other three are written as they are, and a new
+        /// <c>(mode …)</c> goes first in the form, where KiCad writes it. Any other word throws, and
+        /// writes nothing: <c>hatched</c>, a different case, <c>""</c>. Writing back the value just
+        /// read changes nothing, and turns a <c>(mode solid)</c> that some other writer left into the
+        /// form KiCad reads.
+        /// </para>
+        /// <para>
+        /// A set leaves the hatch settings (<c>hatch_thickness</c>, <c>hatch_gap</c> and the rest)
+        /// alone. KiCad reads them whatever the mode (lines 8042–8083) and writes them only for a
+        /// hatched zone (<c>pcb_io_kicad_sexpr.cpp</c>, lines 3034–3051). A hatched zone without them
+        /// gets its board's defaults, 1 mm lines 1.5 mm apart unless the board sets others
+        /// (<c>zone_settings.cpp</c>, lines 53–54). Nor does a set re-fill the zone:
+        /// <see cref="KiCadZone.FilledPolygons"/> keeps the old copper until KiCad fills it again.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">KiCad 10 reads no such zone fill mode.</exception>
         public string Mode
         {
-            get => ReadChild(KiCadTokens.Board.Mode) ?? "solid";
-            set => WriteChild(KiCadTokens.Board.Mode, value, SQuoteStyle.Bare);
+            get => ReadChild(KiCadTokens.Board.Mode) ?? Solid;
+
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                if (string.Equals(value, Solid, StringComparison.Ordinal))
+                {
+                    Node.RemoveChildren(KiCadTokens.Board.Mode);
+                    return;
+                }
+
+                if (!ModeWords.Contains(value))
+                {
+                    throw new ArgumentException(
+                        $"KiCad reads no zone fill mode \"{value}\". Use solid, hatch, polygon or segment.",
+                        nameof(value));
+                }
+
+                if (Node.GetChild(KiCadTokens.Board.Mode) is null)
+                {
+                    // KiCad reads (mode …) anywhere in the form, but writes it first.
+                    Node.Children.Insert(0, new SExpression(KiCadTokens.Board.Mode));
+                }
+
+                Node.SetChildValue(KiCadTokens.Board.Mode, value, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>Gets or sets the gap a thermal relief leaves around a pad, in millimetres.</summary>
