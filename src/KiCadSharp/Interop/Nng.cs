@@ -37,7 +37,8 @@ namespace KiCadSharp.Interop
         /// <summary>
         /// Names a <c>libnng</c> to load instead of the one shipped here: an absolute path, or a
         /// name for the platform loader to resolve. This is the supported way onto a platform
-        /// upstream publishes no binary for -- see <see cref="NngLibraryResolver"/>.
+        /// upstream publishes no binary for -- see <see cref="NngLibraryResolver"/>. When it is set,
+        /// that library is used or the connection fails: the shipped one is never loaded instead.
         /// </summary>
         internal const string LibraryPathVariable = "KICADSHARP_NNG_LIBRARY";
 

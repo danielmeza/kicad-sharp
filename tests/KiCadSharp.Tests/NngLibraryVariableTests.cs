@@ -9,14 +9,20 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace KiCadSharp.Tests;
 
 /// <summary>
-/// <c>KICADSHARP_NNG_LIBRARY</c> naming a library that loads and is not nng (#70).
+/// <c>KICADSHARP_NNG_LIBRARY</c> naming a library that loads and is not nng (#70), or naming
+/// something that does not load at all (#83).
 /// </summary>
 /// <remarks>
 /// <para>
-/// It used to surface as the runtime's <see cref="EntryPointNotFoundException"/>, from the first
-/// call into nng. The loader's two other failures, no library and one the platform refuses, both
-/// reach the caller as a <see cref="KiCadConnectionException"/>. Now this one does too: the resolver
-/// looks up every entry point as it loads the library, and refuses a library that lacks one.
+/// A library that loads and is not nng used to surface as the runtime's
+/// <see cref="EntryPointNotFoundException"/>, from the first call into nng. The loader's two other
+/// failures, no library and one the platform refuses, both reach the caller as a
+/// <see cref="KiCadConnectionException"/>. Now this one does too: the resolver looks up every entry
+/// point as it loads the library, and refuses a library that lacks one.
+/// </para>
+/// <para>
+/// A value that does not load at all used to be dropped without a word, and the shipped libnng was
+/// loaded in its place. Now it is refused the same way, and nothing is loaded instead.
 /// </para>
 /// <para>
 /// The end-to-end tests run in a <see cref="ChildProcess"/>. The variable is read once, when nng is
@@ -87,6 +93,84 @@ public class NngLibraryVariableTests
             Assert.Equal(typeof(KiCadConnectionException).FullName, attempt.Type);
             Assert.Equal(typeof(NngException).FullName, attempt.InnerType);
             Assert.Contains("Connection refused", attempt.Message);
+        }
+    }
+
+    [ChildProcessFact]
+    public void AVariableNamingNoFileIsAConnectionFailureAndNothingIsLoadedInstead()
+    {
+        // #83. The value was dropped without a word, and the shipped libnng was loaded in its place.
+        var library = Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}", NngLibraryResolver.FileName);
+
+        var attempts = ConnectTwiceInAChild(library);
+
+        var first = attempts[0];
+        AssertRefusedWithoutFallingBack(first, library);
+        Assert.Contains("there is no file at that path", first.Message);
+        Assert.Equal(typeof(DllNotFoundException).FullName, first.InnerType);
+        Assert.Equal(first, attempts[1]);
+    }
+
+    [ChildProcessFact]
+    public void AVariableNamingAFileThatIsNotALibraryIsAConnectionFailureAndNothingIsLoadedInstead()
+    {
+        // #83, the other way a value fails to load: the file is there and is not a shared library.
+        var library = Path.Combine(Path.GetTempPath(), $"kicadsharp-not-a-library-{Guid.NewGuid():N}-{NngLibraryResolver.FileName}");
+        File.WriteAllText(library, "This is text, not a shared library.\n");
+
+        try
+        {
+            var attempts = ConnectTwiceInAChild(library);
+
+            var first = attempts[0];
+            AssertRefusedWithoutFallingBack(first, library);
+            Assert.Contains("the platform loader could not load it", first.Message);
+
+            // Which of the two the loader throws for a file that is not a library is its own
+            // business: DllNotFoundException from dlopen, BadImageFormatException from LoadLibrary.
+            Assert.Contains(first.InnerType, new[] { typeof(DllNotFoundException).FullName, typeof(BadImageFormatException).FullName });
+            Assert.Equal(first, attempts[1]);
+        }
+        finally
+        {
+            File.Delete(library);
+        }
+    }
+
+    [Fact]
+    public void TheWayForwardOffersTheShippedLibraryOnlyWhereThereIsOne()
+    {
+        // #83. The old failure told someone who had set the variable to set it. Neither message for
+        // a variable that is set says that. Where this package ships a libnng, unsetting the
+        // variable is a way forward; where it does not, that would lead nowhere.
+        var shipped = NngLibraryResolver.ShippedRuntimeIdentifiers[0];
+        const string unshipped = "linux-riscv64";
+        Assert.DoesNotContain(unshipped, NngLibraryResolver.ShippedRuntimeIdentifiers);
+
+        var reason = new DllNotFoundException("cannot open shared object file");
+        foreach (var identifier in new[] { shipped, unshipped })
+        {
+            var messages = new[]
+            {
+                NngLibraryResolver.CouldNotLoad("/opt/nng/libnng.so", reason, identifier).Message,
+                NngLibraryResolver.NotNng("/opt/nng/libnng.so", [nameof(Nng.nng_socket_set_ms)], identifier).Message,
+            };
+
+            foreach (var message in messages)
+            {
+                Assert.DoesNotContain($"Set {NngLibraryResolver.LibraryPathVariableName}", message);
+                Assert.Contains(identifier, message);
+
+                if (identifier == shipped)
+                {
+                    Assert.Contains("or unset it to use the", message);
+                }
+                else
+                {
+                    Assert.DoesNotContain("unset", message);
+                    Assert.Contains("this package ships none", message);
+                }
+            }
         }
     }
 
@@ -197,6 +281,26 @@ public class NngLibraryVariableTests
         Assert.True(output.Length == 2, context);
 
         return output.Select(line => JsonSerializer.Deserialize<Outcome>(line)!).ToArray();
+    }
+
+    /// <summary>
+    /// A variable that names something which does not load is refused, and the refusal says so.
+    /// </summary>
+    private static void AssertRefusedWithoutFallingBack(Outcome attempt, string library)
+    {
+        // A failure at the dial means some libnng loaded: the shipped one, in place of the one the
+        // variable names. That is the fallback #83 is about.
+        Assert.DoesNotContain("Connection refused", attempt.Message);
+        Assert.NotEqual(typeof(NngException).FullName, attempt.InnerType);
+
+        Assert.Equal(typeof(KiCadConnectionException).FullName, attempt.Type);
+        Assert.Contains(NngLibraryResolver.LibraryPathVariableName, attempt.Message);
+        Assert.Contains($"'{library}'", attempt.Message);
+
+        // Neither tells the user to set the variable they have set, and neither lists the probe
+        // paths, which were never looked at.
+        Assert.DoesNotContain($"Set {NngLibraryResolver.LibraryPathVariableName}", attempt.Message);
+        Assert.DoesNotContain("Looked in", attempt.Message);
     }
 
     /// <summary>What one attempt threw, or all nulls when it connected.</summary>

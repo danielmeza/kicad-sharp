@@ -58,6 +58,11 @@ above. One that loads and lacks any of them is refused, and every connection att
 `KiCadConnectionException` that names the variable, the path and the functions it lacks. The
 runtime's `EntryPointNotFoundException` for the first missing function is its inner exception.
 
+A value that does not load at all, because there is no file at that path or the platform loader
+refuses it, is refused the same way, with the loader's own exception inside. Once the variable is
+set, the library it names is used or the connection fails: the shipped `libnng` is never loaded in
+its place. An empty variable counts as not set.
+
 **What libnng itself links against**, read out of the shipped binaries. Nothing here is bundled —
 these are the host's own libraries, and the only ones a consumer may have to install are on the
 right:

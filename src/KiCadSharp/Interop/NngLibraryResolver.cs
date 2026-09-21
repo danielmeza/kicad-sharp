@@ -43,6 +43,13 @@ namespace KiCadSharp.Interop
     /// library. If one is missing, it refuses the library with a <see cref="KiCadConnectionException"/>
     /// that names the variable, the path and what is missing.
     /// </para>
+    /// <para>
+    /// <b>A variable that is set is used, or the connection fails.</b> A value that does not load
+    /// at all, because no file is there or the platform loader refuses it, used to be dropped without
+    /// a word, and the shipped library was loaded in its place (#83). Now it is refused the same
+    /// way, and nothing is loaded instead. A variable that is empty or only whitespace counts as
+    /// not set.
+    /// </para>
     /// </remarks>
     internal static class NngLibraryResolver
     {
@@ -94,8 +101,8 @@ namespace KiCadSharp.Interop
         /// resolves the NuGet native asset from <c>.deps.json</c>.
         /// </summary>
         /// <exception cref="KiCadConnectionException">
-        /// <see cref="LibraryPathVariableName"/> names a library that loads and lacks one of the
-        /// <see cref="EntryPoints"/>.
+        /// <see cref="LibraryPathVariableName"/> is set and names something that does not load, or a
+        /// library that loads and lacks one of the <see cref="EntryPoints"/>.
         /// </exception>
         internal static IntPtr Resolve(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
         {
@@ -112,8 +119,21 @@ namespace KiCadSharp.Interop
             }
 
             var configured = Environment.GetEnvironmentVariable(LibraryPathVariableName);
-            if (!string.IsNullOrWhiteSpace(configured) && NativeLibrary.TryLoad(configured, out var overridden))
+            if (!string.IsNullOrWhiteSpace(configured))
             {
+                // Named, so it is that library or none. A value that does not load is refused, and
+                // the probing below is never reached: it would load the shipped libnng in place of
+                // the one the user asked for, and say nothing (#83).
+                IntPtr overridden;
+                try
+                {
+                    overridden = NativeLibrary.Load(configured);
+                }
+                catch (Exception exception) when (exception is DllNotFoundException or BadImageFormatException)
+                {
+                    throw CouldNotLoad(configured, exception);
+                }
+
                 // Loading it proves that it is a shared library, not that it is nng. Every entry
                 // point is looked up now, so a wrong library is refused here with one message. It
                 // does not fail later, on its first call, or halfway through a dial for a library
@@ -147,32 +167,35 @@ namespace KiCadSharp.Interop
         /// because a build that pins a RID reports that RID rather than the portable one, and the
         /// folder on disk is always the portable name.
         /// </summary>
+        /// <remarks>
+        /// Each path appears once (#84). The two roots are usually the same directory spelled two
+        /// ways: <see cref="AppContext.BaseDirectory"/> ends in a separator and
+        /// <see cref="Path.GetDirectoryName(string)"/> does not. Compared as strings they differed,
+        /// so the same file was probed twice and listed twice in <see cref="DescribeFailure"/>.
+        /// </remarks>
         internal static IEnumerable<string> ProbePaths(Assembly? assembly = null)
         {
             var roots = new List<string>(2) { AppContext.BaseDirectory };
-            var beside = assembly is null || string.IsNullOrEmpty(assembly.Location)
-                ? null
-                : Path.GetDirectoryName(assembly.Location);
-            if (!string.IsNullOrEmpty(beside) && !roots.Contains(beside))
+            if (assembly is not null && !string.IsNullOrEmpty(assembly.Location)
+                && Path.GetDirectoryName(assembly.Location) is { Length: > 0 } beside)
             {
                 roots.Add(beside);
             }
 
-            var identifiers = new List<string>(2) { RuntimeInformation.RuntimeIdentifier };
-            var portable = PortableRuntimeIdentifier();
-            if (!identifiers.Contains(portable))
-            {
-                identifiers.Add(portable);
-            }
+            string[] identifiers = [RuntimeInformation.RuntimeIdentifier, PortableRuntimeIdentifier()];
 
-            foreach (var root in roots)
-            {
-                foreach (var identifier in identifiers)
-                {
-                    yield return Path.Combine(root, "runtimes", identifier, "native", FileName);
-                }
-            }
+            return Distinct(roots.SelectMany(root =>
+                identifiers.Select(identifier => Path.Combine(root, "runtimes", identifier, "native", FileName))));
         }
+
+        /// <summary>
+        /// <paramref name="paths"/> made absolute, without a trailing separator, and each one once,
+        /// in the order it first appears.
+        /// </summary>
+        internal static IEnumerable<string> Distinct(IEnumerable<string> paths) =>
+            paths
+                .Select(path => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path)))
+                .Distinct(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
 
         /// <summary>
         /// What libnng links against on the running platform, and what to do about it.
@@ -224,15 +247,8 @@ namespace KiCadSharp.Interop
         /// single-file publish produces, where the native asset is put beside the executable and the
         /// runtime's own probing -- not this resolver -- is what finds it.
         /// </summary>
-        internal static IEnumerable<string> DiagnosticPaths()
-        {
-            foreach (var path in ProbePaths(typeof(NngLibraryResolver).Assembly))
-            {
-                yield return path;
-            }
-
-            yield return Path.Combine(AppContext.BaseDirectory, FileName);
-        }
+        internal static IEnumerable<string> DiagnosticPaths() =>
+            Distinct(ProbePaths(typeof(NngLibraryResolver).Assembly).Append(Path.Combine(AppContext.BaseDirectory, FileName)));
 
         /// <summary><c>&lt;os&gt;-&lt;arch&gt;</c>, the shape of the folders in the package.</summary>
         internal static string PortableRuntimeIdentifier()
@@ -308,7 +324,13 @@ namespace KiCadSharp.Interop
         /// <see cref="EntryPointNotFoundException"/> the runtime would have thrown for the first
         /// missing function.
         /// </summary>
-        internal static KiCadConnectionException NotNng(string configured, string[] missing)
+        /// <param name="configured">The value of <see cref="LibraryPathVariableName"/>.</param>
+        /// <param name="missing">What <see cref="MissingEntryPoints"/> found missing; not empty.</param>
+        /// <param name="identifier">
+        /// The runtime identifier to advise for; the running one by default. See
+        /// <see cref="WayForward"/>.
+        /// </param>
+        internal static KiCadConnectionException NotNng(string configured, string[] missing, string? identifier = null)
         {
             var what = missing.Length == EntryPoints.Length
                 ? $"is not nng: it exports none of the {EntryPoints.Length} nng functions KiCadSharp calls, "
@@ -316,15 +338,55 @@ namespace KiCadSharp.Interop
                 : $"is not an nng KiCadSharp can use: it does not export {string.Join(", ", missing)} "
                     + $"({missing.Length} of the {EntryPoints.Length} nng functions KiCadSharp calls).";
 
-            var identifier = PortableRuntimeIdentifier();
-            var way = ShippedRuntimeIdentifiers.Contains(identifier)
-                ? $"Point {LibraryPathVariableName} at a libnng, or unset it to use the {FileName} this package ships for {identifier}."
-                : $"Point {LibraryPathVariableName} at a libnng; this package ships none for {identifier}.";
-
             return new KiCadConnectionException(
-                $"{LibraryPathVariableName} names '{configured}', which loads but {what} {way}",
+                $"{LibraryPathVariableName} names '{configured}', which loads but {what} {WayForward(identifier)}",
                 new EntryPointNotFoundException(
                     $"Unable to find an entry point named '{missing[0]}' in shared library '{configured}'."));
+        }
+
+        /// <summary>
+        /// The failure for a <see cref="LibraryPathVariableName"/> that names something which does not
+        /// load at all (#83). Inside it is the loader's own <see cref="DllNotFoundException"/> or
+        /// <see cref="BadImageFormatException"/>, which carries the platform's reason.
+        /// </summary>
+        /// <param name="configured">The value of <see cref="LibraryPathVariableName"/>.</param>
+        /// <param name="reason">What <see cref="NativeLibrary.Load(string)"/> threw.</param>
+        /// <param name="identifier">
+        /// The runtime identifier to advise for; the running one by default. See
+        /// <see cref="WayForward"/>.
+        /// </param>
+        internal static KiCadConnectionException CouldNotLoad(string configured, Exception reason, string? identifier = null)
+        {
+            // Only a value with a directory in it is a path. A bare name is for the platform loader
+            // to look up on its own search path, and whether a file of that name happens to be in
+            // the working directory says nothing about it.
+            var isPath = configured.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]) >= 0;
+
+            var what = isPath && !File.Exists(configured)
+                ? "and there is no file at that path."
+                : "and the platform loader could not load it. If the file is there, it is not a shared library, "
+                    + "it is built for an architecture other than this process's "
+                    + $"({RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant()}), "
+                    + "or a library it depends on is missing. The loader's own reason is the inner exception.";
+
+            return new KiCadConnectionException(
+                $"{LibraryPathVariableName} names '{configured}', {what} {WayForward(identifier)}",
+                reason);
+        }
+
+        /// <summary>
+        /// What to do about a <see cref="LibraryPathVariableName"/> that was refused. Never "set the
+        /// variable", which is already set. Unsetting it is offered only where this package ships a
+        /// libnng for <paramref name="identifier"/>; anywhere else it would lead to a library that
+        /// is not there.
+        /// </summary>
+        /// <param name="identifier">A runtime identifier; <see cref="PortableRuntimeIdentifier"/> by default.</param>
+        internal static string WayForward(string? identifier = null)
+        {
+            identifier ??= PortableRuntimeIdentifier();
+            return ShippedRuntimeIdentifiers.Contains(identifier)
+                ? $"Point {LibraryPathVariableName} at a libnng, or unset it to use the {FileName} this package ships for {identifier}."
+                : $"Point {LibraryPathVariableName} at a libnng built for {identifier}: this package ships none for that platform.";
         }
     }
 }
