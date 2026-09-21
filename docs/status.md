@@ -46,10 +46,12 @@ What has no view round-trips intact and is reachable through `Node`.
 - **A padstack that differs per layer** (KiCad 9's `(padstack (mode custom) …)`) is described by its
   main shape on every layer, in both `CopperGeometry` and the design a board exports.
 - **A custom pad** is exported to a design as the convex hull of its primitives, which covers it;
-  KiCad exports the outline of their union. In `CopperGeometry` its lines, polygons, square-cornered
-  rectangles and filled circles are exact, and an arc or a stroked circle among them is grown by
-  `maxError`, as a track arc is. **A Bézier primitive is dropped from both, and a rounded rectangle
-  is drawn with square corners** (#77).
+  KiCad exports the hull of the polygon it draws, up to its max error inside. In `CopperGeometry` its
+  lines, polygons and square-cornered rectangles are exact, and so are its filled circles and filled
+  rounded rectangles; an arc, a stroked circle, a stroked rounded rectangle's corners and a Bézier
+  among them are covered within `maxError`, as a track arc is. KiCad cuts a Bézier into chords
+  within its own max error, 5 µm by default, so it can measure up to that much closer to one than the
+  curve is.
 - **A session's `placement` is not applied.** A router does not move parts.
 - **Net classes are an input, not something read.** They live in the `.kicad_pro`, resolved through
   patterns and priorities; `SpecctraOptions` takes them resolved.
