@@ -231,8 +231,9 @@ the four fields KiCad gives every footprint, written as `(property …)`: `Refer
 `F.Fab`. So `GetPropertyValue("Reference")` answers on a new footprint as it does on one KiCad wrote,
 and `TextItems` starts empty (#75). The `(fp_text reference …)` and `(fp_text value …)` it wrote
 before date from before format `20230620`, when fields replaced them. A width set on a new `fp_*`
-shape is written as `(stroke (width w) (type solid))`, not as the bare `(width w)` of older files. kicad-cli 10.0.6 reads the old
-and new spellings the same way. A footprint read from a file keeps its forms: its text items stay
+shape, or on a new board drawing (`gr_line`, `gr_rect`, `gr_circle`, `gr_arc`, `gr_poly`, `gr_curve`;
+#96), is written as `(stroke (width w) (type solid))`, not as the bare `(width w)` of older files.
+kicad-cli 10.0.6 reads the old and new spellings the same way, and re-saves the old as the new. A footprint read from a file keeps its forms: its text items stay
 text items, and a bare `width` stays bare when written to.
 
 **A new board-shaped `KiCadFootprintLibrary` starts with a layer table**, the same one a new
