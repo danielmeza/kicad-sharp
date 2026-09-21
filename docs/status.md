@@ -77,14 +77,9 @@ What is still missing here:
 - **`KiCad.RefreshPaths()` and `KiCad.ImportLibrary(...)` are no-ops.** The commands they would send
   do not exist in KiCad's IPC API; the methods return `ValueTask.CompletedTask` and do nothing. A
   `GetPath(PathType)` is commented out for the same reason.
-- **A send cannot be cancelled.** The reply is polled for, so a `CancellationToken` ends the wait
-  for it; the send is one blocking `nng_sendmsg`, and nothing reaches it. Measured against the
-  in-process peer: with KiCad gone after the dial, a REQ socket has no one to hand the request to,
-  and with the default infinite `RequestTimeout` the send was still blocked on the calling thread
-  5 s after the token was cancelled. What ends it is `RequestTimeout`, which is also nng's
-  `send-timeout`, or `Disconnect()` from another thread. A KiCad that goes away *after* taking the
-  request is not reported by nng either: the receive goes on answering "not yet", and the token or
-  `RequestTimeout` is what ends the call.
+- **A KiCad that goes away *after* taking the request is not reported by nng.** Measured against
+  the in-process peer: the receive goes on answering "not yet", and the token or `RequestTimeout` is
+  what ends the call. With neither, it waits.
 - **A `KICADSHARP_NNG_LIBRARY` that names something other than nng** surfaces as the runtime's
   `EntryPointNotFoundException`, not a `KiCadConnectionException`. Only the loader's two failures
   (`DllNotFoundException`, `BadImageFormatException`) are converted. It is untested: the process

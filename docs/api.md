@@ -36,7 +36,8 @@ configured, the client adopts the one KiCad returns on the first successful roun
 | A reply with no status | `ApiException`, `StatusCode` = `AS_UNKNOWN` | — |
 | `AS_OK` with no payload, the wrong type, or one that does not parse | `ApiException`, `StatusCode` = `AS_OK` | `InvalidProtocolBufferException` for the last |
 | `GetBoard()` with no board open | `ApiException`, `StatusCode` = `null` | — |
-| The caller's token was cancelled, or `Disconnect()` cut the request off | `OperationCanceledException` | — |
+| The caller's token was cancelled: before the request went out, while the send waits for a KiCad to take it, or while the reply is awaited | `OperationCanceledException`, whose `CancellationToken` is the caller's | — |
+| `Disconnect()` cut the request off | `OperationCanceledException` | — |
 
 `AS_UNHANDLED` is how KiCad says it has no handler for a command, so it is how a caller finds out a
 command is not there:
@@ -60,13 +61,13 @@ A token that was empty is not a failure: KiCad answers it with its own, which th
 token from another KiCad instance is `AS_TOKEN_MISMATCH`.
 
 `RequestTimeout` defaults to `Timeout.InfiniteTimeSpan`, which is nng's own default and what this
-client has always done. Waiting is not the same as hanging, though: the reply is polled for rather
-than blocked on, so a `CancellationToken` is observed **while the request is on the wire** and not
-only before it goes out. Pass one with a deadline for a per-call bound, or set `RequestTimeout` for
-a client-wide one. There is no useful single default — `Ping` returns in under a millisecond and
-`RefillZones` on a large board does not. The send is the exception: with no KiCad to take the
-request, it blocks the calling thread until `RequestTimeout` runs out, and a token does not reach
-it — see [docs/status.md](status.md).
+client has always done. Waiting is not the same as hanging, though: neither the send nor the reply
+is blocked on in nng, both are polled for, so a `CancellationToken` is observed **while the request
+is on the wire** and not only before it goes out. That includes a KiCad that went away after the
+dial: the send then has nobody to hand the request to, and it waits for somebody without holding a
+thread, until the token or `RequestTimeout` ends the wait. Pass a token with a deadline for a
+per-call bound, or set `RequestTimeout` for a client-wide one. There is no useful single default —
+`Ping` returns in under a millisecond and `RefillZones` on a large board does not.
 
 ### `KiCad` — the connection handle
 

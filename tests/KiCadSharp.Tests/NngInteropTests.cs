@@ -144,10 +144,12 @@ public class NngInteropTests
         using var peer = NngTestPeer.Start(TimeSpan.Zero);
 
         // The factory: on the way out it hands back an open socket the caller owns. Being able to
-        // send on it afterwards is what says so.
+        // send on it afterwards is what says so. The first attempt sends: a dial that returns has
+        // already put its connection on the ready list (nni_dialer_add_pipe starts the pipe before the
+        // dial completes, in nng 1.3.2).
         using var socket = NngRequestSocket.Dial(peer.Url, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
-        socket.Send([1, 2, 3, 4]);
+        Assert.True(socket.TrySend([1, 2, 3, 4]));
 
         var payload = Poll(socket, TimeSpan.FromSeconds(10));
         Assert.NotEmpty(payload);
@@ -162,11 +164,40 @@ public class NngInteropTests
         using var peer = NngTestPeer.Start(TimeSpan.FromSeconds(2));
         using var socket = NngRequestSocket.Open();
         socket.Dial(peer.Url);
-        socket.Send([1]);
+        Assert.True(socket.TrySend([1]));
 
         var elapsed = Stopwatch.StartNew();
         Assert.False(socket.TryReceive(out _));
         Assert.True(elapsed.Elapsed < TimeSpan.FromMilliseconds(500), $"TryReceive blocked for {elapsed.Elapsed}");
+    }
+
+    [Fact]
+    public void SendingDoesNotBlockWhenNobodyIsThereToTakeIt()
+    {
+        // TrySend is the send's half of the same idea (#58). A REQ socket with no connection has
+        // nobody to hand the request to, which after the dial is a KiCad that went away, and a
+        // blocking nng_sendmsg waits for one for send-timeout -- by default, forever. A socket that is
+        // open and not dialled is that case with no race in it: nothing can connect behind the test's
+        // back, and send-timeout is nng's own infinite default.
+        using var socket = NngRequestSocket.Open();
+
+        var elapsed = Stopwatch.StartNew();
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            Assert.False(socket.TrySend([0xAA]));
+        }
+
+        Assert.True(elapsed.Elapsed < Immediately, $"100 attempts took {elapsed.Elapsed}");
+
+        // "Not now" sent nothing and queued nothing. Once there is a peer, the next request is the
+        // only one it sees -- one of the refused ones, queued, would have gone out first when the
+        // connection came up -- and its reply comes back to this socket.
+        using var peer = NngTestPeer.Start(TimeSpan.Zero);
+        socket.Dial(peer.Url);
+        Assert.True(socket.TrySend([0xBB]));
+
+        Assert.NotEmpty(Poll(socket, TimeSpan.FromSeconds(10)));
+        Assert.Equal(1, peer.RequestsReceived);
     }
 
     [Fact]
@@ -179,12 +210,12 @@ public class NngInteropTests
         using var socket = NngRequestSocket.Open();
         socket.Dial(peer.Url);
 
-        socket.Send([0xAA]);
+        Assert.True(socket.TrySend([0xAA]));
         Assert.False(socket.TryReceive(out _));         // given up on here
 
         Thread.Sleep(TimeSpan.FromSeconds(1.5));        // the abandoned reply lands during this
 
-        socket.Send([0xBB]);
+        Assert.True(socket.TrySend([0xBB]));
         var payload = Poll(socket, TimeSpan.FromSeconds(10));
 
         Assert.NotEmpty(payload);
