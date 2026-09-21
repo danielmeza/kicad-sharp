@@ -28,6 +28,75 @@ await board.PushCommit(commit, "set active layer");
 
 `GetBoard()` asks KiCad for open `DOCTYPE_PCB` documents and throws when there are none.
 
+### What KiCad puts in a plugin's environment
+
+Measured against KiCad 10.0.6: pcbnew in `ghcr.io/danielmeza/orbion-kicad-release:10.0.6`, with a
+fresh `HOME`, running an `exec` API plugin whose action dumps its environment. Before pcbnew started,
+the container had set none of these variables. `KiCadEnvironment` reads each one:
+
+| Variable | Value in that run | Read by |
+|---|---|---|
+| `KICAD_API_SOCKET` | `ipc:///tmp/kicad/api.sock` | `GetApiSocket()` |
+| `KICAD_API_TOKEN` | a GUID | `GetApiToken()` |
+| `KIPRJMOD` | the open board's directory | `GetProjectDirectory()` |
+| `KICAD_USER_TEMPLATE_DIR` | `~/.local/share/kicad/10.0/template/` | `GetUserTemplateDirectory()` |
+| `KICAD10_SYMBOL_DIR` | `/usr/share/kicad/symbols/` | `GetSymbolDirectory()` |
+| `KICAD10_FOOTPRINT_DIR` | `/usr/share/kicad/footprints/` | `GetFootprintDirectory()` |
+| `KICAD10_3DMODEL_DIR` | `/usr/share/kicad/3dmodels/` | `GetModelsDirectory()` |
+| `KICAD10_DESIGN_BLOCK_DIR` | `/usr/share/kicad/blocks/` | `GetDesignBlockDirectory()` |
+| `KICAD10_TEMPLATE_DIR` | `/usr/share/kicad/template/` | `GetTemplateDirectory()` |
+| `KICAD10_3RD_PARTY` | `~/.local/share/kicad/10.0/3rdparty/` | `GetThirdPartyDirectory()` |
+
+A `python` plugin also gets `VIRTUAL_ENV` (`GetPythonVirtualEnvironment()`). An `exec` plugin does not.
+
+Where they come from, in KiCad 10.0.6's source:
+
+- **`KICAD_API_SOCKET` and `KICAD_API_TOKEN`** are added to a copy of KiCad's own environment
+  when `API_PLUGIN_MANAGER::InvokeAction` launches the plugin (`common/api/api_plugin_manager.cpp`,
+  lines 369-372 for `python` and 464-467 for `exec`). The copy is `wxGetEnvMap`, so the plugin gets
+  everything else KiCad has too. `VIRTUAL_ENV` is added at line 390, for `python` only.
+- **The path variables are KiCad's own.** `COMMON_SETTINGS::InitializeEnvironment` defines them
+  (`common/settings/common_settings.cpp`, lines 865-871). `PGM_BASE::loadCommonSettings`
+  (`common/pgm_base.cpp`, 536-558) then sets each one in KiCad's process environment, unless it is
+  already set there.
+- **`KIPRJMOD`** is set when a project is loaded (`SETTINGS_MANAGER::LoadProject`,
+  `common/settings/settings_manager.cpp:1053`).
+
+**The number in the path variables is KiCad's major version.** `ENV_VAR::GetVersionedEnvVarName`
+(`common/env_vars.cpp:78-84`) formats `KICAD%d_%s` with the major version from
+`GetMajorMinorPatchTuple()`. `cmake/BuildSteps/WriteVersionHeader.cmake` takes that number from the
+release number. KiCad 9 set the same six as `KICAD9_*`, by the same code (9.0.9.1,
+`common/settings/common_settings.cpp:678-698`). A 10.99 nightly still sets `KICAD10_*`: KiCad's master
+branch (checked at `21d616e3`, version 10.99.0) builds the names the same way. By the same rule,
+KiCad 11 will set `KICAD11_*`.
+
+**An older name can be there as well.** KiCad also exports every variable saved in
+`kicad_common.json`'s `environment.vars`. When it migrates settings from an older version, it drops
+only the `KICAD6_*`, `KICAD7_*` and `KICAD8_*` names (`SETTINGS_MANAGER::MigrateFromPreviousVersion`,
+`settings_manager.cpp:683-705`). So a `KICAD9_*` value that a user customised in KiCad 9 survives.
+With one planted in that file, the plugin got `KICAD9_SYMBOL_DIR` next to `KICAD10_SYMBOL_DIR`.
+
+So the path getters read **the newest version that is set**:
+
+1. Every variable named `KICAD`, then digits, then `_` and the base name is a candidate. The base
+   names are `SYMBOL_DIR`, `FOOTPRINT_DIR`, `3DMODEL_DIR`, `DESIGN_BLOCK_DIR`, `TEMPLATE_DIR` and
+   `3RD_PARTY`. KiCad 5's unversioned names (`KICAD_SYMBOL_DIR`, `KISYSMOD`, `KISYS3DMOD`) are not
+   read.
+2. An empty value counts as unset, as it does in KiCad's `InitializeEnvironment`.
+3. The highest version wins, compared as a number, so 10 beats 9.
+
+In a plugin that KiCad launched, that is the running KiCad's own variable. KiCad defines all six
+for its own version and none for any other version. Another version's name gets there only if the
+user's environment or `kicad_common.json` carries it, and in practice that is an older one. The
+rule depends on no fixed version, so KiCad 9 still works, and so will KiCad 11. On Windows, names
+match regardless of case.
+
+When the version is known, `KiCadEnvironment.GetVersionedVariable(baseName, majorVersion)` reads
+that version's name first, and falls back to the newest one. Pass it `KiCadVersion.Major` from
+`KiCad.GetVersion()`. This is KiCad's own rule (`ENV_VAR::GetVersionedEnvVarValue`,
+`env_vars.cpp:103-118`), with one difference in the fallback: KiCad takes whichever name sorts first
+in its map, and this takes the newest.
+
 ### nng, and which platforms it reaches
 
 The transport is nng. `KiCadSharp` calls it through a **P/Invoke wrapper of thirteen entry points**
