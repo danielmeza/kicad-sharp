@@ -259,11 +259,18 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates a new footprint with the reference and value text KiCad expects.</summary>
         /// <param name="id">The footprint's name.</param>
+        /// <remarks>
+        /// The footprint starts with the <c>(version …)</c> KiCad 10.0.6 writes,
+        /// <see cref="KiCadDefaults.FootprintVersion"/>, and a <c>(generator …)</c>, in the place
+        /// KiCad writes them; see <see cref="Version"/>.
+        /// </remarks>
         public KiCadFootprint(string id)
             : base(new SExpression(KiCadTokens.Footprint.Root))
         {
             ArgumentNullException.ThrowIfNull(id);
             Node.AddValue(id, SQuoteStyle.Quoted);
+            Version = KiCadDefaults.FootprintVersion;
+            WriteChild(KiCadTokens.Common.Generator, KiCadDefaults.LibraryGenerator, SQuoteStyle.Quoted);
             Node.SetChildValue(KiCadTokens.Common.Layer, KiCadLayerNames.FCu, SQuoteStyle.Quoted);
             AddFpText(KiCadTokens.Footprint.TextTypeReference, "REF**", 0, 0, KiCadLayerNames.FSilkS);
             AddFpText(KiCadTokens.Footprint.TextTypeValue, id, 0, 1.27, KiCadLayerNames.FFab);
@@ -274,6 +281,37 @@ namespace KiCadSharp.Documents
         {
             get => Node.GetValue(0) ?? "Unknown";
             set => WriteValue(0, value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>
+        /// Gets or sets the format the footprint is written in, its own <c>(version …)</c>, or
+        /// <see langword="null"/> when it has none. Setting <see langword="null"/> removes it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// KiCad reads a footprint by the format this names, so a stamp that does not match the
+        /// content changes what KiCad reads. With none, a <c>.kicad_mod</c> is read as format 0,
+        /// KiCad 5's, which refuses a modern arc. A footprint read from a file keeps what it has, and
+        /// a footprint built with <see cref="KiCadFootprint(string)"/> starts with
+        /// <see cref="KiCadDefaults.FootprintVersion"/>, KiCad 10.0.6's. A new version goes first in
+        /// the form, before anything it changes the meaning of.
+        /// </para>
+        /// <para>
+        /// <b>On a board.</b> KiCad writes a footprint inside a board without a version, so the board's
+        /// applies. A footprint that does carry one there makes KiCad 10.0.6 read the rest of the
+        /// board under the greater of the two (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5046), and
+        /// some board content reads differently by version: a via after a new footprint on a
+        /// <c>new KiCadBoard()</c>, stamped <c>20241229</c>, loses its explicit "no" covering,
+        /// plugging, capping and filling. Moving a footprint into a board does not change its version
+        /// (#73). To place a footprint built here on a board stamped with an older format, set this to
+        /// <see langword="null"/> first, as KiCad writes it; its content is then read under the
+        /// board's version.
+        /// </para>
+        /// </remarks>
+        public string? Version
+        {
+            get => ReadChild(KiCadTokens.Common.Version);
+            set => WriteChild(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the layer the footprint sits on.</summary>
