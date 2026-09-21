@@ -23,10 +23,6 @@ A standalone `.kicad_mod` loads as one footprint and saves byte-identical, `desc
 
 What is still missing here:
 
-- **A zone's `KiCadZoneFill.Mode` can write a word KiCad refuses** (#72). It reads `solid` when the
-  fill has no `(mode …)`, and the setter writes any word, so writing it back unchanged gives
-  `(mode solid)`. pcbnew 10.0.6 reads only `segment`, `hatch` or `polygon` there, and refuses the
-  board.
 - **`KiCadSchematic` has no view for rule areas, tables, groups or embedded files** (`rule_area`,
   `table`, `group`, `embedded_files`), all of which KiCad 10.0.6 writes at a sheet's top level.
   Everything else it writes there has one: symbols, sheets, wires, buses, bus entries, junctions,
