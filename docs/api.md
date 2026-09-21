@@ -30,6 +30,7 @@ configured, the client adopts the one KiCad returns on the first successful roun
 | No socket path, or nothing listening at it | `KiCadConnectionException` | nng's error (connection refused) |
 | A socket that never completes nng's handshake (a KiCad still starting) | `KiCadConnectionException`, after nng's own 10 s | nng's error (timed out) |
 | No native nng for this platform | `KiCadConnectionException` | the loader's `DllNotFoundException` or `BadImageFormatException` |
+| `KICADSHARP_NNG_LIBRARY` names a library that loads and is not nng: it lacks one of the thirteen functions this client calls | `KiCadConnectionException`, naming the variable, the path and the missing functions | `EntryPointNotFoundException` for the first one missing |
 | `RequestTimeout` ran out, waiting for the reply or to send | `KiCadConnectionException` | `TimeoutException` |
 | Bytes back that are not an `ApiResponse` | `KiCadConnectionException` | `InvalidProtocolBufferException` |
 | KiCad answered a status other than `AS_OK` — `AS_UNHANDLED`, `AS_BAD_REQUEST`, `AS_NOT_READY`, `AS_BUSY`, `AS_TOKEN_MISMATCH`, … | `ApiException`, `StatusCode` = that status | — |

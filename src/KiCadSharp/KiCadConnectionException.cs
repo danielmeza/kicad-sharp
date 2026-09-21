@@ -7,7 +7,8 @@
     /// <para>
     /// Thrown for: no socket path configured; nothing listening at the path, or a socket there that
     /// never completes nng's handshake (nng gives up after about 10 s); no native nng library for
-    /// this platform; a send or a receive that nng refused; a reply that does not parse as an
+    /// this platform, or a <c>KICADSHARP_NNG_LIBRARY</c> that names a library which is not nng; a
+    /// send or a receive that nng refused; a reply that does not parse as an
     /// <c>ApiResponse</c>; and <see cref="KiCadClientSettings.RequestTimeout"/> running out, in which
     /// case the <see cref="Exception.InnerException"/> is a <see cref="TimeoutException"/>.
     /// </para>

@@ -79,7 +79,11 @@ namespace KiCadSharp.Interop
         }
 
         /// <summary>Opens a REQ v0 socket.</summary>
-        /// <exception cref="KiCadConnectionException">nng could not be loaded at all.</exception>
+        /// <exception cref="KiCadConnectionException">
+        /// nng could not be loaded at all, or <see cref="Nng.LibraryPathVariable"/> names a library
+        /// that is not nng. <see cref="NngLibraryResolver"/> throws that one itself, as it loads the
+        /// library, and it passes through here unchanged.
+        /// </exception>
         /// <exception cref="NngException">nng refused to open the socket.</exception>
         internal static NngRequestSocket Open()
         {
