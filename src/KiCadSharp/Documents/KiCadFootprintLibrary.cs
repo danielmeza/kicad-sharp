@@ -102,16 +102,23 @@ namespace KiCadSharp.Documents
 
         /// <summary>
         /// Gets the footprints in the file. For a <c>.kicad_mod</c> this is the root form itself,
-        /// as one element; for a board it is a live view over its <c>footprint</c> children, with
-        /// KiCad 5's <c>module</c> children included.
+        /// as one element; for a board it is its <c>footprint</c> children, with KiCad 5's
+        /// <c>module</c> children included, as they are at the moment you ask.
         /// </summary>
+        /// <remarks>
+        /// A <c>.kicad_mod</c> whose footprint has been moved into another file through
+        /// <see cref="AddFootprint"/> no longer holds it, and this is then empty: the form belongs to
+        /// the other file now, and a view of it here would edit that file.
+        /// </remarks>
         public IReadOnlyList<KiCadFootprint> Footprints
         {
             get
             {
                 if (_rootIsFootprint)
                 {
-                    return new[] { new KiCadFootprint(_root) };
+                    return ReferenceEquals(_document.Root, _root)
+                        ? new[] { new KiCadFootprint(_root) }
+                        : Array.Empty<KiCadFootprint>();
                 }
 
                 return _root.Children

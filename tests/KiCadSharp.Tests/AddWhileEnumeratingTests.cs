@@ -416,4 +416,25 @@ public class AddWhileEnumeratingTests
         Assert.Equal(ids, destination.LibrarySymbols.Select(s => s.Id));
         Assert.Empty(source.LibrarySymbols);
     }
+
+    [Fact]
+    public void MovingTheFootprintOutOfAKicadMod_LeavesThatFileWithNone()
+    {
+        // A .kicad_mod is its footprint: the form is the root of the file. Moving it into a board
+        // takes it out of that file, and the library over the file has to say so rather than keep
+        // handing out a view of a footprint that now belongs to the board.
+        var file = KiCadFootprintLibrary.Load(TestData.Footprint);
+        var footprint = file.Footprints[0];
+        var id = footprint.Id;
+        var destination = new KiCadFootprintLibrary();
+
+        destination.AddFootprint(footprint);
+
+        Assert.Equal(footprint, destination.GetFootprint(id));
+        Assert.True(file.IsSingleFootprint);
+        Assert.Empty(file.Footprints);
+        Assert.Null(file.GetFootprint(id));
+        Assert.Null(file.Document.Root);
+        Assert.DoesNotContain(id, file.ToText(), StringComparison.Ordinal);
+    }
 }
