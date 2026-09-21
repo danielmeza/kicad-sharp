@@ -269,6 +269,69 @@ for it. Instance entries filed under a *different* project name, which is what l
 still open on its own. And every byte outside the `(instances …)` blocks — the test asserts that
 stripping those blocks from the file before and after leaves two identical texts.
 
+## `KiCadSharp.Fluent`
+
+```
+dotnet add package KiCadSharp.Fluent
+```
+
+A second way to build the same documents. `using KiCadSharp.Fluent;` brings in a `With*` extension
+for every public `Add*` on the document types (`KiCadSharp.Documents` and `KiCadSharp.Schematics`).
+The core `Add*` API is unchanged. The fluent layer adds no behaviour of its own. Each call follows
+one rule:
+
+> `parent.WithX(args, configure)` is `configure?.Invoke(parent.AddX(args))`, then `return parent`.
+
+- **It returns the parent**, the object it was called on, so calls chain.
+- **It takes a callback exactly when the `Add*` returns a child.** The callback receives that child
+  after it has been appended. `AddPoint` and `AddMember` return nothing, so their `With*` take no
+  callback.
+- **Same arguments, same names, same exceptions.** When the caller passes the child in (a symbol,
+  a pin, a graphical item), the method is generic in its type, so the callback sees what was passed:
+  `symbol.WithGraphicalItem(new KiCadPolyline(), p => p.WithPoint(0, 0))` needs no cast.
+- **An optional `width` is an overload, not a default.** `AddLine` and `AddCircle` default `width`.
+  Leave it out of `WithLine`/`WithCircle` and they call the `Add*` without one, so the default stays
+  the core's.
+
+`tests/KiCadSharp.Fluent.Tests/MirrorTests` checks the mirror by reflection in both directions.
+Every `Add*` must have its `With*`, and every `With*` must match an `Add*`. A new `Add*` in the
+core fails that test until it is mirrored.
+
+| Receiver | `Add*` in `KiCadSharp` | `With*` in `KiCadSharp.Fluent` | Callback gets |
+|---|---|---|---|
+| `KiCadFootprintLibrary` | `AddFootprint(footprint)` | `WithFootprint(footprint, configure?)` | the footprint |
+| `KiCadFootprint` | `AddFpText(type, text, x, y, layer)` | `WithFpText(…, configure?)` | `KiCadFpText` |
+| `KiCadFootprint` | `AddPad(number, type, shape, x, y, width, height, layers)` | `WithPad(…, configure?)` | `KiCadPad` |
+| `KiCadFootprint` | `AddLine(startX, startY, endX, endY, layer, width = 0.12)` | `WithLine(…, layer, configure?)`, `WithLine(…, layer, width, configure?)` | `KiCadFpLine` |
+| `KiCadFootprint` | `AddCircle(centerX, centerY, endX, endY, layer, width = 0.12)` | `WithCircle(…, layer, configure?)`, `WithCircle(…, layer, width, configure?)` | `KiCadFpCircle` |
+| `KiCadFootprint` | `AddModel(path)` | `WithModel(path, configure?)` | `KiCadModel` |
+| `KiCadFpPoly` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadSymbolLibrary` | `AddSymbol(symbol)` | `WithSymbol(symbol, configure?)` | the symbol |
+| `KiCadSymbolLibrary` | `AddSymbol(id)` | `WithSymbol(id, configure?)` | `KiCadSymbol` |
+| `KiCadSymbol` | `AddProperty(key, value)` | `WithProperty(key, value, configure?)` | `KiCadProperty`, new or updated |
+| `KiCadSymbol` | `AddPin(pin)` | `WithPin(pin, configure?)` | the pin |
+| `KiCadSymbol` | `AddGraphicalItem(item)` | `WithGraphicalItem(item, configure?)` | the item, as its own type |
+| `KiCadSymbol` | `AddUnit(name)` | `WithUnit(name, configure?)` | `KiCadSymbolUnit` |
+| `KiCadSymbolUnit` | `AddPin(pin)` | `WithPin(pin, configure?)` | the pin |
+| `KiCadPolyline` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadBoard` | `AddNet(code, name)` | `WithNet(code, name, configure?)` | `KiCadNet` |
+| `KiCadZone` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadGrPoly` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadGrCurve` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadDimension` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadGroup` | `AddMember(uuid)` | `WithMember(uuid)` | — |
+| `KiCadNodeList<T>` | `Add()` | `With(configure?)` | the new `T` |
+| `KiCadNodeList<T>` | `Add(item)` | `With(item, configure?)` | the item |
+| `KiCadSchematicLine` (`KiCadWire`, `KiCadBus`) | `AddPoint(x, y)` | `WithPoint(x, y)`, returning the wire or bus as its own type | — |
+| `KiCadBusAlias` | `AddMember(net)` | `WithMember(net)` | — |
+
+**What is not mirrored:** `SpecctraNode.Add` already returns the form it was called on, so it
+chains as it is. `AddKiCad` registers services in DI and does not build a document.
+
+**The `KiCadNodeList<T>` rows matter more than they look.** Most board and schematic items (zones,
+tracks, drawings, wires, labels) have no `Add*` of their own. They are appended through a live list,
+`board.Zones.Add()`. `With` returns the list, not the board, so it starts its own statement.
+
 ## `KiCadSharp.Protos`
 
 12 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by

@@ -47,6 +47,7 @@ document model here covers symbol and footprint libraries well; its write path i
 | Package | What it's for |
 |---|---|
 | [`KiCadSharp`](https://www.nuget.org/packages/KiCadSharp) | The client: IPC, plus the on-disk symbol, footprint and board formats, copper geometry checked against KiCad's own, and Specctra DSN export and session import for an autorouter. |
+| [`KiCadSharp.Fluent`](https://www.nuget.org/packages/KiCadSharp.Fluent) | A fluent style for building documents: a chainable `With*` for every `Add*`. Optional, and layered over `KiCadSharp` — see [below](#two-ways-to-build-a-document). |
 | [`KiCadSharp.Protos`](https://www.nuget.org/packages/KiCadSharp.Protos) | Generated C# types for KiCad's protobuf API. Separate package because they appear in `KiCadSharp`'s public surface. |
 | [`KiCadSharp.Cli`](https://www.nuget.org/packages/KiCadSharp.Cli) | A dotnet tool, `kicadsharp`, for s-expression files from a shell. |
 
@@ -70,6 +71,51 @@ $ kicadsharp query board.kicad_pcb kicad_pcb/general/thickness
 
 `fmt` re-parses its own output and compares the trees before writing anything, so a clean run is the
 proof the round trip was lossless. It refuses `--in-place` when it would drop content.
+
+## Two ways to build a document
+
+`KiCadSharp` builds a document with `Add*` methods. Each returns the child it created, so you keep a
+handle on it:
+
+```csharp
+using KiCadSharp.Documents;
+
+string[] smd = ["F.Cu", "F.Paste", "F.Mask"];
+
+var footprint = new KiCadFootprint("R_0603_1608Metric");
+footprint.AddPad("1", "smd", "rect", -0.8, 0, 0.9, 0.95, smd);
+footprint.AddPad("2", "smd", "rect", 0.8, 0, 0.9, 0.95, smd);
+footprint.AddLine(-1.5, -0.7, 1.5, -0.7, "F.CrtYd", 0.05);
+var model = footprint.AddModel("${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step");
+model.Scale = new KiCadXyz(1, 1, 1);
+```
+
+`KiCadSharp.Fluent` adds a `With*` for each of them. It returns the parent, so the calls chain, and
+takes an optional callback that receives the child, so chaining never costs you the handle:
+
+```
+dotnet add package KiCadSharp.Fluent
+```
+
+```csharp
+using KiCadSharp.Documents;
+using KiCadSharp.Fluent;
+
+string[] smd = ["F.Cu", "F.Paste", "F.Mask"];
+
+var footprint = new KiCadFootprint("R_0603_1608Metric")
+    .WithPad("1", "smd", "rect", -0.8, 0, 0.9, 0.95, smd)
+    .WithPad("2", "smd", "rect", 0.8, 0, 0.9, 0.95, smd)
+    .WithLine(-1.5, -0.7, 1.5, -0.7, "F.CrtYd", 0.05)
+    .WithModel("${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step",
+               model => model.Scale = new KiCadXyz(1, 1, 1));
+```
+
+Both build the same footprint and save the same bytes; the package's tests hold it to that. Neither
+style replaces the other. The `Add*` API is unchanged, both work on the same objects, and you can
+mix them. Items that are added through a live list rather than an `Add*` get a `With` too:
+`board.Zones.With(zone => zone.WithPoint(0, 0).WithPoint(10, 0).WithPoint(10, 10))`. The full list is
+in [docs/api.md](docs/api.md#kicadsharpfluent).
 
 ## More examples
 

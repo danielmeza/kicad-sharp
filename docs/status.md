@@ -111,6 +111,8 @@ What is still missing here:
   10 fixtures, with the byte counts in the assertions. The IPC surface is covered two ways: the
   transport, its timeout behaviour and every way a call fails against an in-process nng peer
   (`NngInteropTests`, `IpcTimeoutTests`, `IpcFailureTests`, no KiCad needed), and the client against a real KiCad (`IpcTests`, which returns
-  early unless `KICADSHARP_IPC_SOCKET` names a socket — see `scripts/kicad-ipc-container.sh`). The one
-  test that shells out to `kicad-cli` returns early unless `KICADSHARP_KICAD_CLI` points at one. Run
-  them with `dotnet test KiCadSharp.slnx`.
+  early unless `KICADSHARP_IPC_SOCKET` names a socket — see `scripts/kicad-ipc-container.sh`). The
+  tests that shell out to `kicad-cli` return early unless `KICADSHARP_KICAD_CLI` points at one.
+  `tests/KiCadSharp.Fluent.Tests` covers the fluent package: every `With*` against the `Add*` it
+  mirrors, a reflection check that the two sets match, and a footprint and a symbol library that
+  must save identically in both styles. Run them all with `dotnet test KiCadSharp.slnx`.
