@@ -1,9 +1,11 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/KiCadSharp/KiCadSharp.csproj" />
+    <Project Path="src/KiCadSharp.Fluent/KiCadSharp.Fluent.csproj" />
     <Project Path="src/KiCadSharp.Protos/KiCadSharp.Protos.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/KiCadSharp.Fluent.Tests/KiCadSharp.Fluent.Tests.csproj" />
     <Project Path="tests/KiCadSharp.Tests/KiCadSharp.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
