@@ -126,7 +126,11 @@ namespace KiCadSharp.Documents
         public string Version
         {
             get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.BoardVersion;
-            set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+            set
+            {
+                KiCadChildOrder.Place(_root, KiCadTokens.Common.Version);
+                _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>Gets or sets the name of the program that wrote the file.</summary>

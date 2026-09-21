@@ -90,7 +90,11 @@ namespace KiCadSharp.Documents
         public string Version
         {
             get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.FootprintLibraryVersion;
-            set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+            set
+            {
+                KiCadChildOrder.Place(_root, KiCadTokens.Common.Version);
+                _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>Gets or sets the name of the program that wrote the file.</summary>
@@ -726,8 +730,7 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
