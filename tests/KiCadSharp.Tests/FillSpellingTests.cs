@@ -315,7 +315,7 @@ public class FillSpellingTests
         }
 
         var version = KiCadBoard.Load(TestData.Kicad10Board).Version;
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
 
         // ── a board: one gr_rect per word, and a gr_circle and gr_poly ─────────────────────────
         // KiCad saves each fill as yes, no or a hatch (pcb_io_kicad_sexpr.cpp, 1071–1098).

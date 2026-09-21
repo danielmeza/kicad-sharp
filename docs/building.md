@@ -32,6 +32,44 @@ property to go back to the released one.
 There is deliberately no "swap to `ProjectReference`" switch. Consuming the real `.nupkg` is what
 proves the package works, and the package is the thing that actually breaks.
 
+## Testing
+
+```
+dotnet test KiCadSharp.slnx -c Release
+```
+
+The suite needs nothing installed. Three environment variables change what it does:
+
+| Variable | Effect |
+| --- | --- |
+| `KICADSHARP_KICAD_CLI` | A `kicad-cli` to shell out to. The tests that hand a file to KiCad itself return early without it, since CI has no KiCad. |
+| `KICADSHARP_IPC_SOCKET` | The API socket of a running KiCad, for the live tests in `IpcTests`. `scripts/kicad-ipc-container.sh` starts one and sets it. |
+| `KICADSHARP_KEEP_TEST_FILES` | Set to `1` to keep every test's scratch directory instead of deleting it. |
+
+### Scratch directories
+
+A test that writes files gets a directory of its own under the system temp folder,
+`<temp>/kicadsharp-tests/` (`kicadsharp-fluent-tests/` for the fluent package), named after the
+test that asked for it. The test deletes it when it finishes, pass or fail. When a file is still
+held open, for example by a `kicad-cli` that has just exited on Windows, the delete is retried for
+under a second and then given up without failing the test. A directory that no test disposes, such
+as one shared by every case of a theory, is deleted when the test process exits.
+
+To look at what a failing test wrote, run it with `KICADSHARP_KEEP_TEST_FILES=1`. Nothing is
+deleted, so clear the folder yourself afterwards.
+
+A new test takes its directory with `using`:
+
+```csharp
+using var scratch = TestData.NewScratchDirectory();   // TestSupport.NewScratchDirectory() in KiCadSharp.Fluent.Tests
+var output = Path.Combine(scratch, "board.kicad_pcb");
+```
+
+`scratch` converts to its path wherever a `string` is expected. Do not write to `Path.GetTempPath()`
+directly. The one exception is a Unix socket: its path has to fit in 104 bytes on macOS, which a
+scratch directory's path does not leave room for. The IPC tests' sockets therefore sit directly in
+the temp folder, and each test removes its socket when it closes it.
+
 ## Why these keep the `Sharp` suffix
 
 This repository was split out of

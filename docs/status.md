@@ -116,4 +116,5 @@ What has no view round-trips intact and is reachable through `Node`.
   tests that shell out to `kicad-cli` return early unless `KICADSHARP_KICAD_CLI` points at one.
   `tests/KiCadSharp.Fluent.Tests` covers the fluent package: every `With*` against the `Add*` it
   mirrors, a reflection check that the two sets match, and a footprint and a symbol library that
-  must save identically in both styles. Run them all with `dotnet test KiCadSharp.slnx`.
+  must save identically in both styles. Run them all with `dotnet test KiCadSharp.slnx`;
+  [building.md](building.md#testing) lists the variables they read and where they write files.

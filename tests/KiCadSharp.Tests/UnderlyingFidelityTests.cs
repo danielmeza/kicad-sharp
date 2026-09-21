@@ -50,7 +50,8 @@ public class UnderlyingFidelityTests
         var original = File.ReadAllBytes(path);
         var document = SDocument.Load(path);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), Path.GetFileName(path));
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, Path.GetFileName(path));
         document.Save(output);
 
         Assert.Equal(original.Length, new FileInfo(output).Length);

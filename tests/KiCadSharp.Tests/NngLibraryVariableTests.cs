@@ -100,7 +100,8 @@ public class NngLibraryVariableTests
     public void AVariableNamingNoFileIsAConnectionFailureAndNothingIsLoadedInstead()
     {
         // #83. The value was dropped without a word, and the shipped libnng was loaded in its place.
-        var library = Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}", NngLibraryResolver.FileName);
+        using var scratch = TestData.NewScratchDirectory();
+        var library = Path.Combine(scratch, "absent", NngLibraryResolver.FileName);
 
         var attempts = ConnectTwiceInAChild(library);
 
@@ -115,26 +116,20 @@ public class NngLibraryVariableTests
     public void AVariableNamingAFileThatIsNotALibraryIsAConnectionFailureAndNothingIsLoadedInstead()
     {
         // #83, the other way a value fails to load: the file is there and is not a shared library.
-        var library = Path.Combine(Path.GetTempPath(), $"kicadsharp-not-a-library-{Guid.NewGuid():N}-{NngLibraryResolver.FileName}");
+        using var scratch = TestData.NewScratchDirectory();
+        var library = Path.Combine(scratch, $"not-a-library-{NngLibraryResolver.FileName}");
         File.WriteAllText(library, "This is text, not a shared library.\n");
 
-        try
-        {
-            var attempts = ConnectTwiceInAChild(library);
+        var attempts = ConnectTwiceInAChild(library);
 
-            var first = attempts[0];
-            AssertRefusedWithoutFallingBack(first, library);
-            Assert.Contains("the platform loader could not load it", first.Message);
+        var first = attempts[0];
+        AssertRefusedWithoutFallingBack(first, library);
+        Assert.Contains("the platform loader could not load it", first.Message);
 
-            // Which of the two the loader throws for a file that is not a library is its own
-            // business: DllNotFoundException from dlopen, BadImageFormatException from LoadLibrary.
-            Assert.Contains(first.InnerType, new[] { typeof(DllNotFoundException).FullName, typeof(BadImageFormatException).FullName });
-            Assert.Equal(first, attempts[1]);
-        }
-        finally
-        {
-            File.Delete(library);
-        }
+        // Which of the two the loader throws for a file that is not a library is its own
+        // business: DllNotFoundException from dlopen, BadImageFormatException from LoadLibrary.
+        Assert.Contains(first.InnerType, new[] { typeof(DllNotFoundException).FullName, typeof(BadImageFormatException).FullName });
+        Assert.Equal(first, attempts[1]);
     }
 
     [Fact]
