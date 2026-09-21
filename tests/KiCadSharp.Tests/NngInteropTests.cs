@@ -78,13 +78,25 @@ public class NngInteropTests
     [Fact]
     public void EveryShippedRuntimeIdentifierHasItsLibrary()
     {
-        // Six runtime identifiers, exactly the set nng.NET shipped. A platform silently losing its
-        // binary is the failure mode this whole change has to not introduce.
+        // Eight runtime identifiers: the six nng.NET publishes, and osx-arm64 and win-arm64, built
+        // from nng's source under native/. A platform silently losing its binary is one failure; the
+        // other is a binary that ships while the resolver still tells that platform there is none,
+        // which is what issue #81 found in the docs. So the list and the build's runtimes/ folders
+        // must be the same set, and each folder must hold the file nng has on that platform.
+        var runtimes = Path.Combine(AppContext.BaseDirectory, "runtimes");
+        var built = Directory.GetDirectories(runtimes)
+            .Where(directory => Directory.Exists(Path.Combine(directory, "native")))
+            .Select(directory => Path.GetFileName(directory))
+            .Order(StringComparer.Ordinal);
+
+        Assert.Equal(NngLibraryResolver.ShippedRuntimeIdentifiers.Order(StringComparer.Ordinal), built);
+
         foreach (var identifier in NngLibraryResolver.ShippedRuntimeIdentifiers)
         {
-            var directory = Path.Combine(AppContext.BaseDirectory, "runtimes", identifier, "native");
-            Assert.True(Directory.Exists(directory), $"no native folder for {identifier}");
-            Assert.NotEmpty(Directory.GetFiles(directory));
+            var file = identifier.StartsWith("win-", StringComparison.Ordinal) ? "nng.dll"
+                : identifier.StartsWith("osx-", StringComparison.Ordinal) ? "libnng.dylib"
+                : "libnng.so";
+            Assert.True(File.Exists(Path.Combine(runtimes, identifier, "native", file)), $"no {file} for {identifier}");
         }
     }
 

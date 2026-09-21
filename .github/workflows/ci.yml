@@ -39,6 +39,11 @@ jobs:
       - name: Pack
         run: dotnet pack KiCadSharp.slnx -c Release --no-build -o artifacts/packages
 
+      # The README names the platforms the package ships libnng for. This fails unless the package
+      # carries exactly those eight, each built for its own architecture.
+      - name: Check the native libraries in the package
+        run: scripts/check-natives.sh artifacts/packages/KiCadSharp.[0-9]*.nupkg
+
       - uses: actions/upload-artifact@v7
         with:
           name: nupkg
@@ -46,3 +51,43 @@ jobs:
             artifacts/packages/*.nupkg
             artifacts/packages/*.snupkg
           if-no-files-found: warn
+
+  # The two libnng builds this repository makes itself (native/) cannot be loaded on the Linux runner
+  # above, so the suite also runs on the hardware each is for. Both are native arm64 runners, not
+  # emulation: macos-14 is Apple silicon and windows-11-arm is Windows on Arm.
+  test-arm64:
+    name: test (${{ matrix.rid }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: osx-arm64
+            os: macos-14
+          - rid: win-arm64
+            os: windows-11-arm
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      # A test run under x64 emulation would load the x64 library and prove nothing about this one.
+      - name: Check that .NET runs as ${{ matrix.rid }}
+        shell: bash
+        env:
+          RID: ${{ matrix.rid }}
+        run: |
+          info="$(dotnet --info | tr -d '\r')"
+          grep -E '^ *RID:' <<<"$info"
+          grep -qE "^ *RID: *${RID}\$" <<<"$info"
+
+      - name: Restore
+        run: dotnet restore KiCadSharp.slnx
+
+      - name: Build
+        run: dotnet build KiCadSharp.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test KiCadSharp.slnx -c Release --no-build --logger "console;verbosity=normal"
