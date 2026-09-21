@@ -153,6 +153,16 @@ wrap an existing `SExpression` make the same check and throw `ArgumentException`
 footprint-library reader accepts only `footprint` and `module` in a `.kicad_mod`, so check
 `IsSingleFootprint` when a board in that place would be a mistake.
 
+**A symbol library's `version` changes how KiCad reads its symbols.** In KiCad 10.0.6, a lone `~`
+is an empty value, pin name or pin number before `20250318`. An arc over 180° is redrawn as a
+shorter one up to `20230121`. A second body style is inferred before `20250827` and dropped after it
+unless the symbol declares one. So a library that holds no symbols yet takes the version of the
+library its first `AddSymbol` comes from. A library that already holds symbols keeps its version,
+because changing it would change how those symbols read. A symbol built in memory, a copy (`CloneAs`
+or the `Node.Clone()` above) and one from a schematic leave the version alone, so when you copy, set
+`Version` to the source's. Nothing converts symbols between versions, so symbols from libraries
+of different versions cannot all be read as written from one file.
+
 ### Copper geometry — `KiCadSharp.Geometry`
 
 What a piece of copper occupies on the board, and how far it is from another — the question every
