@@ -3,6 +3,8 @@ using System.Text.Json;
 using KiCadSharp.Documents;
 using KiCadSharp.Geometry;
 
+using SExpressions;
+
 namespace KiCadSharp.Tests.Geometry;
 
 /// <summary>
@@ -41,6 +43,17 @@ namespace KiCadSharp.Tests.Geometry;
 /// against it read up to 4.4 µm below KiCad, all at rounded corners. A plain round rectangle is
 /// drawn exactly by KiCad and is held to the ordinary tolerance.
 /// </para>
+/// <para>
+/// <b>A custom pad with a Bézier among its primitives is allowed 5.5 µm below KiCad and 5 µm
+/// above it, because KiCad's curve is a polyline.</b> Its effective shape for a Bézier is the
+/// curve flattened within the pad's <c>GetMaxError()</c> of 5 µm (<c>EDA_SHAPE::makeEffectiveShapes</c>
+/// and <c>BEZIER_POLY::GetPoly</c>), every vertex on the curve and every chord cutting the inside of
+/// its bend. So KiCad reads a neighbour on the outside of a bend too far and one on the inside too
+/// close, by up to 5 µm each way. MEASURED on <c>custom-primitives.kicad_pcb</c>, against gaps
+/// computed from the file with no library code: KiCad is 4.88 µm below to 4.81 µm above the
+/// curve, this library 0.90 µm below to 0 above it. <see cref="ABezierIsExactWhereKiCadIsNot"/> pins
+/// one pair each side.
+/// </para>
 /// </remarks>
 public class CopperGeometryOracleTests
 {
@@ -49,7 +62,8 @@ public class CopperGeometryOracleTests
     /// fails here rather than quietly proving less. <c>pad-shapes.kicad_pcb</c> is a board pcbnew
     /// built itself to carry the shapes no vendored board has: trapezoid, chamfered with and without
     /// rounding, custom with a filled and a stroked primitive, and copper offset from its hole — each
-    /// at 0, 30 and 90 degrees, on both sides.
+    /// at 0, 30 and 90 degrees, on both sides. <c>custom-primitives.kicad_pcb</c> does the same for
+    /// every other primitive a custom pad can hold, each form listed as <c>primitive …</c>.
     /// </summary>
     public static TheoryData<string, string, string[]> Oracles => new()
     {
@@ -58,6 +72,15 @@ public class CopperGeometryOracleTests
         {
             "pad-shapes.distances.json", Path.Combine(TestData.Root, "oracles", "pad-shapes.kicad_pcb"),
             ["pad trapezoid", "pad chamfered_rect", "pad custom", "pad oval", "pad rect", "segment", "via"]
+        },
+        {
+            "custom-primitives.distances.json", Path.Combine(TestData.Root, "oracles", "custom-primitives.kicad_pcb"),
+            [
+                "pad custom", "segment", "via",
+                "primitive gr_curve", "primitive gr_rect rounded filled", "primitive gr_rect rounded stroked",
+                "primitive gr_rect stroked", "primitive gr_arc", "primitive gr_circle filled",
+                "primitive gr_circle stroked", "primitive gr_line",
+            ]
         },
     };
 
@@ -82,12 +105,14 @@ public class CopperGeometryOracleTests
             Assert.True(shapes.ContainsKey(b), $"{b} ({pair.GetProperty("b_kind").GetString()}) is not an item this library found");
             kinds.Add(shapes[a].Kind);
             kinds.Add(shapes[b].Kind);
+            kinds.UnionWith(shapes[a].Primitives.Concat(shapes[b].Primitives).Select(p => "primitive " + p));
 
             var actual = shapes[a].Shape.DistanceTo(shapes[b].Shape);
             var error = actual - expected;
             worst = Math.Max(worst, Math.Abs(error));
             var arc = shapes[a].Kind is "arc" or "pad chamfered_rect" || shapes[b].Kind is "arc" or "pad chamfered_rect";
-            if (error > 0.001 || error < (arc ? -0.0055 : -0.0015))
+            var curve = shapes[a].Primitives.Contains("gr_curve") || shapes[b].Primitives.Contains("gr_curve");
+            if (error > (curve ? 0.005 : 0.001) || error < (arc || curve ? -0.0055 : -0.0015))
             {
                 failures.Add($"{shapes[a].Kind} {a} / {shapes[b].Kind} {b}: KiCad {expected:F5}, here {actual:F5}");
             }
@@ -113,36 +138,80 @@ public class CopperGeometryOracleTests
         Assert.InRange(gap, 1.080561 - (CopperGeometry.DefaultMaxError * 2) - 0.0001, 1.080561 + 0.0001);
     }
 
-    /// <summary>Every copper item on the board by the UUID the file gives it.</summary>
-    internal static Dictionary<string, (string Kind, CopperShape Shape)> Shapes(KiCadBoard board)
+    /// <summary>
+    /// A Bézier pad against a probe inside its bend, where KiCad reads 4.9 µm too close, and one
+    /// outside it, where KiCad reads 4.8 µm too far: each against the gap computed with no library
+    /// code, the curve sampled 400,001 times from the control points in the file.
+    /// </summary>
+    [Theory]
+    [InlineData("bf070d78-518d-4a87-ae9d-af175b79abb0", 0.0476576, 0.04278)]
+    [InlineData("ef6d18da-7016-4bb7-9c38-d6c489b3fcf3", 0.0999994, 0.10480)]
+    public void ABezierIsExactWhereKiCadIsNot(string probe, double exact, double kicad)
     {
-        var shapes = new Dictionary<string, (string, CopperShape)>(StringComparer.Ordinal);
+        const string pad = "5ddd534d-5d39-449c-9351-f283bd03bccc";
+        var oracle = Path.Combine(TestData.Root, "oracles", "custom-primitives.distances.json");
+        using var document = JsonDocument.Parse(File.ReadAllText(oracle));
+        var pair = document.RootElement.GetProperty("pairs").EnumerateArray()
+            .Single(p => p.GetProperty("a").GetString() == pad && p.GetProperty("b").GetString() == probe);
+        Assert.Equal(kicad, pair.GetProperty("distance_mm").GetDouble(), 0.000005);
+        var shapes = Shapes(KiCadBoard.Load(Path.Combine(TestData.Root, "oracles", "custom-primitives.kicad_pcb")));
+
+        var gap = shapes[pad].Shape.DistanceTo(shapes[probe].Shape);
+
+        Assert.InRange(gap, exact - (CopperGeometry.DefaultMaxError * 2) - 0.0000005, exact + 0.0000005);
+    }
+
+    /// <summary>Every copper item on the board by the UUID the file gives it.</summary>
+    /// <remarks>
+    /// A custom pad also names the forms of its primitives, <c>gr_rect rounded filled</c> and so on,
+    /// so an oracle can say which it measured.
+    /// </remarks>
+    internal static Dictionary<string, (string Kind, CopperShape Shape, string[] Primitives)> Shapes(KiCadBoard board)
+    {
+        var shapes = new Dictionary<string, (string, CopperShape, string[])>(StringComparer.Ordinal);
         foreach (var footprint in board.Footprints)
         {
             foreach (var pad in footprint.Pads)
             {
                 if (pad.Node.GetChild("uuid")?.GetValue(0) is { } id)
                 {
-                    shapes[id] = (CopperGeometry.IsChamfered(pad) ? "pad chamfered_rect" : $"pad {pad.Shape}", CopperGeometry.Pad(footprint, pad));
+                    var primitives = pad.Node.GetChild("primitives")?.Children.Select(Form).ToArray() ?? [];
+                    shapes[id] = (CopperGeometry.IsChamfered(pad) ? "pad chamfered_rect" : $"pad {pad.Shape}", CopperGeometry.Pad(footprint, pad), primitives);
                 }
             }
         }
 
         foreach (var s in board.Segments)
         {
-            shapes[s.Uuid!] = ("segment", CopperGeometry.Segment(s));
+            shapes[s.Uuid!] = ("segment", CopperGeometry.Segment(s), []);
         }
 
         foreach (var a in board.TrackArcs)
         {
-            shapes[a.Uuid!] = ("arc", CopperGeometry.Arc(a));
+            shapes[a.Uuid!] = ("arc", CopperGeometry.Arc(a), []);
         }
 
         foreach (var v in board.Vias)
         {
-            shapes[v.Uuid!] = ("via", CopperGeometry.Via(v));
+            shapes[v.Uuid!] = ("via", CopperGeometry.Via(v), []);
         }
 
         return shapes;
+    }
+
+    private static string Form(SExpression primitive)
+    {
+        var form = primitive.Token;
+        if (primitive.GetChild("radius")?.GetValueAsDouble(0) > 0)
+        {
+            form += " rounded";
+        }
+
+        if (primitive.GetChild("fill")?.GetValue(0) is { } fill)
+        {
+            form += fill is "no" or "none" ? " stroked" : " filled";
+        }
+
+        return form;
     }
 }
