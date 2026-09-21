@@ -1,0 +1,21 @@
+# libnng for the two runtime identifiers nng.NET does not publish. scripts/build-nng.sh builds each
+# one from nng's source, and the result is committed beside this file as native/<rid>/<file>.
+#
+# The package's other six (linux-x64, linux-arm64, linux-arm, osx-x64, win-x64, win-x86) are copied
+# verbatim out of the nng.NET package; see src/KiCadSharp/KiCadSharp.csproj. Each build here pins the
+# nng release that its platform's nng.NET binary is, so every Mac runs one nng and every Windows
+# machine runs one nng, whatever the architecture:
+#
+#   osx-arm64  nng 1.3.2, as nng.NET's osx-x64 libnng.dylib is
+#   win-arm64  nng 1.4.0, as nng.NET's win-x64 and win-x86 nng.dll are
+#
+# Each tag MUST be pinned to its commit: an upstream tag can be moved, and the script refuses to build
+# from one that has been. The SHA-256 is that of the committed file, and the nng workflow fails unless
+# a rebuild from this line reproduces it byte for byte.
+#
+# To move a pin: edit the line, run scripts/build-nng.sh <rid> on the matching host (or take the file
+# the nng workflow uploads), and commit the new file and its SHA-256 together.
+#
+# rid       tag     commit                                    file          sha256
+osx-arm64   v1.3.2  32b12a311e1f490f0d5c629ce887edfbf18f2d2c  libnng.dylib  0000000000000000000000000000000000000000000000000000000000000000
+win-arm64   v1.4.0  d020adda8f0348d094790618703b8341a26007a3  nng.dll       0000000000000000000000000000000000000000000000000000000000000000
