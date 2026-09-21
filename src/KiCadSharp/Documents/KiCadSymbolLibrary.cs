@@ -46,18 +46,20 @@ namespace KiCadSharp.Documents
         /// Creates a library over an existing s-expression.
         /// </summary>
         /// <param name="expression">The <c>kicad_symbol_lib</c> form.</param>
+        /// <exception cref="ArgumentException">The form is not a <c>kicad_symbol_lib</c>.</exception>
         public KiCadSymbolLibrary(SExpression expression)
         {
             ArgumentNullException.ThrowIfNull(expression);
+            KiCadDocumentRoot.RequireArgument(expression, nameof(expression), KiCadTokens.Symbol.LibraryRoot);
             _root = expression;
             _document = new SDocument();
             _document.Add(expression);
         }
 
-        private KiCadSymbolLibrary(SDocument document)
+        private KiCadSymbolLibrary(SDocument document, string? filePath)
         {
             _document = document;
-            _root = document.Root ?? throw new InvalidOperationException("The file holds no s-expression.");
+            _root = KiCadDocumentRoot.Require(document, filePath, "symbol library", KiCadTokens.Symbol.LibraryRoot);
         }
 
         /// <summary>Gets the whole parsed file, including anything outside the root form.</summary>
@@ -88,19 +90,31 @@ namespace KiCadSharp.Documents
         /// <summary>Loads a library from a file.</summary>
         /// <param name="filePath">Path to the <c>.kicad_sym</c> file.</param>
         /// <returns>The library.</returns>
-        public static KiCadSymbolLibrary Load(string filePath) => new(SDocument.Load(filePath));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a symbol library: its root is not <c>(kicad_symbol_lib …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
+        public static KiCadSymbolLibrary Load(string filePath) => new(SDocument.Load(filePath), filePath);
 
         /// <summary>Loads a library from a file, reading it asynchronously.</summary>
         /// <param name="filePath">Path to the <c>.kicad_sym</c> file.</param>
         /// <param name="cancellationToken">Cancels the read.</param>
         /// <returns>The library.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a symbol library: its root is not <c>(kicad_symbol_lib …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static async Task<KiCadSymbolLibrary> LoadAsync(string filePath, CancellationToken cancellationToken = default) =>
-            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false));
+            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false), filePath);
 
         /// <summary>Parses a library from text.</summary>
         /// <param name="text">The file contents.</param>
         /// <returns>The library.</returns>
-        public static KiCadSymbolLibrary Parse(string text) => new(SDocument.Parse(text));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The text is not a symbol library: its root is not <c>(kicad_symbol_lib …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
+        public static KiCadSymbolLibrary Parse(string text) => new(SDocument.Parse(text), null);
 
         /// <summary>Appends an existing symbol to the library.</summary>
         /// <param name="symbol">The symbol to append.</param>

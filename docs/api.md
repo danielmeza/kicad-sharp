@@ -67,6 +67,7 @@ plus `Document` and `Name`.
 | `KiCadUtils` | `.kicad_sym` | `ParseSymbolLibrary`, `ExportSymbolToLibrary`, `ValidateSymbolLibrary`, `CloneSymbol`, `GetLibraryName`. |
 | `KiCadFileExtensions` | — | `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`, `.kicad_sym`, `.kicad_mod`, `.kicad_dru`, `.kicad_wks`, `.kicad_prl`. |
 | `KiCadSharp.Settings.IWritableOptions<T>` / `WritableOptions<T>` | JSON | A writable `IOptions<T>` that patches one section of a JSON file and reloads configuration. `System.Text.Json`; every other section of the file is carried across untouched. Unrelated to KiCad IPC. |
+| `KiCadDocumentTypeException` | — | Thrown by every `Load`/`LoadAsync`/`Parse` above when the file is not the kind of document asked for. `FilePath`, `ExpectedRootTokens`, `ActualRootToken`. Derives from `InvalidOperationException`. |
 
 ### Typed vs. generic, by file type
 
@@ -87,6 +88,16 @@ anything not modelled through `Node`.
 Anything in the "No" rows is still fully readable and *losslessly writable* through
 [`SExpressions`](https://github.com/danielmeza/sexpressions), which is a dependency of this package —
 you just write the accessors yourself.
+
+**Every loader checks the root form.** `KiCadSymbolLibrary` takes `(kicad_symbol_lib …)`,
+`KiCadFootprintLibrary` takes `(footprint …)`, KiCad 5's `(module …)` and `(kicad_pcb …)`,
+`KiCadBoard` takes `(kicad_pcb …)` and `KiCadSchematic` takes `(kicad_sch …)`. Any other file,
+including an empty one, JSON or prose, throws `KiCadDocumentTypeException`. It is never loaded as an
+empty document that a later `Save` would write over the original. Text that is not s-expressions at
+all throws the parser's `SExpressionFormatException`, with a line and column. The constructors that
+wrap an existing `SExpression` make the same check and throw `ArgumentException`. KiCad's own
+footprint-library reader accepts only `footprint` and `module` in a `.kicad_mod`, so check
+`IsSingleFootprint` when a board in that place would be a mistake.
 
 ### Copper geometry — `KiCadSharp.Geometry`
 

@@ -126,7 +126,7 @@ public class BoardDocumentTests
     {
         // A .kicad_sym parses perfectly well as an s-expression; it is just not a board, and reading
         // it as one would report every count as zero rather than say so.
-        var error = Assert.Throws<InvalidOperationException>(() => KiCadBoard.Load(TestData.SymbolLibrary));
+        var error = Assert.Throws<KiCadDocumentTypeException>(() => KiCadBoard.Load(TestData.SymbolLibrary));
         Assert.Contains("kicad_symbol_lib", error.Message, StringComparison.Ordinal);
     }
 

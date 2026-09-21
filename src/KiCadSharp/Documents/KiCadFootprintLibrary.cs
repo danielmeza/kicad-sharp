@@ -27,6 +27,13 @@ namespace KiCadSharp.Documents
     /// </remarks>
     public class KiCadFootprintLibrary
     {
+        /// <summary>
+        /// The root tokens a file of footprints may have: KiCad 6+ <c>footprint</c>, KiCad 5
+        /// <c>module</c>, and <c>kicad_pcb</c> for the footprints placed on a board.
+        /// </summary>
+        private static readonly string[] RootTokens =
+            [KiCadTokens.Footprint.Root, KiCadTokens.Footprint.LegacyRoot, KiCadTokens.Board.Root];
+
         private readonly SDocument _document;
         private readonly SExpression _root;
         private readonly bool _rootIsFootprint;
@@ -52,19 +59,21 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates a library over an existing s-expression.</summary>
         /// <param name="expression">A board form, or a single <c>footprint</c>/<c>module</c> form.</param>
+        /// <exception cref="ArgumentException">The form is not a <c>footprint</c>, <c>module</c> or <c>kicad_pcb</c>.</exception>
         public KiCadFootprintLibrary(SExpression expression)
         {
             ArgumentNullException.ThrowIfNull(expression);
+            KiCadDocumentRoot.RequireArgument(expression, nameof(expression), RootTokens);
             _root = expression;
             _rootIsFootprint = IsFootprintToken(expression.Token);
             _document = new SDocument();
             _document.Add(expression);
         }
 
-        private KiCadFootprintLibrary(SDocument document)
+        private KiCadFootprintLibrary(SDocument document, string? filePath)
         {
             _document = document;
-            _root = document.Root ?? throw new InvalidOperationException("The file holds no s-expression.");
+            _root = KiCadDocumentRoot.Require(document, filePath, "footprint or board", RootTokens);
             _rootIsFootprint = IsFootprintToken(_root.Token);
         }
 
@@ -115,19 +124,34 @@ namespace KiCadSharp.Documents
         /// <summary>Loads a file.</summary>
         /// <param name="filePath">Path to a <c>.kicad_pcb</c> or <c>.kicad_mod</c>.</param>
         /// <returns>The library.</returns>
-        public static KiCadFootprintLibrary Load(string filePath) => new(SDocument.Load(filePath));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a footprint or a board: its root is not <c>(footprint …)</c>, <c>(module …)</c>
+        /// or <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
+        public static KiCadFootprintLibrary Load(string filePath) => new(SDocument.Load(filePath), filePath);
 
         /// <summary>Loads a file asynchronously.</summary>
         /// <param name="filePath">Path to a <c>.kicad_pcb</c> or <c>.kicad_mod</c>.</param>
         /// <param name="cancellationToken">Cancels the read.</param>
         /// <returns>The library.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a footprint or a board: its root is not <c>(footprint …)</c>, <c>(module …)</c>
+        /// or <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static async Task<KiCadFootprintLibrary> LoadAsync(string filePath, CancellationToken cancellationToken = default) =>
-            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false));
+            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false), filePath);
 
         /// <summary>Parses a file from text.</summary>
         /// <param name="text">The file contents.</param>
         /// <returns>The library.</returns>
-        public static KiCadFootprintLibrary Parse(string text) => new(SDocument.Parse(text));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The text is not a footprint or a board: its root is not <c>(footprint …)</c>, <c>(module …)</c>
+        /// or <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
+        public static KiCadFootprintLibrary Parse(string text) => new(SDocument.Parse(text), null);
 
         /// <summary>Appends a footprint.</summary>
         /// <param name="footprint">The footprint.</param>
