@@ -619,12 +619,16 @@ namespace KiCadSharp.Documents
             set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
-        /// <summary>Gets the fill, creating a <c>(fill ...)</c> child if there is none.</summary>
-        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node) : null;
+        /// <summary>Gets the fill, or <see langword="null"/> when the rectangle has no <c>(fill ...)</c>.</summary>
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Board) : null;
 
-        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the node has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the board's way, <c>(fill no)</c>, which is how
+        /// KiCad spells it in a footprint too; see <see cref="KiCadFillSpelling.Board"/>.
+        /// </summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
     }
 
     /// <summary>A circle: <c>(fp_circle (center x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
@@ -656,6 +660,17 @@ namespace KiCadSharp.Documents
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
             set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
+
+        /// <summary>Gets the fill, or <see langword="null"/> when the circle has no <c>(fill ...)</c>.</summary>
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Board) : null;
+
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the node has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the board's way, <c>(fill no)</c>, which is how
+        /// KiCad spells it in a footprint too; see <see cref="KiCadFillSpelling.Board"/>.
+        /// </summary>
+        /// <returns>The view.</returns>
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
     }
 
     /// <summary>An arc: <c>(fp_arc (start x y) (mid x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
@@ -732,6 +747,17 @@ namespace KiCadSharp.Documents
         {
             Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
+
+        /// <summary>Gets the fill, or <see langword="null"/> when the polygon has no <c>(fill ...)</c>.</summary>
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Board) : null;
+
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the node has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the board's way, <c>(fill no)</c>, which is how
+        /// KiCad spells it in a footprint too; see <see cref="KiCadFillSpelling.Board"/>.
+        /// </summary>
+        /// <returns>The view.</returns>
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
     }
 
     /// <summary>Footprint text: <c>(fp_text reference "REF**" (at ...) (layer "...") (effects ...))</c>.</summary>

@@ -679,11 +679,15 @@ namespace KiCadSharp.Documents
         /// Gets the fill, or <see langword="null"/> when the form carries no <c>(fill ...)</c>.
         /// Reading it never adds one; use <see cref="RequireFill"/> for that.
         /// </summary>
-        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Schematic) : null;
 
-        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the node has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the schematic's way, <c>(fill (type none))</c>; see
+        /// <see cref="KiCadFillSpelling.Schematic"/>.
+        /// </summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Schematic);
 
         /// <summary>Enumerates the drawing elements directly inside <paramref name="owner"/>.</summary>
         /// <param name="owner">The form to look in.</param>
