@@ -129,14 +129,15 @@ nothing for Apple silicon or Windows on Arm, so those two are built in this repo
   architecture, a deployment target of macOS 11.0 (the first macOS on Apple silicon), and MSVC's
   `/Brepro`, which stamps a content hash where the link time would go so that two builds can be
   compared. `NNG_ELIDE_DEPRECATED` stays off. `nng.NET`'s script asks for it, but its Windows DLLs
-  came from an nng whose CMake never passed it on, and the new DLL should export what they export.
+  still export the deprecated functions it removes, and the new DLL should export what they export.
   The header of `scripts/build-nng.sh` has the details.
 - **Checked.** Each one exports the same nng functions as its x64 counterpart (495 on macOS, 497 on
   Windows) and links the same system libraries. The `nng` workflow rebuilds both on their own
   hardware, GitHub's `macos-14` and `windows-11-arm`, and fails unless each rebuild is the committed
-  file byte for byte. CI runs the whole test suite on those two machines too. Every packed
-  `KiCadSharp` is checked for exactly these eight files, each built for its own architecture
-  (`scripts/check-natives.sh`), in CI and before a release.
+  file byte for byte. CI runs the test suite on those two machines too, on Windows without three
+  tests that fail there whatever the architecture (#106, #107). Every packed `KiCadSharp` is checked
+  for exactly these eight files, each built for its own architecture (`scripts/check-natives.sh`), in
+  CI and before a release.
 
 On a platform that is not in the list, or in a container that does not have libnng's own
 dependencies, set **`KICADSHARP_NNG_LIBRARY`** to the full path of a `libnng` to load instead (a

@@ -18,11 +18,13 @@
 #   -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DNNG_ELIDE_DEPRECATED=ON -DNNG_TESTS=OFF -DNNG_TOOLS=OFF
 #
 # with one correction, taken from the binaries rather than the script: NNG_ELIDE_DEPRECATED is off.
-# nng 1.3.2 has no such option, and nng.NET's Windows nng.dll came from an nng snapshot whose CMake
-# never passed it to the compiler (nng fixed that in 44b8e23f), so all six export nng's deprecated
-# nng_getopt/nng_setopt family. Built from the 1.4.0 tag with the flag on, win-arm64 exported 427
-# nng functions where win-x64 and win-x86 export 497; with it off, it exports the same 497. KiCadSharp
-# calls none of the 70, and a platform should not be the one where a function is missing.
+# nng 1.3.2 has no such option, and nng.NET's Windows nng.dll exports the deprecated nng_getopt /
+# nng_setopt family the flag removes, so it had no effect on the nng those DLLs were built from.
+# (They were committed on 2021-01-18, three weeks before nng tagged 1.4.0; nng added the option on
+# 2020-11-16 and only made it work on 2021-01-02, in 44b8e23f.) Built from the 1.4.0 tag with the flag
+# on, win-arm64 exported 427 nng functions where win-x64 and win-x86 export 497; with it off, it
+# exports the same 497. KiCadSharp calls none of the 70, and no platform should be the one where a
+# function is missing.
 #
 # Beyond that, only what the platform needs:
 #   osx-arm64   -DCMAKE_OSX_ARCHITECTURES=arm64, and a deployment target of 11.0, the first macOS on
