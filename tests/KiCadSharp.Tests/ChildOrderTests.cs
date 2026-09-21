@@ -35,7 +35,7 @@ public class ChildOrderTests
             () => new KiCadFpPoly(),
             [Pts],
             ("layer", p => p.Layer = KiCadLayerNames.FSilkS),
-            ("width", p => p.Width = 0.12),
+            ("stroke", p => p.Width = 0.12),
             (Pts, p => AddPoints(p.AddPoint, 3)));
 
     [Fact]
@@ -65,7 +65,7 @@ public class ChildOrderTests
             (Start, l => l.Start = new KiCadPosition(0, 0)),
             (End, l => l.End = new KiCadPosition(1, 1)),
             ("layer", l => l.Layer = KiCadLayerNames.FSilkS),
-            ("width", l => l.Width = 0.12));
+            ("stroke", l => l.Width = 0.12));
 
     [Fact]
     public void GrLine_StartThenEndGoFirst_WhateverOrderThePropertiesAreSetIn() =>
@@ -86,7 +86,7 @@ public class ChildOrderTests
             (Start, r => r.Start = new KiCadPosition(0, 0)),
             (End, r => r.End = new KiCadPosition(1, 1)),
             ("layer", r => r.Layer = KiCadLayerNames.FSilkS),
-            ("width", r => r.Width = 0.12));
+            ("stroke", r => r.Width = 0.12));
 
     [Fact]
     public void GrRect_StartThenEndGoFirst_WhateverOrderThePropertiesAreSetIn() =>
@@ -106,7 +106,7 @@ public class ChildOrderTests
             (Center, c => c.Center = new KiCadPosition(0, 0)),
             (End, c => c.End = new KiCadPosition(1, 0)),
             ("layer", c => c.Layer = KiCadLayerNames.FSilkS),
-            ("width", c => c.Width = 0.12));
+            ("stroke", c => c.Width = 0.12));
 
     [Fact]
     public void GrCircle_CenterThenEndGoFirst_WhateverOrderThePropertiesAreSetIn() =>
@@ -127,7 +127,7 @@ public class ChildOrderTests
             (Mid, a => a.Mid = new KiCadPosition(0.2929, 0.7071)),
             (End, a => a.End = new KiCadPosition(1, 1)),
             ("layer", a => a.Layer = KiCadLayerNames.FSilkS),
-            ("width", a => a.Width = 0.12));
+            ("stroke", a => a.Width = 0.12));
 
     [Fact]
     public void GrArc_StartMidEndGoFirst_WhateverOrderThePropertiesAreSetIn() =>
@@ -155,7 +155,7 @@ public class ChildOrderTests
             (End, a => a.End = new KiCadPosition(1, 0)),
             (Angle, a => a.Angle = 90),
             ("layer", a => a.Layer = KiCadLayerNames.FSilkS),
-            ("width", a => a.Width = 0.12));
+            ("stroke", a => a.Width = 0.12));
 
         AssertEveryOrder(
             () => new KiCadGrArc(),

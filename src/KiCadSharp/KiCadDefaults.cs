@@ -39,10 +39,16 @@ namespace KiCadSharp
         public const string BoardVersion = "20241229";
 
         /// <summary>
-        /// The format stamp <see cref="Documents.KiCadFootprintLibrary"/> writes, and the fallback
-        /// for a <c>.kicad_mod</c> parsed without a <c>version</c> token.
+        /// The format stamp a new, board-shaped <see cref="Documents.KiCadFootprintLibrary"/> writes.
         /// </summary>
         /// <remarks>
+        /// <para>
+        /// It is not a fallback for a file with no <c>version</c> token: KiCad reads such a
+        /// <c>.kicad_mod</c> as format 0 and such a board as <c>20201115</c>, so
+        /// <see cref="Documents.KiCadFootprintLibrary.Version"/> reports <see langword="null"/> there
+        /// rather than this (#76).
+        /// </para>
+        /// <para>
         /// <b>Not a <c>.kicad_mod</c> stamp on the write path.</b> That type builds a
         /// <c>kicad_pcb</c> root — its own summary says "board-shaped" — so what it stamps is a
         /// board, and an OLDER format than <see cref="BoardVersion"/>: KiCad 6 against KiCad 9.
@@ -51,6 +57,7 @@ namespace KiCadSharp
         /// reconciled: raising it changes what the type writes, and that is a decision for
         /// whoever knows which readers depend on the old value. A footprint built in memory is
         /// stamped with <see cref="FootprintVersion"/> instead.
+        /// </para>
         /// </remarks>
         public const string FootprintLibraryVersion = "20211014";
 
