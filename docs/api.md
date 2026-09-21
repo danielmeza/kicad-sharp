@@ -88,6 +88,56 @@ Anything in the "No" rows is still fully readable and *losslessly writable* thro
 [`SExpressions`](https://github.com/danielmeza/sexpressions), which is a dependency of this package —
 you just write the accessors yourself.
 
+### Copper geometry — `KiCadSharp.Geometry`
+
+What a piece of copper occupies on the board, and how far it is from another — the question every
+clearance rule asks — answered from the file, with no KiCad running.
+
+| Type | What it does |
+|---|---|
+| `BoardPoint`, `BoardBox` | Millimetres in the file's frame, Y down. `BoardPoint.Rotate(degrees)` turns the way `(at x y angle)` does, exactly at quarter turns. |
+| `RoundedShape` | A point, segment or polygon swept by a radius — which is every piece of copper, EXACTLY: a via, a track, an oval, a round rectangle (the rectangle shrunk by the corner radius, swept by it). `DistanceTo` is the core distance less both radii. |
+| `CopperShape` | One or more of those: a custom pad, an arc's covering capsules. `DistanceTo`, `Clears(other, clearance)`, `Contains`, `Bounds`. |
+| `CopperGeometry` | `Pad(footprint, pad)`, `Hole`, `Segment`, `Arc`, `Via`, `Fill(filledPolygon)`, `PadPosition`, `ArcPoints`, `IsChamfered`, `CopperLayers(board)` in physical order, `CopperLayersOf(declared, layers)` for `*.Cu` and `F&B.Cu`. |
+| `BoardOutline` | `Of(board)`: the closed shapes on `Edge.Cuts` (footprint graphics included) as `Outers` and `Holes`, every edge as `Edges`, `DistanceToEdge(copper)`, `Contains(point)`, and `OpenChains` for an outline drawn with a gap. |
+
+**Judged against KiCad.** `tests/…/Geometry/CopperGeometryOracleTests` compares `DistanceTo` with
+pcbnew 10.0.6's own `GetEffectiveShape().Collide()` on 5,738 pairs across three boards — every pad
+shape KiCad has, both sides, rotations, copper offset from the hole — within 1 µm above and 1.5 µm
+below. The only approximation is a track arc, covered by capsules grown by the chord error so a
+distance can read low, never high.
+
+### Specctra — `KiCadSharp.Specctra`
+
+A board to an autorouter and back: what File → Export → Specctra DSN and File → Import → Specctra
+Session do in pcbnew, without pcbnew.
+
+```csharp
+var board = KiCadBoard.Load("board.kicad_pcb");
+File.WriteAllText("board.dsn", SpecctraDesign.Export(board, new SpecctraOptions
+{
+    Classes = [new SpecctraNetClass("Power", 0.5, 0.25, 0.8, 0.4) { Nets = ["+3V3", "+5V"] }],
+}));
+
+// … route board.dsn into board.ses with Freerouting …
+
+var result = SpecctraSession.Parse(File.ReadAllText("board.ses")).ApplyTo(board, viaDrill: 0.3);
+board.Save("board.kicad_pcb");
+```
+
+| Type | What it does |
+|---|---|
+| `SpecctraDesign` | `Export`/`Build(board, options)`: layers, boundary and cutouts, planes, rule-area keepouts, every footprint as an image seen from the top, padstacks, nets, classes, and existing copper as wiring — locked copper as `fix`. `NetNames`, `NetOf`, `ReferenceOf`. |
+| `SpecctraOptions`, `SpecctraNetClass` | The net classes — which live in the project file, not the board — and the hole clearance. |
+| `SpecctraSession` | `Parse(text)`, `Wires`, `Vias`, `ApplyTo(board, viaDrill)`: replaces every unlocked track, arc and via with the session's, keeps the locked ones, writes nets in whichever spelling the board uses. |
+| `SpecctraNode`, `SpecctraReader` | The format itself: its own `string_quote`, and KiCad's rule for which words are quoted. |
+
+**Judged against KiCad.** `Specctra/SpecctraDesignOracleTests` compares the design with the one
+pcbnew 10.0.6 writes for five boards, item by item — every pin's position, rotation and padstack
+geometry, every placement, net, class, plane, keepout, wire and via — and
+`SpecctraSessionOracleTests` compares an import with pcbnew's own import of the same Freerouting
+session, track by track. `data/oracles/README.md` records how each oracle was made.
+
 ### Annotation
 
 `kicad-cli` has no `annotate` command. This does.

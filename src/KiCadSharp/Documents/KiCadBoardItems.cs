@@ -125,11 +125,30 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>
-        /// Gets the net name the item carries — KiCad 10's <c>(net "GND")</c> — or
+        /// Gets or sets the net name the item carries — KiCad 10's <c>(net "GND")</c> — or
         /// <see langword="null"/> on a file that numbers its nets instead, where the name lives in
         /// the board's net table and <see cref="KiCadBoard.GetNet(int)"/> reaches it.
         /// </summary>
-        public string? NetName => KiCadNetRef.ReadName(Node.GetChild(KiCadTokens.Common.Net));
+        /// <remarks>
+        /// Setting it writes KiCad 10's spelling. On a board that numbers its nets — one with a
+        /// board-level net table — set <see cref="Net"/> instead, or the file mixes the two.
+        /// </remarks>
+        public string? NetName
+        {
+            get => KiCadNetRef.ReadName(Node.GetChild(KiCadTokens.Common.Net));
+
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                if (Node.GetChild(KiCadTokens.Common.Net) is { } net && KiCadNetRef.ReadName(net) is not null)
+                {
+                    KiCadNetRef.WriteName(net, value);
+                    return;
+                }
+
+                WriteChild(KiCadTokens.Common.Net, value, SQuoteStyle.Quoted);
+            }
+        }
 
         /// <summary>
         /// Gets or sets the item's UUID, which is how a <see cref="KiCadGroup"/> refers to it.

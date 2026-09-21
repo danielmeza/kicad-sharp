@@ -91,6 +91,15 @@ namespace KiCadSharp
             /// <summary>Present on a zone that keeps copper out rather than pouring it.</summary>
             public const string Keepout = "keepout";
 
+            /// <summary>Inside <c>(keepout …)</c>: whether tracks may cross the area.</summary>
+            public const string KeepoutTracks = "tracks";
+
+            /// <summary>Inside <c>(keepout …)</c>: whether vias may be placed in the area.</summary>
+            public const string KeepoutVias = "vias";
+
+            /// <summary>The value a <c>(keepout …)</c> child takes when the thing is forbidden.</summary>
+            public const string NotAllowed = "not_allowed";
+
             /// <summary>Present on a filled polygon the filler cut off from the rest of the zone.</summary>
             public const string Island = "island";
 
