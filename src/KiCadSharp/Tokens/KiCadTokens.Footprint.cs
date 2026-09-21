@@ -61,6 +61,41 @@ namespace KiCadSharp
             /// <summary>A polygon inside a footprint.</summary>
             public const string FpPoly = "fp_poly";
 
+            // ---------------------------------------------------------------- pad geometry
+
+            /// <summary>A round-rectangle pad's corner radius, as a fraction of its smaller side.</summary>
+            public const string RoundRectRatio = "roundrect_rratio";
+
+            /// <summary>A chamfered pad's chamfer, as a fraction of its smaller side.</summary>
+            public const string ChamferRatio = "chamfer_ratio";
+
+            /// <summary>Which corners of a chamfered pad are cut: <c>(chamfer top_left bottom_right)</c>.</summary>
+            public const string Chamfer = "chamfer";
+
+            /// <summary>A trapezoid pad's delta: <c>(rect_delta dx dy)</c>.</summary>
+            public const string RectDelta = "rect_delta";
+
+            /// <summary>A custom pad's drawn shapes, in the pad's own frame.</summary>
+            public const string Primitives = "primitives";
+
+            /// <summary>A custom pad's options: <c>(options (clearance outline) (anchor rect))</c>.</summary>
+            public const string Options = "options";
+
+            /// <summary>The shape a custom pad's primitives are drawn around.</summary>
+            public const string Anchor = "anchor";
+
+            /// <summary>The corner names <c>(chamfer …)</c> takes.</summary>
+            public const string ChamferTopLeft = "top_left";
+
+            /// <summary>See <see cref="ChamferTopLeft"/>.</summary>
+            public const string ChamferTopRight = "top_right";
+
+            /// <summary>See <see cref="ChamferTopLeft"/>.</summary>
+            public const string ChamferBottomLeft = "bottom_left";
+
+            /// <summary>See <see cref="ChamferTopLeft"/>.</summary>
+            public const string ChamferBottomRight = "bottom_right";
+
             // ---------------------------------------------------------------- fp_text kinds
 
             // The first value of an (fp_text …), not a token of its own.

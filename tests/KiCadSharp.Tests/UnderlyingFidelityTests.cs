@@ -36,8 +36,10 @@ public class UnderlyingFidelityTests
     public void EveryFixture_FindsTheFilesThatAreThere()
     {
         // A discovery gate that passes over an empty set proves nothing. Nine s-expression fixtures
-        // shipped before the third-party boards arrived; the three of them make twelve.
-        Assert.Equal(12, EveryFixture().Count);
+        // shipped before the third-party boards arrived; the three of them make twelve, and the two
+        // boards pcbnew 10.0.6 wrote for the Specctra oracles and the one it built to carry the pad
+        // shapes no vendored board has (data/oracles/) make fifteen.
+        Assert.Equal(15, EveryFixture().Count);
     }
 
     [Theory]

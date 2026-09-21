@@ -1,0 +1,5911 @@
+{
+"board": "pad-shapes.kicad_pcb",
+"kicad": "10.0.6-10.0.6~ubuntu26.04.1",
+"method": "GetEffectiveShape(layer).Collide(other, clearance) bisected to 0.1 um",
+"pairs": [
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "1b75ce8b-7f16-4831-b382-3528eed4e783",
+"b_kind": "via",
+"distance_mm": 6e-05
+},
+{
+"layer": "F.Cu",
+"a": "2c53b14f-60b5-451d-b99c-171b8a4fbc7d",
+"a_kind": "segment",
+"b": "a65394bc-d615-4fa5-ae02-2a3daf304c24",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "6195750a-626f-4f10-8bc2-fab71a9670f9",
+"a_kind": "segment",
+"b": "b61c1174-addc-482e-bf83-0f2552e11fb2",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "18a97dcb-8e6d-43c4-b046-9885728cfdd8",
+"b_kind": "segment",
+"distance_mm": 0.87433
+},
+{
+"layer": "F.Cu",
+"a": "763c025a-070d-4ed4-811a-3666b6ba51d9",
+"a_kind": "pad",
+"b": "10ee3489-b993-4f36-bf3e-0beec3bed2b6",
+"b_kind": "segment",
+"distance_mm": 1.03851
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "0fb4f712-a4f5-44d1-bf34-9e8863544afe",
+"b_kind": "via",
+"distance_mm": 0.31103
+},
+{
+"layer": "F.Cu",
+"a": "009ba47a-5bc1-45cf-936b-634438c9218b",
+"a_kind": "segment",
+"b": "70ceb24c-c2a4-4ea1-9313-08585c815a17",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "0a6c5fe2-8f49-4e49-813a-f342d2ebdbf0",
+"a_kind": "segment",
+"b": "e670de48-c0bb-42c4-9d14-b63916a90164",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "7a0be243-a460-4584-8eb8-d6a88c6df900",
+"a_kind": "segment",
+"b": "acd96ed7-c49e-4d41-a300-db0bd808c682",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "2a50f746-0a36-4dbd-800a-39f455cf6abc",
+"b_kind": "segment",
+"distance_mm": 0.95776
+},
+{
+"layer": "F.Cu",
+"a": "74983127-0cb0-446b-9b22-8157890f2fee",
+"a_kind": "segment",
+"b": "c982c95b-43a1-4b4f-bc98-31836d8beda9",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "128c7576-2c54-4879-8284-b6b70c6290c8",
+"a_kind": "via",
+"b": "7203d787-c296-4e98-b345-b4a74bcb6eed",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "398b47dc-9847-4cc9-b6b8-5ac36f5b77a9",
+"b_kind": "segment",
+"distance_mm": 0.92334
+},
+{
+"layer": "F.Cu",
+"a": "342da444-3781-466a-a798-a67b91e9bfc4",
+"a_kind": "segment",
+"b": "e79d7c9f-aa84-4b6a-8291-00c652b457e7",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "709ecf2a-c8b6-4619-88c0-f49eb51a66d9",
+"a_kind": "segment",
+"b": "a0e3c4a1-5462-4a13-b828-8783267c9a09",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "1b75ce8b-7f16-4831-b382-3528eed4e783",
+"a_kind": "via",
+"b": "897d6d39-fa65-4070-91bb-a892ae44c8cf",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "cf28a261-8eff-4920-a275-e279ac33a455",
+"a_kind": "segment",
+"b": "0b383ac8-1fc7-49b1-a6fa-a458485f96e4",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "9280722f-a89f-4e36-8e96-5c034dd17e4a",
+"a_kind": "pad",
+"b": "74983127-0cb0-446b-9b22-8157890f2fee",
+"b_kind": "segment",
+"distance_mm": 0.7879
+},
+{
+"layer": "B.Cu",
+"a": "75940030-4ca5-4fcb-bbd4-957f762fc109",
+"a_kind": "segment",
+"b": "86adcad8-ca42-45c6-b82f-ad3083e9532a",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "3453c6ff-abe6-4168-ad90-110bcd96ab2f",
+"a_kind": "segment",
+"b": "24ad50f7-c149-4ac3-960e-619fa9f64f08",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "8e74b88a-b133-4001-a2e9-1b189c47d4e5",
+"a_kind": "segment",
+"b": "f3800fdb-84b4-496e-bd1a-91b3a4aec3df",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "fd347ae5-f565-4951-9dfa-21da86e529da",
+"a_kind": "via",
+"b": "1af13e5a-009f-47dd-a6cc-c0531614eb37",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "8ab2ba86-5295-4c33-a04a-4e88f288224f",
+"a_kind": "segment",
+"b": "e08a6307-8480-4284-8aa0-cba527685810",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "6791a069-e81d-4b63-870c-69b15fb4c83f",
+"b_kind": "segment",
+"distance_mm": 0.44006
+},
+{
+"layer": "B.Cu",
+"a": "167c4d57-2f52-4c30-8e12-105f620abb4b",
+"a_kind": "pad",
+"b": "849483fc-8227-4aee-88b5-7259f15db33c",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "66cb3344-f51b-4849-bac6-c8d0132ca5a1",
+"a_kind": "segment",
+"b": "9c7b1439-7161-4c2d-8257-3f2436a5a5f3",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "dea79c9d-d3a7-4701-bcec-cf2369784a56",
+"b_kind": "segment",
+"distance_mm": 0.58447
+},
+{
+"layer": "B.Cu",
+"a": "66e9f2d6-ff74-4d1a-b734-af763049349d",
+"a_kind": "segment",
+"b": "6f2de2cf-3903-4013-bec9-cf54394dcc4a",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "8eee898b-cdb5-478c-bedc-56caa32c6e93",
+"a_kind": "segment",
+"b": "a4f401ff-cca0-40ca-bdad-e86ba2c9411e",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "49097003-4385-489d-878f-973ca0ed7a4a",
+"a_kind": "segment",
+"b": "801a1aec-3a5e-478f-afda-a60eca158d57",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "08debdb3-3263-44bc-b720-dfdedcd1bcc6",
+"a_kind": "segment",
+"b": "68b6b42f-ccc8-474e-b895-548d8b978b95",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "08debdb3-3263-44bc-b720-dfdedcd1bcc6",
+"b_kind": "segment",
+"distance_mm": 0.70019
+},
+{
+"layer": "B.Cu",
+"a": "60f7ab73-0853-4873-b311-a166c0797024",
+"a_kind": "segment",
+"b": "fd3af7ac-3585-4a44-8db6-3beb82e47bdc",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "68b6b42f-ccc8-474e-b895-548d8b978b95",
+"a_kind": "segment",
+"b": "852c5d0b-2923-4512-a37c-08c5b8cf8a78",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "740c1df5-9fec-43f5-b3e6-fd67f70e49c7",
+"a_kind": "segment",
+"b": "c8a60b4d-1994-4e2d-b85d-1b0bdaa7a628",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "278e0bfe-5533-4fba-976f-712e0e786cbb",
+"a_kind": "pad",
+"b": "3f9c16e5-d28a-428a-9590-ea68b83a4895",
+"b_kind": "via",
+"distance_mm": 0.45001
+},
+{
+"layer": "B.Cu",
+"a": "abe8d097-4d21-4a74-aa29-86aba722df14",
+"a_kind": "via",
+"b": "c9468a85-5c8e-4421-b98e-4fe2718e13bb",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "849483fc-8227-4aee-88b5-7259f15db33c",
+"a_kind": "via",
+"b": "c9d13b59-1492-4b48-9169-59cc467e15af",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "7bc7e832-e6de-4e9e-939a-944ed5b7dc08",
+"a_kind": "pad",
+"b": "128c7576-2c54-4879-8284-b6b70c6290c8",
+"b_kind": "via",
+"distance_mm": 0.00067
+},
+{
+"layer": "F.Cu",
+"a": "b1f3ca9f-30e5-414a-9b59-5f8bd071656a",
+"a_kind": "segment",
+"b": "dea79c9d-d3a7-4701-bcec-cf2369784a56",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "763c025a-070d-4ed4-811a-3666b6ba51d9",
+"a_kind": "pad",
+"b": "f7afe823-df42-4556-881c-bd2cc6a24876",
+"b_kind": "segment",
+"distance_mm": 0.46796
+},
+{
+"layer": "F.Cu",
+"a": "9b3bb86c-7264-4bdd-bfa1-fe4bdebbf527",
+"a_kind": "segment",
+"b": "26d1dfec-2080-4168-be58-e8e45eb5d3a3",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "f5498b93-c362-4ec6-8d46-66af15cfda70",
+"b_kind": "segment",
+"distance_mm": 1.02325
+},
+{
+"layer": "B.Cu",
+"a": "08debdb3-3263-44bc-b720-dfdedcd1bcc6",
+"a_kind": "segment",
+"b": "df7d9705-e992-48ce-a404-23a021370353",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "ea134955-ea81-4437-b331-7460638da383",
+"b_kind": "segment",
+"distance_mm": 0.73718
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "d77adf00-8326-43a8-b23e-bda3a70ed8fa",
+"b_kind": "segment",
+"distance_mm": 1.0935
+},
+{
+"layer": "F.Cu",
+"a": "cfc6dfac-3d97-47c6-8f0b-3e7084bc4e24",
+"a_kind": "segment",
+"b": "91d2cdda-ad3b-40e2-b86f-85285dcb1b74",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "9e617ab5-a5df-42ec-8453-68e7526e050e",
+"a_kind": "segment",
+"b": "ba4f4f6a-0069-4d03-bfaa-4a18d8baabfe",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "520aee33-bec0-4393-91ef-a41aa03b9b6d",
+"b_kind": "segment",
+"distance_mm": 0.39874
+},
+{
+"layer": "F.Cu",
+"a": "3453c6ff-abe6-4168-ad90-110bcd96ab2f",
+"a_kind": "segment",
+"b": "54ccef2c-0133-4a3e-90a1-093ad6d028f8",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "167c4d57-2f52-4c30-8e12-105f620abb4b",
+"a_kind": "pad",
+"b": "670f208f-39a6-40a6-b152-1d7f889ce41c",
+"b_kind": "segment",
+"distance_mm": 0.38446
+},
+{
+"layer": "F.Cu",
+"a": "0ba30ba2-152d-46f5-9c37-db9d46d6b003",
+"a_kind": "segment",
+"b": "8eee898b-cdb5-478c-bedc-56caa32c6e93",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "d2272f62-363c-4a5d-a0a0-e031167faa49",
+"a_kind": "pad",
+"b": "3ce2ebd6-2220-418f-ae9b-cc3647a865d4",
+"b_kind": "segment",
+"distance_mm": 0.40002
+},
+{
+"layer": "F.Cu",
+"a": "fcb8ceb8-f7b3-4508-a914-7a2c1c6212c1",
+"a_kind": "pad",
+"b": "24ad50f7-c149-4ac3-960e-619fa9f64f08",
+"b_kind": "via",
+"distance_mm": 6e-05
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "34c5852f-79dd-4970-ac39-e29be021ff8a",
+"b_kind": "via",
+"distance_mm": 6e-05
+},
+{
+"layer": "B.Cu",
+"a": "aff77f68-3886-4c5d-b44d-de5b9d293199",
+"a_kind": "segment",
+"b": "ea397b97-658a-41ca-b696-961c08e1e39c",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "2fa10198-8e9e-423f-ac45-a3ed14f29da9",
+"a_kind": "segment",
+"b": "864d33dd-93d7-43eb-ab6b-272a0e3a9bad",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "1ce4c50a-bc26-45c0-9623-891a8b6430e0",
+"a_kind": "segment",
+"b": "97057fab-7fe2-4485-a9f2-c9b61afc4523",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "98cb310e-f264-4b58-b49e-43b5d0f46452",
+"b_kind": "segment",
+"distance_mm": 0.81006
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "cfc6dfac-3d97-47c6-8f0b-3e7084bc4e24",
+"b_kind": "segment",
+"distance_mm": 0.17303
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "9ec8974e-17a1-49f4-8475-b2288c049057",
+"b_kind": "segment",
+"distance_mm": 0.60333
+},
+{
+"layer": "B.Cu",
+"a": "520aee33-bec0-4393-91ef-a41aa03b9b6d",
+"a_kind": "segment",
+"b": "a243ce36-6dd3-45d2-8e37-142d5cc26927",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "acd96ed7-c49e-4d41-a300-db0bd808c682",
+"a_kind": "segment",
+"b": "34c5852f-79dd-4970-ac39-e29be021ff8a",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "1af13e5a-009f-47dd-a6cc-c0531614eb37",
+"a_kind": "segment",
+"b": "552fa849-a180-4404-829a-4ad9209443b7",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "822833df-1288-4791-b572-09e02caad92a",
+"a_kind": "segment",
+"b": "d50ad4ad-27fc-4989-9d60-0e0c9da921ff",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "b94bc8f1-3f88-4df1-9c4d-669edc728c81",
+"a_kind": "pad",
+"b": "51c351d3-f030-4b27-b29a-3fc2effd0563",
+"b_kind": "segment",
+"distance_mm": 1.05401
+},
+{
+"layer": "B.Cu",
+"a": "7203d787-c296-4e98-b345-b4a74bcb6eed",
+"a_kind": "segment",
+"b": "7ec20c20-eb22-4947-a09a-d321324bc679",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "c156ab70-804c-48e1-b32a-ab54defcc220",
+"a_kind": "pad",
+"b": "dd18903e-5a31-432b-97f9-477c33bd98c1",
+"b_kind": "segment",
+"distance_mm": 0.90863
+},
+{
+"layer": "F.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "f78e9af8-551e-4a5f-844e-a1f629fdd0e7",
+"b_kind": "segment",
+"distance_mm": 0.65002
+},
+{
+"layer": "B.Cu",
+"a": "128c7576-2c54-4879-8284-b6b70c6290c8",
+"a_kind": "via",
+"b": "7ec20c20-eb22-4947-a09a-d321324bc679",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "0e9e034f-0e7d-4c3f-83df-5fd0422da4ea",
+"a_kind": "segment",
+"b": "7880a0ea-b9d1-4e77-abc1-4de592dd2a7b",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "f00bb2a3-9c1c-4c39-a43a-366dd8abfaa4",
+"a_kind": "segment",
+"b": "d3d09b65-4008-409c-8ad0-44b160b7c991",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "d2272f62-363c-4a5d-a0a0-e031167faa49",
+"a_kind": "pad",
+"b": "4dff5870-19e0-45d3-bd5a-3d395e92d3bb",
+"b_kind": "segment",
+"distance_mm": 0.79071
+},
+{
+"layer": "B.Cu",
+"a": "c156ab70-804c-48e1-b32a-ab54defcc220",
+"a_kind": "pad",
+"b": "60f7ab73-0853-4873-b311-a166c0797024",
+"b_kind": "segment",
+"distance_mm": 0.56006
+},
+{
+"layer": "F.Cu",
+"a": "0088d2c7-8d53-456c-b79e-9118f6983e1a",
+"a_kind": "pad",
+"b": "d3d09b65-4008-409c-8ad0-44b160b7c991",
+"b_kind": "via",
+"distance_mm": 0.25006
+},
+{
+"layer": "F.Cu",
+"a": "135f7e87-2442-428d-afab-c65b479d788b",
+"a_kind": "segment",
+"b": "380f358e-24f4-487c-9fa6-9f164c72167e",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "7855a274-f136-44fa-8b38-991dac59c37d",
+"a_kind": "segment",
+"b": "9bd452ed-46a5-4f14-a751-8cf2ef4453a8",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "1b01231e-d1b4-4406-9906-19919bd0eb79",
+"a_kind": "segment",
+"b": "940b0edd-26a4-45dc-9cf8-09c53305d97d",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "3988ec25-2832-4bd7-abb3-36fbee830a96",
+"b_kind": "segment",
+"distance_mm": 0.46405
+},
+{
+"layer": "F.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "26d1dfec-2080-4168-be58-e8e45eb5d3a3",
+"b_kind": "via",
+"distance_mm": 0.30481
+},
+{
+"layer": "F.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "342da444-3781-466a-a798-a67b91e9bfc4",
+"b_kind": "segment",
+"distance_mm": 0.91583
+},
+{
+"layer": "B.Cu",
+"a": "edc3b75f-2179-416c-b987-a3027441692e",
+"a_kind": "pad",
+"b": "96ac1e02-74c9-45cc-a996-751e5d5375aa",
+"b_kind": "segment",
+"distance_mm": 0.61011
+},
+{
+"layer": "F.Cu",
+"a": "013f4438-b88c-4cc9-99e3-6d2b01ef242d",
+"a_kind": "segment",
+"b": "9b3bb86c-7264-4bdd-bfa1-fe4bdebbf527",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "ffaf9a01-4cfd-445c-a967-44fec8c0b6e6",
+"a_kind": "pad",
+"b": "2a0d3cb6-f4ae-4869-bad9-4f153e29a776",
+"b_kind": "via",
+"distance_mm": 0.35004
+},
+{
+"layer": "F.Cu",
+"a": "a4f401ff-cca0-40ca-bdad-e86ba2c9411e",
+"a_kind": "segment",
+"b": "def223c6-fe6f-4446-a41c-e45b9e26fcee",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "9c7b1439-7161-4c2d-8257-3f2436a5a5f3",
+"b_kind": "segment",
+"distance_mm": 0.7984
+},
+{
+"layer": "F.Cu",
+"a": "b1afe8ec-1bd1-4bb9-bf3b-f32e68459a84",
+"a_kind": "segment",
+"b": "b742d5ba-e3e8-40d1-a937-e1838098cff2",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "694024c0-2a6a-4a30-8a57-119dd3050f5e",
+"b_kind": "segment",
+"distance_mm": 0.2179
+},
+{
+"layer": "F.Cu",
+"a": "f78e9af8-551e-4a5f-844e-a1f629fdd0e7",
+"a_kind": "segment",
+"b": "26d1dfec-2080-4168-be58-e8e45eb5d3a3",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "c156ab70-804c-48e1-b32a-ab54defcc220",
+"a_kind": "pad",
+"b": "bfe28bbd-26bd-4816-bde7-ad5db64d7bbd",
+"b_kind": "segment",
+"distance_mm": 0.95068
+},
+{
+"layer": "B.Cu",
+"a": "505e3fce-df36-4c65-8c56-3740c8847d89",
+"a_kind": "segment",
+"b": "9e617ab5-a5df-42ec-8453-68e7526e050e",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "47fe81dd-d7f2-4059-a10d-f2b77c779a43",
+"a_kind": "segment",
+"b": "7d38dc72-87b9-4b84-8924-e3a1f021b76c",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "2420d8c3-8ed8-42ed-9743-db374c1fc08f",
+"a_kind": "segment",
+"b": "7e6d34a3-4e07-4a82-bfc3-63e7e6949139",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "f9d324a7-1fb3-4c58-adf5-bbe8af947395",
+"b_kind": "segment",
+"distance_mm": 0.49219
+},
+{
+"layer": "F.Cu",
+"a": "5f56a999-3205-4e91-aec9-eff5d2562e3a",
+"a_kind": "segment",
+"b": "dd8b41c8-f1fd-406d-9743-6840068a44f5",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "eba8f396-5f37-4bd5-a550-92b6a16a95bf",
+"a_kind": "segment",
+"b": "f5498b93-c362-4ec6-8d46-66af15cfda70",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "fcb8ceb8-f7b3-4508-a914-7a2c1c6212c1",
+"a_kind": "pad",
+"b": "2a0674ce-8184-463c-9263-4ed75129dd12",
+"b_kind": "segment",
+"distance_mm": 0.88
+},
+{
+"layer": "F.Cu",
+"a": "009ba47a-5bc1-45cf-936b-634438c9218b",
+"a_kind": "segment",
+"b": "940b0edd-26a4-45dc-9cf8-09c53305d97d",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "ffaf9a01-4cfd-445c-a967-44fec8c0b6e6",
+"a_kind": "pad",
+"b": "12bf304d-ed08-4e7d-be9d-0d6eb230c95f",
+"b_kind": "segment",
+"distance_mm": 0.72003
+},
+{
+"layer": "B.Cu",
+"a": "3988ec25-2832-4bd7-abb3-36fbee830a96",
+"a_kind": "segment",
+"b": "7e4aa3c0-6828-4630-a5fa-f11a70fc8917",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "0ba30ba2-152d-46f5-9c37-db9d46d6b003",
+"a_kind": "segment",
+"b": "801a1aec-3a5e-478f-afda-a60eca158d57",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "bd2bfa1e-9494-459a-81a0-b7986a6ba265",
+"a_kind": "via",
+"b": "f4a09434-870f-4a2c-ba22-2f6ec60be8f8",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "01ebf785-52d0-4ea0-b17c-a572a204427f",
+"a_kind": "segment",
+"b": "8b2a984e-af2d-4d84-ba72-a2cccfd77275",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "2420d8c3-8ed8-42ed-9743-db374c1fc08f",
+"b_kind": "segment",
+"distance_mm": 0.41724
+},
+{
+"layer": "F.Cu",
+"a": "940b0edd-26a4-45dc-9cf8-09c53305d97d",
+"a_kind": "segment",
+"b": "70ceb24c-c2a4-4ea1-9313-08585c815a17",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "07be84c4-81a7-452d-86d6-255726e7c319",
+"a_kind": "segment",
+"b": "24ad50f7-c149-4ac3-960e-619fa9f64f08",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "c982c95b-43a1-4b4f-bc98-31836d8beda9",
+"a_kind": "segment",
+"b": "e91d4f95-1e88-44b4-b4c8-18ef689f5100",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "6c1ca338-ac2b-4f98-adc2-2e44a8be08ea",
+"a_kind": "segment",
+"b": "7855a274-f136-44fa-8b38-991dac59c37d",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "cbc93f0d-95f1-4b49-8d6a-b98fc1564afc",
+"a_kind": "pad",
+"b": "063deb7b-c0a6-4e1d-812f-4ce22da6cb02",
+"b_kind": "segment",
+"distance_mm": 1.06842
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "86c7bc1a-648d-416b-935c-c2129f286ccb",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "ce838346-a59c-4c0f-ae71-6f9594bbe665",
+"a_kind": "segment",
+"b": "d0bad995-3851-4682-acf9-fdc880e495ad",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "278e0bfe-5533-4fba-976f-712e0e786cbb",
+"a_kind": "pad",
+"b": "3f9c16e5-d28a-428a-9590-ea68b83a4895",
+"b_kind": "via",
+"distance_mm": 0.45001
+},
+{
+"layer": "F.Cu",
+"a": "c776680c-6721-4d4f-bdb9-88d1bccc251d",
+"a_kind": "segment",
+"b": "897ea256-f2dd-4402-816c-d43656c8f4e2",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "10ee3489-b993-4f36-bf3e-0beec3bed2b6",
+"a_kind": "segment",
+"b": "268975b8-1b03-4638-a092-5996c4b064f4",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "74e643b6-c927-4d3c-9267-019e3157b29f",
+"a_kind": "segment",
+"b": "dfe1d66e-425c-4d25-9abf-e9aa6225fa14",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "72608300-38e5-4cdb-b046-b8a18aae619d",
+"a_kind": "segment",
+"b": "0fb4f712-a4f5-44d1-bf34-9e8863544afe",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "3bb5246d-d29e-444d-b10a-eeb699e867aa",
+"a_kind": "via",
+"b": "ce838346-a59c-4c0f-ae71-6f9594bbe665",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "0e018778-af7a-4ec6-8772-a113a7ed1c1b",
+"b_kind": "segment",
+"distance_mm": 0.15161
+},
+{
+"layer": "B.Cu",
+"a": "b54b18b9-8003-4c66-8f89-733d755f602b",
+"a_kind": "segment",
+"b": "c04b028d-9f46-41a0-979e-bd69e70f8186",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "adb3dfc8-8bfa-4d60-9c04-07e035194295",
+"b_kind": "segment",
+"distance_mm": 0.59283
+},
+{
+"layer": "F.Cu",
+"a": "4f5c0388-07d7-464d-868c-eed6b02f57ce",
+"a_kind": "segment",
+"b": "f00bb2a3-9c1c-4c39-a43a-366dd8abfaa4",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "42c7c39a-2a4f-470a-8936-a944ba6b9058",
+"a_kind": "segment",
+"b": "cd0c70a2-d70f-4a25-bed5-4efbacb6ec90",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "834f5fee-f2d4-4bfb-bc69-2e0b05aedd2e",
+"a_kind": "segment",
+"b": "959f1af0-35ae-46c1-b574-f5b02c4b5aa6",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "18d4b819-38dd-4cbe-ade4-5d6c825ad543",
+"a_kind": "segment",
+"b": "b6cae1aa-e0a8-4c42-ac57-1e353bfcc476",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "e7a44cdf-fe60-4055-b4a3-2a359bd903d9",
+"b_kind": "segment",
+"distance_mm": 0.3407
+},
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "e46809fc-26f2-4246-92d4-d58215f974c2",
+"b_kind": "segment",
+"distance_mm": 0.66223
+},
+{
+"layer": "B.Cu",
+"a": "aec3f597-18c5-4597-a36e-751178d8db68",
+"a_kind": "segment",
+"b": "b6c37a4e-9e50-4e7b-bfce-f0843088c175",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "0088d2c7-8d53-456c-b79e-9118f6983e1a",
+"a_kind": "pad",
+"b": "f00bb2a3-9c1c-4c39-a43a-366dd8abfaa4",
+"b_kind": "segment",
+"distance_mm": 0.29968
+},
+{
+"layer": "B.Cu",
+"a": "70b47fd5-dc9f-4a84-b62a-c3cd07dd0cbf",
+"a_kind": "segment",
+"b": "834f5fee-f2d4-4bfb-bc69-2e0b05aedd2e",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "edc3b75f-2179-416c-b987-a3027441692e",
+"a_kind": "pad",
+"b": "ce838346-a59c-4c0f-ae71-6f9594bbe665",
+"b_kind": "segment",
+"distance_mm": 0.5022
+},
+{
+"layer": "F.Cu",
+"a": "c6521e5a-2b8a-4c42-8c63-55f281fbfa7f",
+"a_kind": "segment",
+"b": "e29d0133-7b05-483d-922b-425e87e6e95e",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "763c025a-070d-4ed4-811a-3666b6ba51d9",
+"a_kind": "pad",
+"b": "2c7165b5-4edf-4ba5-bd4d-aac47cc2d90c",
+"b_kind": "segment",
+"distance_mm": 0.40002
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "91d2cdda-ad3b-40e2-b86f-85285dcb1b74",
+"b_kind": "segment",
+"distance_mm": 0.25439
+},
+{
+"layer": "F.Cu",
+"a": "72608300-38e5-4cdb-b046-b8a18aae619d",
+"a_kind": "segment",
+"b": "6c1ca338-ac2b-4f98-adc2-2e44a8be08ea",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "6ded9e59-da0c-4a3e-926a-bba493a60bc5",
+"a_kind": "segment",
+"b": "81e9b7f3-04fe-4eb0-b888-765bf17d06d7",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "0088d2c7-8d53-456c-b79e-9118f6983e1a",
+"a_kind": "pad",
+"b": "4f5c0388-07d7-464d-868c-eed6b02f57ce",
+"b_kind": "segment",
+"distance_mm": 0.10766
+},
+{
+"layer": "B.Cu",
+"a": "5f9951b1-3c01-41aa-9f0b-489631014715",
+"a_kind": "via",
+"b": "aff77f68-3886-4c5d-b44d-de5b9d293199",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "7597f8d1-df7d-4d01-bd43-02a2a92eab61",
+"a_kind": "via",
+"b": "2e7217ff-44d7-4c2b-a093-5a57093741be",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "2de52ea4-7823-407e-8ee5-90d6f2a74d59",
+"a_kind": "segment",
+"b": "26d1dfec-2080-4168-be58-e8e45eb5d3a3",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "2a0674ce-8184-463c-9263-4ed75129dd12",
+"a_kind": "segment",
+"b": "9e578e79-cc27-4835-ac3d-fd23fb28859f",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "04242483-5c2c-4a81-9b76-b755eb1e4af2",
+"b_kind": "segment",
+"distance_mm": 1.24664
+},
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "b1404ac6-76fd-431e-853b-b7f5a2e2ea09",
+"b_kind": "segment",
+"distance_mm": 1.04999
+},
+{
+"layer": "B.Cu",
+"a": "7bc7e832-e6de-4e9e-939a-944ed5b7dc08",
+"a_kind": "pad",
+"b": "70882921-9856-4272-9613-1580d9ecec97",
+"b_kind": "segment",
+"distance_mm": 0.90863
+},
+{
+"layer": "B.Cu",
+"a": "edc3b75f-2179-416c-b987-a3027441692e",
+"a_kind": "pad",
+"b": "0a6c5fe2-8f49-4e49-813a-f342d2ebdbf0",
+"b_kind": "segment",
+"distance_mm": 1.03851
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "9bd452ed-46a5-4f14-a751-8cf2ef4453a8",
+"b_kind": "segment",
+"distance_mm": 0.86481
+},
+{
+"layer": "F.Cu",
+"a": "72608300-38e5-4cdb-b046-b8a18aae619d",
+"a_kind": "segment",
+"b": "bb955592-ad7a-45a0-a342-6f4be3cc92b0",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "c9d13b59-1492-4b48-9169-59cc467e15af",
+"a_kind": "segment",
+"b": "0e9e034f-0e7d-4c3f-83df-5fd0422da4ea",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "7bc7e832-e6de-4e9e-939a-944ed5b7dc08",
+"a_kind": "pad",
+"b": "a3d1536d-bc60-41ec-ac94-b15970842ff8",
+"b_kind": "segment",
+"distance_mm": 0.56006
+},
+{
+"layer": "F.Cu",
+"a": "0b0dc83c-7483-4ff8-af60-abbc079afa19",
+"a_kind": "segment",
+"b": "34c5852f-79dd-4970-ac39-e29be021ff8a",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "7bc7e832-e6de-4e9e-939a-944ed5b7dc08",
+"a_kind": "pad",
+"b": "7203d787-c296-4e98-b345-b4a74bcb6eed",
+"b_kind": "segment",
+"distance_mm": 0.75006
+},
+{
+"layer": "F.Cu",
+"a": "51bd0beb-84b3-414f-9caa-0eecb6a96200",
+"a_kind": "segment",
+"b": "8ab2ba86-5295-4c33-a04a-4e88f288224f",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "849483fc-8227-4aee-88b5-7259f15db33c",
+"a_kind": "via",
+"b": "830b43dc-ad00-4dda-983c-f455fc20e11c",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "91c69f3d-c219-47f5-b4c8-95e4b3ceed04",
+"a_kind": "segment",
+"b": "f7afe823-df42-4556-881c-bd2cc6a24876",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "0151eade-f1de-479d-8be1-a7d45a61966f",
+"a_kind": "segment",
+"b": "d5f086d8-defe-4d0b-a628-28d9735fb010",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "734fd753-2cd7-4185-9c3e-7496ae04b71c",
+"a_kind": "segment",
+"b": "b6cae1aa-e0a8-4c42-ac57-1e353bfcc476",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "70882921-9856-4272-9613-1580d9ecec97",
+"a_kind": "segment",
+"b": "acc3ac4f-1acc-4179-9ef6-afee4f2d5fc4",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "342da444-3781-466a-a798-a67b91e9bfc4",
+"a_kind": "segment",
+"b": "9c7b1439-7161-4c2d-8257-3f2436a5a5f3",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "734fd753-2cd7-4185-9c3e-7496ae04b71c",
+"b_kind": "segment",
+"distance_mm": 0.58124
+},
+{
+"layer": "B.Cu",
+"a": "b8c129c3-4cf9-4ef5-8722-786b5867d575",
+"a_kind": "via",
+"b": "83a6e1fe-4a07-4932-b83a-cf3b3c20b545",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "f43ed9f8-8b9e-4b71-a767-419240ef059b",
+"a_kind": "pad",
+"b": "2fa10198-8e9e-423f-ac45-a3ed14f29da9",
+"b_kind": "segment",
+"distance_mm": 0.67169
+},
+{
+"layer": "B.Cu",
+"a": "494cfc95-1aff-4e23-abc2-6babda189f34",
+"a_kind": "segment",
+"b": "dfe1d66e-425c-4d25-9abf-e9aa6225fa14",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "8c49c1b2-4697-44a3-bbb6-ff2fa7d86c60",
+"a_kind": "segment",
+"b": "e79d31fa-0252-4394-a7fe-83d5acce2a85",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "edc3b75f-2179-416c-b987-a3027441692e",
+"a_kind": "pad",
+"b": "e4cef779-9e6d-401b-8930-d8942bf0b35f",
+"b_kind": "segment",
+"distance_mm": 0.40002
+},
+{
+"layer": "B.Cu",
+"a": "f952fc70-0858-4d72-a8c9-ab73a9d0ffdd",
+"a_kind": "via",
+"b": "68b6b42f-ccc8-474e-b895-548d8b978b95",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "26670171-592f-42f7-9a0f-80a7b5677e79",
+"b_kind": "segment",
+"distance_mm": 0.68078
+},
+{
+"layer": "F.Cu",
+"a": "1836d269-f50e-4b9e-81bc-021c19b11ea2",
+"a_kind": "segment",
+"b": "953e2a6b-923f-4946-8c93-82f9bc43dcf8",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "140c9061-ad17-40a1-9514-6c577ff30b96",
+"a_kind": "segment",
+"b": "ee0f3780-9cfd-4449-9c11-cb18b95246f8",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "e79d7c9f-aa84-4b6a-8291-00c652b457e7",
+"b_kind": "via",
+"distance_mm": 0.25714
+},
+{
+"layer": "F.Cu",
+"a": "0ba30ba2-152d-46f5-9c37-db9d46d6b003",
+"a_kind": "segment",
+"b": "def223c6-fe6f-4446-a41c-e45b9e26fcee",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "e79d31fa-0252-4394-a7fe-83d5acce2a85",
+"a_kind": "segment",
+"b": "2a0d3cb6-f4ae-4869-bad9-4f153e29a776",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "6195750a-626f-4f10-8bc2-fab71a9670f9",
+"a_kind": "segment",
+"b": "99c17f6d-c641-42e2-9ce7-8d58683a9f54",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "010dbe55-0590-4efb-b535-cf35d734d133",
+"a_kind": "segment",
+"b": "d004b82d-f2f8-470f-85a1-5bb9c41124be",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "c1a5b3d2-04bd-47c8-89a7-43a4d3a980d0",
+"a_kind": "segment",
+"b": "d7aff691-9c68-49f2-a85b-882ea7773f8b",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "552fa849-a180-4404-829a-4ad9209443b7",
+"a_kind": "segment",
+"b": "6791a069-e81d-4b63-870c-69b15fb4c83f",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "670f208f-39a6-40a6-b152-1d7f889ce41c",
+"a_kind": "segment",
+"b": "830b43dc-ad00-4dda-983c-f455fc20e11c",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "7e6d34a3-4e07-4a82-bfc3-63e7e6949139",
+"a_kind": "segment",
+"b": "f5498b93-c362-4ec6-8d46-66af15cfda70",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "04751914-23e3-414b-8875-f0bc6597d47c",
+"b_kind": "segment",
+"distance_mm": 0.4165
+},
+{
+"layer": "F.Cu",
+"a": "1f1dc583-86d5-49fd-803b-2badc7944d90",
+"a_kind": "segment",
+"b": "364aa83c-a347-4afd-b73b-73d8b5c4680e",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "ddead667-3947-4c64-a98c-e447d88d3237",
+"a_kind": "via",
+"b": "c04b028d-9f46-41a0-979e-bd69e70f8186",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "acd96ed7-c49e-4d41-a300-db0bd808c682",
+"b_kind": "segment",
+"distance_mm": 0.56006
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "f952fc70-0858-4d72-a8c9-ab73a9d0ffdd",
+"b_kind": "via",
+"distance_mm": 0.22906
+},
+{
+"layer": "B.Cu",
+"a": "e80a4d94-77a0-49c2-b172-48441b8bddb9",
+"a_kind": "segment",
+"b": "f4a09434-870f-4a2c-ba22-2f6ec60be8f8",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "763c025a-070d-4ed4-811a-3666b6ba51d9",
+"a_kind": "pad",
+"b": "29e91752-49b6-4deb-9fd2-2befb022faf0",
+"b_kind": "segment",
+"distance_mm": 0.61011
+},
+{
+"layer": "F.Cu",
+"a": "cfc6dfac-3d97-47c6-8f0b-3e7084bc4e24",
+"a_kind": "segment",
+"b": "5b576b28-edae-44ce-b275-2dd32c266e1c",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "e9b401c0-38f5-4c10-8372-85b0ab64ebe4",
+"a_kind": "via",
+"b": "caf3a825-5c9a-465c-a911-53dd8834c732",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "7597f8d1-df7d-4d01-bd43-02a2a92eab61",
+"a_kind": "via",
+"b": "a4ffd4e8-7c68-4d41-9bfd-8aa703d9ffa7",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "d2272f62-363c-4a5d-a0a0-e031167faa49",
+"a_kind": "pad",
+"b": "e0cd978c-a619-4c95-9069-d8ff727c297d",
+"b_kind": "segment",
+"distance_mm": 1.06842
+},
+{
+"layer": "F.Cu",
+"a": "16a3583a-d3a5-4763-b60d-86a87a18d339",
+"a_kind": "pad",
+"b": "309b20b4-38a8-4291-87b1-b90849acf45c",
+"b_kind": "segment",
+"distance_mm": 1.06708
+},
+{
+"layer": "B.Cu",
+"a": "abe8d097-4d21-4a74-aa29-86aba722df14",
+"a_kind": "via",
+"b": "d004b82d-f2f8-470f-85a1-5bb9c41124be",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "18d4b819-38dd-4cbe-ade4-5d6c825ad543",
+"b_kind": "segment",
+"distance_mm": 0.45502
+},
+{
+"layer": "F.Cu",
+"a": "2c7165b5-4edf-4ba5-bd4d-aac47cc2d90c",
+"a_kind": "segment",
+"b": "eb23d389-d530-4c6e-a1d9-40d6ebd02f5b",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "8f0ef741-2247-470d-894c-30420fa2a274",
+"a_kind": "segment",
+"b": "dd8b41c8-f1fd-406d-9743-6840068a44f5",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "f952fc70-0858-4d72-a8c9-ab73a9d0ffdd",
+"a_kind": "via",
+"b": "df7d9705-e992-48ce-a404-23a021370353",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "2e7217ff-44d7-4c2b-a093-5a57093741be",
+"a_kind": "segment",
+"b": "fd3af7ac-3585-4a44-8db6-3beb82e47bdc",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "4a0252fa-ce74-4300-9190-c917b23c6f9f",
+"a_kind": "segment",
+"b": "c04b028d-9f46-41a0-979e-bd69e70f8186",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "369a1c09-269a-4b5e-91ee-34dec2d69e8d",
+"a_kind": "segment",
+"b": "494cfc95-1aff-4e23-abc2-6babda189f34",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "c72b23c9-b4c6-458a-9946-061e959faa1c",
+"b_kind": "segment",
+"distance_mm": 0.7218
+},
+{
+"layer": "F.Cu",
+"a": "cf2ca9bf-ddf3-4ab7-908d-2a0fde492c1c",
+"a_kind": "segment",
+"b": "2a0d3cb6-f4ae-4869-bad9-4f153e29a776",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "4dff5870-19e0-45d3-bd5a-3d395e92d3bb",
+"a_kind": "segment",
+"b": "98988d98-d9a1-4d26-9303-b0460c508c8d",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "55eaac3f-1456-4305-95b2-0f76d8b96e3a",
+"a_kind": "via",
+"b": "694024c0-2a6a-4a30-8a57-119dd3050f5e",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "c8427d91-d81e-4a29-8fef-f904e1a1297e",
+"b_kind": "segment",
+"distance_mm": 1.1264
+},
+{
+"layer": "B.Cu",
+"a": "2055831f-6811-4852-abb3-8abf92bf985a",
+"a_kind": "segment",
+"b": "2fa10198-8e9e-423f-ac45-a3ed14f29da9",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "ffaf9a01-4cfd-445c-a967-44fec8c0b6e6",
+"a_kind": "pad",
+"b": "f34a1dd4-c83a-4c9e-8e81-a21aa3b68921",
+"b_kind": "segment",
+"distance_mm": 0.40002
+},
+{
+"layer": "F.Cu",
+"a": "2b976ef7-f161-44e1-95cd-d4514834a385",
+"a_kind": "pad",
+"b": "140c9061-ad17-40a1-9514-6c577ff30b96",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "4934e036-561c-4a47-99d1-0d11e36169ac",
+"a_kind": "pad",
+"b": "58d0aa90-0fb2-43a7-94ae-261c4905fdf4",
+"b_kind": "segment",
+"distance_mm": 0.73987
+},
+{
+"layer": "F.Cu",
+"a": "398b47dc-9847-4cc9-b6b8-5ac36f5b77a9",
+"a_kind": "segment",
+"b": "51bd0beb-84b3-414f-9caa-0eecb6a96200",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "c982c95b-43a1-4b4f-bc98-31836d8beda9",
+"a_kind": "segment",
+"b": "897ea256-f2dd-4402-816c-d43656c8f4e2",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "07dcc186-4cea-4376-9bc1-5ee091615767",
+"a_kind": "segment",
+"b": "d653379c-df79-4183-8032-3f327bb61349",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "3bb5246d-d29e-444d-b10a-eeb699e867aa",
+"a_kind": "via",
+"b": "606a6724-f8b4-4ef3-b778-7219f36a9a5d",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "0088d2c7-8d53-456c-b79e-9118f6983e1a",
+"a_kind": "pad",
+"b": "b4f787f9-d76b-4c22-94f0-98916e47f7eb",
+"b_kind": "segment",
+"distance_mm": 1.01379
+},
+{
+"layer": "B.Cu",
+"a": "3ce2ebd6-2220-418f-ae9b-cc3647a865d4",
+"a_kind": "segment",
+"b": "e0cd978c-a619-4c95-9069-d8ff727c297d",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "6ded9e59-da0c-4a3e-926a-bba493a60bc5",
+"a_kind": "segment",
+"b": "b1404ac6-76fd-431e-853b-b7f5a2e2ea09",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "c7489a32-35a3-415d-b39f-4f7b49076cff",
+"a_kind": "via",
+"b": "9e617ab5-a5df-42ec-8453-68e7526e050e",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "85a841a9-4ac6-4ca3-bf93-a5437b0d9b0c",
+"b_kind": "segment",
+"distance_mm": 0.77008
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "83c8497e-aa16-4ceb-bfde-5ba38ddd46bb",
+"b_kind": "segment",
+"distance_mm": 0.5354
+},
+{
+"layer": "F.Cu",
+"a": "7019467e-83f4-4ffa-bc22-0d179cd8e8fa",
+"a_kind": "pad",
+"b": "801a1aec-3a5e-478f-afda-a60eca158d57",
+"b_kind": "segment",
+"distance_mm": 0.72003
+},
+{
+"layer": "B.Cu",
+"a": "278e0bfe-5533-4fba-976f-712e0e786cbb",
+"a_kind": "pad",
+"b": "ba6b8e20-6141-495a-87cc-922581d0f890",
+"b_kind": "segment",
+"distance_mm": 1.02893
+},
+{
+"layer": "B.Cu",
+"a": "c9d13b59-1492-4b48-9169-59cc467e15af",
+"a_kind": "segment",
+"b": "670f208f-39a6-40a6-b152-1d7f889ce41c",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "86adcad8-ca42-45c6-b82f-ad3083e9532a",
+"a_kind": "segment",
+"b": "caf3a825-5c9a-465c-a911-53dd8834c732",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "9e617ab5-a5df-42ec-8453-68e7526e050e",
+"b_kind": "segment",
+"distance_mm": 0.55005
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "b6cae1aa-e0a8-4c42-ac57-1e353bfcc476",
+"b_kind": "segment",
+"distance_mm": 0.50366
+},
+{
+"layer": "B.Cu",
+"a": "edc3b75f-2179-416c-b987-a3027441692e",
+"a_kind": "pad",
+"b": "3bb5246d-d29e-444d-b10a-eeb699e867aa",
+"b_kind": "via",
+"distance_mm": 0.37573
+},
+{
+"layer": "F.Cu",
+"a": "10ee3489-b993-4f36-bf3e-0beec3bed2b6",
+"a_kind": "segment",
+"b": "2c7165b5-4edf-4ba5-bd4d-aac47cc2d90c",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "709ecf2a-c8b6-4619-88c0-f49eb51a66d9",
+"a_kind": "segment",
+"b": "906baea4-753a-4a5e-972b-0d527745257a",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "90792016-5dc4-4138-b68c-5834a9c2f375",
+"b_kind": "segment",
+"distance_mm": 1.21161
+},
+{
+"layer": "F.Cu",
+"a": "a59f95d9-81a3-4312-b2b4-59799b05ba8b",
+"a_kind": "segment",
+"b": "3de5a59c-dab3-4ecb-8d23-491060203e4c",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "edc3b75f-2179-416c-b987-a3027441692e",
+"a_kind": "pad",
+"b": "606a6724-f8b4-4ef3-b778-7219f36a9a5d",
+"b_kind": "segment",
+"distance_mm": 0.46796
+},
+{
+"layer": "F.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "1b01231e-d1b4-4406-9906-19919bd0eb79",
+"b_kind": "segment",
+"distance_mm": 0.5144
+},
+{
+"layer": "F.Cu",
+"a": "9280722f-a89f-4e36-8e96-5c034dd17e4a",
+"a_kind": "pad",
+"b": "c982c95b-43a1-4b4f-bc98-31836d8beda9",
+"b_kind": "segment",
+"distance_mm": 0.56811
+},
+{
+"layer": "B.Cu",
+"a": "897d6d39-fa65-4070-91bb-a892ae44c8cf",
+"a_kind": "segment",
+"b": "e46809fc-26f2-4246-92d4-d58215f974c2",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "5cdc1915-5f80-437f-bcc0-a343498c831d",
+"a_kind": "segment",
+"b": "83a6e1fe-4a07-4932-b83a-cf3b3c20b545",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "c156ab70-804c-48e1-b32a-ab54defcc220",
+"a_kind": "pad",
+"b": "2e7217ff-44d7-4c2b-a093-5a57093741be",
+"b_kind": "segment",
+"distance_mm": 0.75
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "96cf8b82-9e5a-4675-b57d-c3f831c48e0e",
+"b_kind": "segment",
+"distance_mm": 0.73718
+},
+{
+"layer": "B.Cu",
+"a": "c156ab70-804c-48e1-b32a-ab54defcc220",
+"a_kind": "pad",
+"b": "af51affb-dc10-420d-9b80-3ba178865127",
+"b_kind": "segment",
+"distance_mm": 0.88
+},
+{
+"layer": "B.Cu",
+"a": "cbc93f0d-95f1-4b49-8d6a-b98fc1564afc",
+"a_kind": "pad",
+"b": "630ea360-6b23-4ece-b556-42efaa84e083",
+"b_kind": "segment",
+"distance_mm": 0.74896
+},
+{
+"layer": "F.Cu",
+"a": "2b976ef7-f161-44e1-95cd-d4514834a385",
+"a_kind": "pad",
+"b": "905a6c0c-edb0-4cb6-a819-0ed31342e5bf",
+"b_kind": "segment",
+"distance_mm": 0.41437
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "7a0be243-a460-4584-8eb8-d6a88c6df900",
+"b_kind": "segment",
+"distance_mm": 0.45007
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "430f93f0-9087-4b3a-bb05-a0a834830029",
+"b_kind": "via",
+"distance_mm": 0.30267
+},
+{
+"layer": "F.Cu",
+"a": "a59f95d9-81a3-4312-b2b4-59799b05ba8b",
+"a_kind": "segment",
+"b": "2c1603b9-38e5-4b7c-82e6-1bb98ab0b90f",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "9d010b62-7928-4a02-bc02-80ebaa0b1983",
+"a_kind": "segment",
+"b": "ba6b8e20-6141-495a-87cc-922581d0f890",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "81a4f402-14d2-4989-b24b-2c46f60b46f1",
+"a_kind": "segment",
+"b": "70ceb24c-c2a4-4ea1-9313-08585c815a17",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "a861bcf7-e303-48eb-b937-ba3d12e0f942",
+"a_kind": "segment",
+"b": "d21b15ec-bce4-426c-9b18-d4ef5548bf19",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "7597f8d1-df7d-4d01-bd43-02a2a92eab61",
+"a_kind": "via",
+"b": "fd3af7ac-3585-4a44-8db6-3beb82e47bdc",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "c5485ec6-5c6f-4480-bcd4-178d378531cb",
+"a_kind": "segment",
+"b": "f7afe823-df42-4556-881c-bd2cc6a24876",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "bb955592-ad7a-45a0-a342-6f4be3cc92b0",
+"b_kind": "segment",
+"distance_mm": 0.42346
+},
+{
+"layer": "B.Cu",
+"a": "f43ed9f8-8b9e-4b71-a767-419240ef059b",
+"a_kind": "pad",
+"b": "2055831f-6811-4852-abb3-8abf92bf985a",
+"b_kind": "segment",
+"distance_mm": 0.22809
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "b61c1174-addc-482e-bf83-0f2552e11fb2",
+"b_kind": "segment",
+"distance_mm": 0.56201
+},
+{
+"layer": "F.Cu",
+"a": "fe63df00-f6c5-4f45-9b16-c9597cccec46",
+"a_kind": "segment",
+"b": "eb23d389-d530-4c6e-a1d9-40d6ebd02f5b",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "905a6c0c-edb0-4cb6-a819-0ed31342e5bf",
+"a_kind": "segment",
+"b": "a29faaf7-918a-4b0b-a4fc-538a14d457a9",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "18d4b819-38dd-4cbe-ade4-5d6c825ad543",
+"a_kind": "segment",
+"b": "369a1c09-269a-4b5e-91ee-34dec2d69e8d",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "5b576b28-edae-44ce-b275-2dd32c266e1c",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "940b0edd-26a4-45dc-9cf8-09c53305d97d",
+"b_kind": "segment",
+"distance_mm": 0.50983
+},
+{
+"layer": "B.Cu",
+"a": "3ce2ebd6-2220-418f-ae9b-cc3647a865d4",
+"a_kind": "segment",
+"b": "b48ad637-e6ee-45eb-8b96-6f0af5d70496",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "9ec8974e-17a1-49f4-8475-b2288c049057",
+"a_kind": "segment",
+"b": "430f93f0-9087-4b3a-bb05-a0a834830029",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "128c7576-2c54-4879-8284-b6b70c6290c8",
+"a_kind": "via",
+"b": "a3d1536d-bc60-41ec-ac94-b15970842ff8",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "2b976ef7-f161-44e1-95cd-d4514834a385",
+"a_kind": "pad",
+"b": "709ecf2a-c8b6-4619-88c0-f49eb51a66d9",
+"b_kind": "segment",
+"distance_mm": 0.27197
+},
+{
+"layer": "B.Cu",
+"a": "fd347ae5-f565-4951-9dfa-21da86e529da",
+"a_kind": "via",
+"b": "552fa849-a180-4404-829a-4ad9209443b7",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "1f1dc583-86d5-49fd-803b-2badc7944d90",
+"b_kind": "segment",
+"distance_mm": 0.88769
+},
+{
+"layer": "F.Cu",
+"a": "2b976ef7-f161-44e1-95cd-d4514834a385",
+"a_kind": "pad",
+"b": "a29faaf7-918a-4b0b-a4fc-538a14d457a9",
+"b_kind": "segment",
+"distance_mm": 0.33227
+},
+{
+"layer": "F.Cu",
+"a": "a380610d-84ac-4892-ab62-a642915c8eba",
+"a_kind": "segment",
+"b": "f34a1dd4-c83a-4c9e-8e81-a21aa3b68921",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "2a0674ce-8184-463c-9263-4ed75129dd12",
+"a_kind": "segment",
+"b": "35b38aff-5f3a-44e0-8094-353dc3b245eb",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "cbc93f0d-95f1-4b49-8d6a-b98fc1564afc",
+"a_kind": "pad",
+"b": "66e9f2d6-ff74-4d1a-b734-af763049349d",
+"b_kind": "segment",
+"distance_mm": 0.80932
+},
+{
+"layer": "F.Cu",
+"a": "e91d4f95-1e88-44b4-b4c8-18ef689f5100",
+"a_kind": "segment",
+"b": "897ea256-f2dd-4402-816c-d43656c8f4e2",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "9b3bb86c-7264-4bdd-bfa1-fe4bdebbf527",
+"b_kind": "segment",
+"distance_mm": 0.86005
+},
+{
+"layer": "F.Cu",
+"a": "9280722f-a89f-4e36-8e96-5c034dd17e4a",
+"a_kind": "pad",
+"b": "c776680c-6721-4d4f-bdb9-88d1bccc251d",
+"b_kind": "segment",
+"distance_mm": 0.35724
+},
+{
+"layer": "F.Cu",
+"a": "2c1603b9-38e5-4b7c-82e6-1bb98ab0b90f",
+"a_kind": "via",
+"b": "3de5a59c-dab3-4ecb-8d23-491060203e4c",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "063deb7b-c0a6-4e1d-812f-4ce22da6cb02",
+"a_kind": "segment",
+"b": "940e7cde-e074-4772-ac2d-0ef47cf8fd1e",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "99c17f6d-c641-42e2-9ce7-8d58683a9f54",
+"a_kind": "segment",
+"b": "a243ce36-6dd3-45d2-8e37-142d5cc26927",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "af51affb-dc10-420d-9b80-3ba178865127",
+"a_kind": "segment",
+"b": "dd18903e-5a31-432b-97f9-477c33bd98c1",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "1ce4c50a-bc26-45c0-9623-891a8b6430e0",
+"a_kind": "segment",
+"b": "c72b23c9-b4c6-458a-9946-061e959faa1c",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "b63d53ae-050c-4c09-82cd-71c73385be08",
+"a_kind": "segment",
+"b": "d5424eec-a411-4612-8920-9fc4a83c4edc",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "29e91752-49b6-4deb-9fd2-2befb022faf0",
+"a_kind": "segment",
+"b": "c5485ec6-5c6f-4480-bcd4-178d378531cb",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "b61c1174-addc-482e-bf83-0f2552e11fb2",
+"a_kind": "segment",
+"b": "caf3a825-5c9a-465c-a911-53dd8834c732",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "2b976ef7-f161-44e1-95cd-d4514834a385",
+"a_kind": "pad",
+"b": "906baea4-753a-4a5e-972b-0d527745257a",
+"b_kind": "via",
+"distance_mm": 0.30743
+},
+{
+"layer": "B.Cu",
+"a": "9d010b62-7928-4a02-bc02-80ebaa0b1983",
+"a_kind": "segment",
+"b": "c8a60b4d-1994-4e2d-b85d-1b0bdaa7a628",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "1201699b-2f63-43df-9b1d-dc0c760d7eca",
+"b_kind": "segment",
+"distance_mm": 0.61591
+},
+{
+"layer": "F.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "013f4438-b88c-4cc9-99e3-6d2b01ef242d",
+"b_kind": "segment",
+"distance_mm": 1.02539
+},
+{
+"layer": "F.Cu",
+"a": "2b976ef7-f161-44e1-95cd-d4514834a385",
+"a_kind": "pad",
+"b": "a0e3c4a1-5462-4a13-b828-8783267c9a09",
+"b_kind": "segment",
+"distance_mm": 0.77209
+},
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "6ded9e59-da0c-4a3e-926a-bba493a60bc5",
+"b_kind": "segment",
+"distance_mm": 0.62402
+},
+{
+"layer": "B.Cu",
+"a": "3f9c16e5-d28a-428a-9590-ea68b83a4895",
+"a_kind": "via",
+"b": "740c1df5-9fec-43f5-b3e6-fd67f70e49c7",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "ffaf9a01-4cfd-445c-a967-44fec8c0b6e6",
+"a_kind": "pad",
+"b": "8c49c1b2-4697-44a3-bbb6-ff2fa7d86c60",
+"b_kind": "segment",
+"distance_mm": 0.91003
+},
+{
+"layer": "F.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "70ceb24c-c2a4-4ea1-9313-08585c815a17",
+"b_kind": "via",
+"distance_mm": 0.10266
+},
+{
+"layer": "F.Cu",
+"a": "f7afe823-df42-4556-881c-bd2cc6a24876",
+"a_kind": "segment",
+"b": "eb23d389-d530-4c6e-a1d9-40d6ebd02f5b",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "c72b23c9-b4c6-458a-9946-061e959faa1c",
+"a_kind": "segment",
+"b": "97057fab-7fe2-4485-a9f2-c9b61afc4523",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "4934e036-561c-4a47-99d1-0d11e36169ac",
+"a_kind": "pad",
+"b": "ddead667-3947-4c64-a98c-e447d88d3237",
+"b_kind": "via",
+"distance_mm": 0.55005
+},
+{
+"layer": "B.Cu",
+"a": "cbc93f0d-95f1-4b49-8d6a-b98fc1564afc",
+"a_kind": "pad",
+"b": "b8c129c3-4cf9-4ef5-8722-786b5867d575",
+"b_kind": "via",
+"distance_mm": 0.35004
+},
+{
+"layer": "F.Cu",
+"a": "2c1603b9-38e5-4b7c-82e6-1bb98ab0b90f",
+"a_kind": "via",
+"b": "e29d0133-7b05-483d-922b-425e87e6e95e",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "12bf304d-ed08-4e7d-be9d-0d6eb230c95f",
+"a_kind": "segment",
+"b": "cf2ca9bf-ddf3-4ab7-908d-2a0fde492c1c",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "8ab2ba86-5295-4c33-a04a-4e88f288224f",
+"a_kind": "segment",
+"b": "430f93f0-9087-4b3a-bb05-a0a834830029",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "f43ed9f8-8b9e-4b71-a767-419240ef059b",
+"a_kind": "pad",
+"b": "aff77f68-3886-4c5d-b44d-de5b9d293199",
+"b_kind": "segment",
+"distance_mm": 0.17731
+},
+{
+"layer": "B.Cu",
+"a": "7880a0ea-b9d1-4e77-abc1-4de592dd2a7b",
+"a_kind": "segment",
+"b": "ff381905-c911-4011-b810-fd875319681b",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "7a0be243-a460-4584-8eb8-d6a88c6df900",
+"a_kind": "segment",
+"b": "34c5852f-79dd-4970-ac39-e29be021ff8a",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "505e3fce-df36-4c65-8c56-3740c8847d89",
+"b_kind": "segment",
+"distance_mm": 0.55792
+},
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "81e9b7f3-04fe-4eb0-b888-765bf17d06d7",
+"b_kind": "segment",
+"distance_mm": 0.88
+},
+{
+"layer": "B.Cu",
+"a": "7a4daeb2-86a5-4ce2-9e8d-25039555cfc9",
+"a_kind": "segment",
+"b": "af30e268-723a-4b5d-bf69-357f3113552a",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "83c8497e-aa16-4ceb-bfde-5ba38ddd46bb",
+"a_kind": "segment",
+"b": "c8427d91-d81e-4a29-8fef-f904e1a1297e",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "cfc6dfac-3d97-47c6-8f0b-3e7084bc4e24",
+"a_kind": "segment",
+"b": "0e018778-af7a-4ec6-8772-a113a7ed1c1b",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "9656619f-f1fa-41c5-95e9-3f64a3687482",
+"b_kind": "segment",
+"distance_mm": 0.39801
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "99c17f6d-c641-42e2-9ce7-8d58683a9f54",
+"b_kind": "segment",
+"distance_mm": 0.5921
+},
+{
+"layer": "B.Cu",
+"a": "278e0bfe-5533-4fba-976f-712e0e786cbb",
+"a_kind": "pad",
+"b": "c8a60b4d-1994-4e2d-b85d-1b0bdaa7a628",
+"b_kind": "segment",
+"distance_mm": 0.4411
+},
+{
+"layer": "F.Cu",
+"a": "009ba47a-5bc1-45cf-936b-634438c9218b",
+"a_kind": "segment",
+"b": "52f5c0e1-027f-436b-b4bc-4543a0d215d8",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "1ce4c50a-bc26-45c0-9623-891a8b6430e0",
+"a_kind": "segment",
+"b": "2420d8c3-8ed8-42ed-9743-db374c1fc08f",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "5e2ca1b3-ad8f-425b-8812-4a378a7f3f5a",
+"a_kind": "segment",
+"b": "bd246868-6658-4346-9efa-5c704316e264",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "2b2c79f2-fdc9-4467-b778-c963c85cd76f",
+"a_kind": "segment",
+"b": "a2511d3f-281e-43af-988f-d2dd2c4e552a",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "04242483-5c2c-4a81-9b76-b755eb1e4af2",
+"a_kind": "segment",
+"b": "2a50f746-0a36-4dbd-800a-39f455cf6abc",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "97057fab-7fe2-4485-a9f2-c9b61afc4523",
+"b_kind": "via",
+"distance_mm": 0.30267
+},
+{
+"layer": "B.Cu",
+"a": "606a6724-f8b4-4ef3-b778-7219f36a9a5d",
+"a_kind": "segment",
+"b": "d0bad995-3851-4682-acf9-fdc880e495ad",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "ce838346-a59c-4c0f-ae71-6f9594bbe665",
+"a_kind": "segment",
+"b": "e4cef779-9e6d-401b-8930-d8942bf0b35f",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "1b01231e-d1b4-4406-9906-19919bd0eb79",
+"a_kind": "segment",
+"b": "81a4f402-14d2-4989-b24b-2c46f60b46f1",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "9280722f-a89f-4e36-8e96-5c034dd17e4a",
+"a_kind": "pad",
+"b": "e91d4f95-1e88-44b4-b4c8-18ef689f5100",
+"b_kind": "segment",
+"distance_mm": 0.51202
+},
+{
+"layer": "B.Cu",
+"a": "c156ab70-804c-48e1-b32a-ab54defcc220",
+"a_kind": "pad",
+"b": "7597f8d1-df7d-4d01-bd43-02a2a92eab61",
+"b_kind": "via",
+"distance_mm": 0.00067
+},
+{
+"layer": "F.Cu",
+"a": "380f358e-24f4-487c-9fa6-9f164c72167e",
+"a_kind": "segment",
+"b": "ca3cbd26-b0b1-424c-96c9-a52266d89e06",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "6429881a-7b36-40ee-80f5-cd617cd4871e",
+"a_kind": "segment",
+"b": "94c52c77-51b7-43f0-a01b-ec9ce7e477e3",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "fcb8ceb8-f7b3-4508-a914-7a2c1c6212c1",
+"a_kind": "pad",
+"b": "b742d5ba-e3e8-40d1-a937-e1838098cff2",
+"b_kind": "segment",
+"distance_mm": 0.56006
+},
+{
+"layer": "F.Cu",
+"a": "7019467e-83f4-4ffa-bc22-0d179cd8e8fa",
+"a_kind": "pad",
+"b": "def223c6-fe6f-4446-a41c-e45b9e26fcee",
+"b_kind": "via",
+"distance_mm": 0.35004
+},
+{
+"layer": "F.Cu",
+"a": "0b0dc83c-7483-4ff8-af60-abbc079afa19",
+"a_kind": "segment",
+"b": "e441b8cb-cac1-48fd-bace-cc2b6e82c125",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "4dff5870-19e0-45d3-bd5a-3d395e92d3bb",
+"a_kind": "segment",
+"b": "d3c90780-2e8d-4af3-a63c-16818cd5abbd",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "adb3dfc8-8bfa-4d60-9c04-07e035194295",
+"a_kind": "segment",
+"b": "97057fab-7fe2-4485-a9f2-c9b61afc4523",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "4cbcc9c8-0907-42fa-bd15-08f410e3f984",
+"a_kind": "segment",
+"b": "89fd10aa-3a06-4ea4-aeaf-24e2c3125df8",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "a0691ba3-0a2c-49c3-8b3b-017465b5582d",
+"b_kind": "via",
+"distance_mm": 0.12384
+},
+{
+"layer": "F.Cu",
+"a": "a65394bc-d615-4fa5-ae02-2a3daf304c24",
+"a_kind": "segment",
+"b": "c776680c-6721-4d4f-bdb9-88d1bccc251d",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "af51affb-dc10-420d-9b80-3ba178865127",
+"a_kind": "segment",
+"b": "bfe28bbd-26bd-4816-bde7-ad5db64d7bbd",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "89fd10aa-3a06-4ea4-aeaf-24e2c3125df8",
+"b_kind": "segment",
+"distance_mm": 1.31232
+},
+{
+"layer": "F.Cu",
+"a": "763c025a-070d-4ed4-811a-3666b6ba51d9",
+"a_kind": "pad",
+"b": "91c69f3d-c219-47f5-b4c8-95e4b3ceed04",
+"b_kind": "segment",
+"distance_mm": 0.89276
+},
+{
+"layer": "F.Cu",
+"a": "a59f95d9-81a3-4312-b2b4-59799b05ba8b",
+"a_kind": "segment",
+"b": "6ee9573d-a304-4fe1-9dad-fd4955e07ee7",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "3f9c16e5-d28a-428a-9590-ea68b83a4895",
+"a_kind": "via",
+"b": "9d010b62-7928-4a02-bc02-80ebaa0b1983",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "1622aa5a-336d-42f7-a391-fb35368966ca",
+"a_kind": "segment",
+"b": "4f42f1a6-6007-4a2d-ad2f-91ec4d3ed856",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "2055831f-6811-4852-abb3-8abf92bf985a",
+"a_kind": "segment",
+"b": "aff77f68-3886-4c5d-b44d-de5b9d293199",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "fd347ae5-f565-4951-9dfa-21da86e529da",
+"a_kind": "via",
+"b": "6791a069-e81d-4b63-870c-69b15fb4c83f",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "30a3988a-36b4-4bd6-abf5-8f27f3f9fa9e",
+"a_kind": "segment",
+"b": "852c5d0b-2923-4512-a37c-08c5b8cf8a78",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "309b20b4-38a8-4291-87b1-b90849acf45c",
+"a_kind": "segment",
+"b": "8e74b88a-b133-4001-a2e9-1b189c47d4e5",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "7ec20c20-eb22-4947-a09a-d321324bc679",
+"a_kind": "segment",
+"b": "a3d1536d-bc60-41ec-ac94-b15970842ff8",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "ea134955-ea81-4437-b331-7460638da383",
+"a_kind": "segment",
+"b": "eba8f396-5f37-4bd5-a550-92b6a16a95bf",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "30a3988a-36b4-4bd6-abf5-8f27f3f9fa9e",
+"b_kind": "segment",
+"distance_mm": 0.74213
+},
+{
+"layer": "B.Cu",
+"a": "167c4d57-2f52-4c30-8e12-105f620abb4b",
+"a_kind": "pad",
+"b": "830b43dc-ad00-4dda-983c-f455fc20e11c",
+"b_kind": "segment",
+"distance_mm": 0.65002
+},
+{
+"layer": "B.Cu",
+"a": "96ac1e02-74c9-45cc-a996-751e5d5375aa",
+"a_kind": "segment",
+"b": "e670de48-c0bb-42c4-9d14-b63916a90164",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "dd8b41c8-f1fd-406d-9743-6840068a44f5",
+"a_kind": "segment",
+"b": "e223c5fe-fbc1-4051-bcdb-05cd7248e815",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "7bc7e832-e6de-4e9e-939a-944ed5b7dc08",
+"a_kind": "pad",
+"b": "acc3ac4f-1acc-4179-9ef6-afee4f2d5fc4",
+"b_kind": "segment",
+"distance_mm": 0.88
+},
+{
+"layer": "F.Cu",
+"a": "6ba3eb62-e8bc-4f1d-9f8b-086cc3c75418",
+"a_kind": "segment",
+"b": "6ee9573d-a304-4fe1-9dad-fd4955e07ee7",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "52f5c0e1-027f-436b-b4bc-4543a0d215d8",
+"a_kind": "segment",
+"b": "7387ff24-0c5f-46c9-a8a8-bf52a9a51ebf",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "d7aff691-9c68-49f2-a85b-882ea7773f8b",
+"a_kind": "segment",
+"b": "0fb4f712-a4f5-44d1-bf34-9e8863544afe",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "e79d31fa-0252-4394-a7fe-83d5acce2a85",
+"a_kind": "segment",
+"b": "f34a1dd4-c83a-4c9e-8e81-a21aa3b68921",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "7bc7e832-e6de-4e9e-939a-944ed5b7dc08",
+"a_kind": "pad",
+"b": "e2a41acf-881f-4d0e-9bad-38bff94d9263",
+"b_kind": "segment",
+"distance_mm": 0.96936
+},
+{
+"layer": "F.Cu",
+"a": "5b6f98a9-d687-457c-8317-f8ec17104771",
+"a_kind": "segment",
+"b": "81a4f402-14d2-4989-b24b-2c46f60b46f1",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "96cf8b82-9e5a-4675-b57d-c3f831c48e0e",
+"a_kind": "segment",
+"b": "9ec8974e-17a1-49f4-8475-b2288c049057",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "16dd37d5-6294-49b8-8ed2-f5d50aab94b7",
+"a_kind": "via",
+"b": "3ce2ebd6-2220-418f-ae9b-cc3647a865d4",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "c7489a32-35a3-415d-b39f-4f7b49076cff",
+"a_kind": "via",
+"b": "18a97dcb-8e6d-43c4-b046-9885728cfdd8",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "6429881a-7b36-40ee-80f5-cd617cd4871e",
+"a_kind": "segment",
+"b": "d5ef0fa0-ce33-49f2-ae99-bf6b5734a2cb",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "84c25de0-0c0c-43f5-8e11-f9bb53182bd1",
+"a_kind": "segment",
+"b": "a4ffd4e8-7c68-4d41-9bfd-8aa703d9ffa7",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "e08a6307-8480-4284-8aa0-cba527685810",
+"b_kind": "segment",
+"distance_mm": 0.72906
+},
+{
+"layer": "B.Cu",
+"a": "abe8d097-4d21-4a74-aa29-86aba722df14",
+"a_kind": "via",
+"b": "3988ec25-2832-4bd7-abb3-36fbee830a96",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "7da11763-13d3-46db-9c6a-ec9f436f25ce",
+"a_kind": "segment",
+"b": "bbb37ce3-4667-4575-a685-d8653c18b506",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "342da444-3781-466a-a798-a67b91e9bfc4",
+"a_kind": "segment",
+"b": "ecebac40-e5ab-4a0c-be6d-9309d8d10f4e",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "51c351d3-f030-4b27-b29a-3fc2effd0563",
+"a_kind": "segment",
+"b": "6ba3eb62-e8bc-4f1d-9f8b-086cc3c75418",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "84c25de0-0c0c-43f5-8e11-f9bb53182bd1",
+"a_kind": "segment",
+"b": "dd18903e-5a31-432b-97f9-477c33bd98c1",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "6131b9df-90e2-47cd-a0d3-e34d9396cf26",
+"b_kind": "segment",
+"distance_mm": 0.92004
+},
+{
+"layer": "F.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "2de52ea4-7823-407e-8ee5-90d6f2a74d59",
+"b_kind": "segment",
+"distance_mm": 0.72394
+},
+{
+"layer": "F.Cu",
+"a": "b94bc8f1-3f88-4df1-9c4d-669edc728c81",
+"a_kind": "pad",
+"b": "e29d0133-7b05-483d-922b-425e87e6e95e",
+"b_kind": "segment",
+"distance_mm": 0.55005
+},
+{
+"layer": "F.Cu",
+"a": "fcb8ceb8-f7b3-4508-a914-7a2c1c6212c1",
+"a_kind": "pad",
+"b": "9e578e79-cc27-4835-ac3d-fd23fb28859f",
+"b_kind": "segment",
+"distance_mm": 1.06708
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "97c6487a-dda8-4be8-b49c-6d8880fbb7cf",
+"b_kind": "segment",
+"distance_mm": 1.0282
+},
+{
+"layer": "F.Cu",
+"a": "7d63f099-1486-4356-9ff0-923979144710",
+"a_kind": "segment",
+"b": "d4a177fa-bb25-49ac-9b15-61caab8f3b9b",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "5b6f98a9-d687-457c-8317-f8ec17104771",
+"b_kind": "segment",
+"distance_mm": 0.48572
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "6195750a-626f-4f10-8bc2-fab71a9670f9",
+"b_kind": "segment",
+"distance_mm": 0.49212
+},
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "b4c4d0ad-6617-4f82-b5dd-366873aff844",
+"b_kind": "segment",
+"distance_mm": 0.59833
+},
+{
+"layer": "B.Cu",
+"a": "010dbe55-0590-4efb-b535-cf35d734d133",
+"a_kind": "segment",
+"b": "92ca5e91-7e53-450c-87e7-c426d4ef75e4",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "e80a4d94-77a0-49c2-b172-48441b8bddb9",
+"b_kind": "segment",
+"distance_mm": 0.28485
+},
+{
+"layer": "F.Cu",
+"a": "d4a177fa-bb25-49ac-9b15-61caab8f3b9b",
+"a_kind": "segment",
+"b": "def223c6-fe6f-4446-a41c-e45b9e26fcee",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "4cbcc9c8-0907-42fa-bd15-08f410e3f984",
+"b_kind": "segment",
+"distance_mm": 0.37823
+},
+{
+"layer": "B.Cu",
+"a": "cbc93f0d-95f1-4b49-8d6a-b98fc1564afc",
+"a_kind": "pad",
+"b": "6f2de2cf-3903-4013-bec9-cf54394dcc4a",
+"b_kind": "segment",
+"distance_mm": 0.72003
+},
+{
+"layer": "B.Cu",
+"a": "01ebf785-52d0-4ea0-b17c-a572a204427f",
+"a_kind": "segment",
+"b": "70882921-9856-4272-9613-1580d9ecec97",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "e9b401c0-38f5-4c10-8372-85b0ab64ebe4",
+"b_kind": "via",
+"distance_mm": 0.32709
+},
+{
+"layer": "F.Cu",
+"a": "9c7b1439-7161-4c2d-8257-3f2436a5a5f3",
+"a_kind": "segment",
+"b": "e79d7c9f-aa84-4b6a-8291-00c652b457e7",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "92ca5e91-7e53-450c-87e7-c426d4ef75e4",
+"b_kind": "segment",
+"distance_mm": 0.52594
+},
+{
+"layer": "B.Cu",
+"a": "1b75ce8b-7f16-4831-b382-3528eed4e783",
+"a_kind": "via",
+"b": "045509b2-bf96-4167-a994-a8ca26f33ef3",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "acc3ac4f-1acc-4179-9ef6-afee4f2d5fc4",
+"a_kind": "segment",
+"b": "e2a41acf-881f-4d0e-9bad-38bff94d9263",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "380f358e-24f4-487c-9fa6-9f164c72167e",
+"b_kind": "segment",
+"distance_mm": 0.43616
+},
+{
+"layer": "F.Cu",
+"a": "0088d2c7-8d53-456c-b79e-9118f6983e1a",
+"a_kind": "pad",
+"b": "5e2ca1b3-ad8f-425b-8812-4a378a7f3f5a",
+"b_kind": "segment",
+"distance_mm": 0.88397
+},
+{
+"layer": "F.Cu",
+"a": "97c6487a-dda8-4be8-b49c-6d8880fbb7cf",
+"a_kind": "segment",
+"b": "a94952f2-fba2-4d7b-80c2-a4f9fe6d91c4",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "167c4d57-2f52-4c30-8e12-105f620abb4b",
+"a_kind": "pad",
+"b": "ff381905-c911-4011-b810-fd875319681b",
+"b_kind": "segment",
+"distance_mm": 1.1886
+},
+{
+"layer": "F.Cu",
+"a": "2de52ea4-7823-407e-8ee5-90d6f2a74d59",
+"a_kind": "segment",
+"b": "9b3bb86c-7264-4bdd-bfa1-fe4bdebbf527",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "364aa83c-a347-4afd-b73b-73d8b5c4680e",
+"b_kind": "segment",
+"distance_mm": 0.93939
+},
+{
+"layer": "F.Cu",
+"a": "582483d6-3c3c-42c6-b537-39d318f5d57a",
+"a_kind": "segment",
+"b": "f3800fdb-84b4-496e-bd1a-91b3a4aec3df",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "6131b9df-90e2-47cd-a0d3-e34d9396cf26",
+"a_kind": "segment",
+"b": "d49d82b8-710c-4eea-9423-6dc5faf4db42",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "d2272f62-363c-4a5d-a0a0-e031167faa49",
+"a_kind": "pad",
+"b": "b48ad637-e6ee-45eb-8b96-6f0af5d70496",
+"b_kind": "segment",
+"distance_mm": 0.4707
+},
+{
+"layer": "F.Cu",
+"a": "66cb3344-f51b-4849-bac6-c8d0132ca5a1",
+"a_kind": "segment",
+"b": "e79d7c9f-aa84-4b6a-8291-00c652b457e7",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "2a50f746-0a36-4dbd-800a-39f455cf6abc",
+"a_kind": "segment",
+"b": "c20ed437-ccdf-47f3-9708-2c7b943be91e",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "83c8497e-aa16-4ceb-bfde-5ba38ddd46bb",
+"a_kind": "segment",
+"b": "9656619f-f1fa-41c5-95e9-3f64a3687482",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "268975b8-1b03-4638-a092-5996c4b064f4",
+"a_kind": "segment",
+"b": "29e91752-49b6-4deb-9fd2-2befb022faf0",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "5e2ca1b3-ad8f-425b-8812-4a378a7f3f5a",
+"a_kind": "segment",
+"b": "ff8d9c94-6d1c-4d6c-9aa2-3a54b1cb9f00",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "8e805d13-c853-4d83-819e-2ed231cd59f5",
+"a_kind": "segment",
+"b": "90792016-5dc4-4138-b68c-5834a9c2f375",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "bd246868-6658-4346-9efa-5c704316e264",
+"a_kind": "segment",
+"b": "d3d09b65-4008-409c-8ad0-44b160b7c991",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "3453c6ff-abe6-4168-ad90-110bcd96ab2f",
+"a_kind": "segment",
+"b": "b742d5ba-e3e8-40d1-a937-e1838098cff2",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "07be84c4-81a7-452d-86d6-255726e7c319",
+"a_kind": "segment",
+"b": "9e578e79-cc27-4835-ac3d-fd23fb28859f",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "045509b2-bf96-4167-a994-a8ca26f33ef3",
+"a_kind": "segment",
+"b": "85a841a9-4ac6-4ca3-bf93-a5437b0d9b0c",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "a94952f2-fba2-4d7b-80c2-a4f9fe6d91c4",
+"b_kind": "segment",
+"distance_mm": 1.03204
+},
+{
+"layer": "B.Cu",
+"a": "edc3b75f-2179-416c-b987-a3027441692e",
+"a_kind": "pad",
+"b": "d0bad995-3851-4682-acf9-fdc880e495ad",
+"b_kind": "segment",
+"distance_mm": 0.89276
+},
+{
+"layer": "F.Cu",
+"a": "26670171-592f-42f7-9a0f-80a7b5677e79",
+"a_kind": "segment",
+"b": "8e805d13-c853-4d83-819e-2ed231cd59f5",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "74983127-0cb0-446b-9b22-8157890f2fee",
+"a_kind": "segment",
+"b": "c776680c-6721-4d4f-bdb9-88d1bccc251d",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "58d0aa90-0fb2-43a7-94ae-261c4905fdf4",
+"a_kind": "segment",
+"b": "e96cd8d8-71c4-442f-be5d-0d69f4e2bdcd",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "3f9c16e5-d28a-428a-9590-ea68b83a4895",
+"a_kind": "via",
+"b": "c8a60b4d-1994-4e2d-b85d-1b0bdaa7a628",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "8eee898b-cdb5-478c-bedc-56caa32c6e93",
+"a_kind": "segment",
+"b": "def223c6-fe6f-4446-a41c-e45b9e26fcee",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "cbc93f0d-95f1-4b49-8d6a-b98fc1564afc",
+"a_kind": "pad",
+"b": "5cdc1915-5f80-437f-bcc0-a343498c831d",
+"b_kind": "segment",
+"distance_mm": 0.48932
+},
+{
+"layer": "F.Cu",
+"a": "fcb8ceb8-f7b3-4508-a914-7a2c1c6212c1",
+"a_kind": "pad",
+"b": "07be84c4-81a7-452d-86d6-255726e7c319",
+"b_kind": "segment",
+"distance_mm": 0.75
+},
+{
+"layer": "F.Cu",
+"a": "4f5c0388-07d7-464d-868c-eed6b02f57ce",
+"a_kind": "segment",
+"b": "d3d09b65-4008-409c-8ad0-44b160b7c991",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "7203d787-c296-4e98-b345-b4a74bcb6eed",
+"a_kind": "segment",
+"b": "e2a41acf-881f-4d0e-9bad-38bff94d9263",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "9656619f-f1fa-41c5-95e9-3f64a3687482",
+"a_kind": "segment",
+"b": "e80a4d94-77a0-49c2-b172-48441b8bddb9",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "b8c129c3-4cf9-4ef5-8722-786b5867d575",
+"a_kind": "via",
+"b": "5cdc1915-5f80-437f-bcc0-a343498c831d",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "d2272f62-363c-4a5d-a0a0-e031167faa49",
+"a_kind": "pad",
+"b": "d189d63f-2f68-4e80-b946-85cb14b650eb",
+"b_kind": "segment",
+"distance_mm": 0.91003
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "7e6d34a3-4e07-4a82-bfc3-63e7e6949139",
+"b_kind": "segment",
+"distance_mm": 0.91284
+},
+{
+"layer": "B.Cu",
+"a": "4934e036-561c-4a47-99d1-0d11e36169ac",
+"a_kind": "pad",
+"b": "c04b028d-9f46-41a0-979e-bd69e70f8186",
+"b_kind": "segment",
+"distance_mm": 0.65002
+},
+{
+"layer": "B.Cu",
+"a": "7bc7e832-e6de-4e9e-939a-944ed5b7dc08",
+"a_kind": "pad",
+"b": "8b2a984e-af2d-4d84-ba72-a2cccfd77275",
+"b_kind": "segment",
+"distance_mm": 0.64935
+},
+{
+"layer": "B.Cu",
+"a": "a68ccaed-dbed-40af-bbcb-1e2e52cb80a2",
+"a_kind": "segment",
+"b": "d189d63f-2f68-4e80-b946-85cb14b650eb",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "278e0bfe-5533-4fba-976f-712e0e786cbb",
+"a_kind": "pad",
+"b": "441b314d-0dc3-4634-90fe-146ee21e30df",
+"b_kind": "segment",
+"distance_mm": 0.83539
+},
+{
+"layer": "B.Cu",
+"a": "ddead667-3947-4c64-a98c-e447d88d3237",
+"a_kind": "via",
+"b": "4a0252fa-ce74-4300-9190-c917b23c6f9f",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "caf3a825-5c9a-465c-a911-53dd8834c732",
+"b_kind": "segment",
+"distance_mm": 1.13757
+},
+{
+"layer": "F.Cu",
+"a": "b4f787f9-d76b-4c22-94f0-98916e47f7eb",
+"a_kind": "segment",
+"b": "cd0c70a2-d70f-4a25-bed5-4efbacb6ec90",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "0151eade-f1de-479d-8be1-a7d45a61966f",
+"a_kind": "segment",
+"b": "864d33dd-93d7-43eb-ab6b-272a0e3a9bad",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "494cfc95-1aff-4e23-abc2-6babda189f34",
+"b_kind": "segment",
+"distance_mm": 1.22003
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "0b0dc83c-7483-4ff8-af60-abbc079afa19",
+"b_kind": "segment",
+"distance_mm": 0.31494
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "47fe81dd-d7f2-4059-a10d-f2b77c779a43",
+"b_kind": "segment",
+"distance_mm": 0.88
+},
+{
+"layer": "F.Cu",
+"a": "7019467e-83f4-4ffa-bc22-0d179cd8e8fa",
+"a_kind": "pad",
+"b": "49097003-4385-489d-878f-973ca0ed7a4a",
+"b_kind": "segment",
+"distance_mm": 0.90704
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "010dbe55-0590-4efb-b535-cf35d734d133",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "74983127-0cb0-446b-9b22-8157890f2fee",
+"a_kind": "segment",
+"b": "897ea256-f2dd-4402-816c-d43656c8f4e2",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "441b314d-0dc3-4634-90fe-146ee21e30df",
+"a_kind": "segment",
+"b": "b6c37a4e-9e50-4e7b-bfce-f0843088c175",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "04751914-23e3-414b-8875-f0bc6597d47c",
+"a_kind": "segment",
+"b": "1201699b-2f63-43df-9b1d-dc0c760d7eca",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "bb955592-ad7a-45a0-a342-6f4be3cc92b0",
+"a_kind": "segment",
+"b": "0fb4f712-a4f5-44d1-bf34-9e8863544afe",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "38bdd695-0594-4dbc-9a5c-319c981c707e",
+"a_kind": "segment",
+"b": "e223c5fe-fbc1-4051-bcdb-05cd7248e815",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "55eaac3f-1456-4305-95b2-0f76d8b96e3a",
+"a_kind": "via",
+"b": "74e643b6-c927-4d3c-9267-019e3157b29f",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "abe8d097-4d21-4a74-aa29-86aba722df14",
+"b_kind": "via",
+"distance_mm": 0.50006
+},
+{
+"layer": "F.Cu",
+"a": "9a026820-3969-47e4-a0f5-fa180e4da932",
+"a_kind": "segment",
+"b": "ca3cbd26-b0b1-424c-96c9-a52266d89e06",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "520aee33-bec0-4393-91ef-a41aa03b9b6d",
+"a_kind": "segment",
+"b": "75940030-4ca5-4fcb-bbd4-957f762fc109",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "bb955592-ad7a-45a0-a342-6f4be3cc92b0",
+"a_kind": "segment",
+"b": "f9d324a7-1fb3-4c58-adf5-bbe8af947395",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "d5ef0fa0-ce33-49f2-ae99-bf6b5734a2cb",
+"b_kind": "segment",
+"distance_mm": 0.77185
+},
+{
+"layer": "B.Cu",
+"a": "1af13e5a-009f-47dd-a6cc-c0531614eb37",
+"a_kind": "segment",
+"b": "69df8ed7-40cf-454d-ae30-2d3c56e11dbd",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "8f0ef741-2247-470d-894c-30420fa2a274",
+"a_kind": "segment",
+"b": "e223c5fe-fbc1-4051-bcdb-05cd7248e815",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "871b6e58-4143-4771-aac4-2c6b5c8a0e59",
+"b_kind": "segment",
+"distance_mm": 0.47003
+},
+{
+"layer": "B.Cu",
+"a": "cf28a261-8eff-4920-a275-e279ac33a455",
+"a_kind": "segment",
+"b": "bd2bfa1e-9494-459a-81a0-b7986a6ba265",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "16a3583a-d3a5-4763-b60d-86a87a18d339",
+"a_kind": "pad",
+"b": "e223c5fe-fbc1-4051-bcdb-05cd7248e815",
+"b_kind": "via",
+"distance_mm": 6e-05
+},
+{
+"layer": "B.Cu",
+"a": "86c7bc1a-648d-416b-935c-c2129f286ccb",
+"a_kind": "segment",
+"b": "cf28a261-8eff-4920-a275-e279ac33a455",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "ca3cbd26-b0b1-424c-96c9-a52266d89e06",
+"b_kind": "via",
+"distance_mm": 0.15002
+},
+{
+"layer": "B.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "ca3cbd26-b0b1-424c-96c9-a52266d89e06",
+"b_kind": "via",
+"distance_mm": 0.15002
+},
+{
+"layer": "B.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "ba4f4f6a-0069-4d03-bfaa-4a18d8baabfe",
+"b_kind": "segment",
+"distance_mm": 0.43152
+},
+{
+"layer": "B.Cu",
+"a": "f43ed9f8-8b9e-4b71-a767-419240ef059b",
+"a_kind": "pad",
+"b": "d5f086d8-defe-4d0b-a628-28d9735fb010",
+"b_kind": "segment",
+"distance_mm": 1.078
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "1af13e5a-009f-47dd-a6cc-c0531614eb37",
+"b_kind": "segment",
+"distance_mm": 0.93756
+},
+{
+"layer": "B.Cu",
+"a": "e9b401c0-38f5-4c10-8372-85b0ab64ebe4",
+"a_kind": "via",
+"b": "75940030-4ca5-4fcb-bbd4-957f762fc109",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "1836d269-f50e-4b9e-81bc-021c19b11ea2",
+"a_kind": "segment",
+"b": "dea79c9d-d3a7-4701-bcec-cf2369784a56",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "0088d2c7-8d53-456c-b79e-9118f6983e1a",
+"a_kind": "pad",
+"b": "d3d09b65-4008-409c-8ad0-44b160b7c991",
+"b_kind": "via",
+"distance_mm": 0.25006
+},
+{
+"layer": "B.Cu",
+"a": "7597f8d1-df7d-4d01-bd43-02a2a92eab61",
+"a_kind": "via",
+"b": "60f7ab73-0853-4873-b311-a166c0797024",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "9280722f-a89f-4e36-8e96-5c034dd17e4a",
+"a_kind": "pad",
+"b": "b63d53ae-050c-4c09-82cd-71c73385be08",
+"b_kind": "segment",
+"distance_mm": 0.8136
+},
+{
+"layer": "B.Cu",
+"a": "04242483-5c2c-4a81-9b76-b755eb1e4af2",
+"a_kind": "segment",
+"b": "180f806b-0641-4976-9f32-ceeac308761d",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "adb3dfc8-8bfa-4d60-9c04-07e035194295",
+"a_kind": "segment",
+"b": "c72b23c9-b4c6-458a-9946-061e959faa1c",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "cf28a261-8eff-4920-a275-e279ac33a455",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "2c53b14f-60b5-451d-b99c-171b8a4fbc7d",
+"a_kind": "segment",
+"b": "b63d53ae-050c-4c09-82cd-71c73385be08",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "b94bc8f1-3f88-4df1-9c4d-669edc728c81",
+"a_kind": "pad",
+"b": "a59f95d9-81a3-4312-b2b4-59799b05ba8b",
+"b_kind": "segment",
+"distance_mm": 0.31006
+},
+{
+"layer": "F.Cu",
+"a": "398b47dc-9847-4cc9-b6b8-5ac36f5b77a9",
+"a_kind": "segment",
+"b": "a94952f2-fba2-4d7b-80c2-a4f9fe6d91c4",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "0a6c5fe2-8f49-4e49-813a-f342d2ebdbf0",
+"a_kind": "segment",
+"b": "e4cef779-9e6d-401b-8930-d8942bf0b35f",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "278e0bfe-5533-4fba-976f-712e0e786cbb",
+"a_kind": "pad",
+"b": "740c1df5-9fec-43f5-b3e6-fd67f70e49c7",
+"b_kind": "segment",
+"distance_mm": 0.10004
+},
+{
+"layer": "B.Cu",
+"a": "167c4d57-2f52-4c30-8e12-105f620abb4b",
+"a_kind": "pad",
+"b": "0e9e034f-0e7d-4c3f-83df-5fd0422da4ea",
+"b_kind": "segment",
+"distance_mm": 0.60113
+},
+{
+"layer": "B.Cu",
+"a": "045509b2-bf96-4167-a994-a8ca26f33ef3",
+"a_kind": "segment",
+"b": "b4c4d0ad-6617-4f82-b5dd-366873aff844",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "135f7e87-2442-428d-afab-c65b479d788b",
+"a_kind": "segment",
+"b": "90792016-5dc4-4138-b68c-5834a9c2f375",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "6bf98de5-1c44-43ba-892a-4b9708b2dd67",
+"a_kind": "segment",
+"b": "ea397b97-658a-41ca-b696-961c08e1e39c",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "bd246868-6658-4346-9efa-5c704316e264",
+"a_kind": "segment",
+"b": "f00bb2a3-9c1c-4c39-a43a-366dd8abfaa4",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "a861bcf7-e303-48eb-b937-ba3d12e0f942",
+"b_kind": "segment",
+"distance_mm": 1.021
+},
+{
+"layer": "F.Cu",
+"a": "9280722f-a89f-4e36-8e96-5c034dd17e4a",
+"a_kind": "pad",
+"b": "a65394bc-d615-4fa5-ae02-2a3daf304c24",
+"b_kind": "segment",
+"distance_mm": 0.90967
+},
+{
+"layer": "F.Cu",
+"a": "b1afe8ec-1bd1-4bb9-bf3b-f32e68459a84",
+"a_kind": "segment",
+"b": "24ad50f7-c149-4ac3-960e-619fa9f64f08",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "7a4daeb2-86a5-4ce2-9e8d-25039555cfc9",
+"b_kind": "segment",
+"distance_mm": 0.44855
+},
+{
+"layer": "B.Cu",
+"a": "010dbe55-0590-4efb-b535-cf35d734d133",
+"a_kind": "segment",
+"b": "abe8d097-4d21-4a74-aa29-86aba722df14",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "b742d5ba-e3e8-40d1-a937-e1838098cff2",
+"a_kind": "segment",
+"b": "24ad50f7-c149-4ac3-960e-619fa9f64f08",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "74e643b6-c927-4d3c-9267-019e3157b29f",
+"b_kind": "segment",
+"distance_mm": 0.00201
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "552fa849-a180-4404-829a-4ad9209443b7",
+"b_kind": "segment",
+"distance_mm": 0.63775
+},
+{
+"layer": "B.Cu",
+"a": "3bb5246d-d29e-444d-b10a-eeb699e867aa",
+"a_kind": "via",
+"b": "d0bad995-3851-4682-acf9-fdc880e495ad",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "d21b15ec-bce4-426c-9b18-d4ef5548bf19",
+"b_kind": "segment",
+"distance_mm": 0.34369
+},
+{
+"layer": "F.Cu",
+"a": "9a026820-3969-47e4-a0f5-fa180e4da932",
+"a_kind": "segment",
+"b": "e7a44cdf-fe60-4055-b4a3-2a359bd903d9",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "834f5fee-f2d4-4bfb-bc69-2e0b05aedd2e",
+"b_kind": "segment",
+"distance_mm": 0.8642
+},
+{
+"layer": "B.Cu",
+"a": "86c7bc1a-648d-416b-935c-c2129f286ccb",
+"a_kind": "segment",
+"b": "bd2bfa1e-9494-459a-81a0-b7986a6ba265",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "3f2ae207-0307-46c6-af5c-f0e4944145bc",
+"a_kind": "segment",
+"b": "7387ff24-0c5f-46c9-a8a8-bf52a9a51ebf",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "74e643b6-c927-4d3c-9267-019e3157b29f",
+"a_kind": "segment",
+"b": "694024c0-2a6a-4a30-8a57-119dd3050f5e",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "0b383ac8-1fc7-49b1-a6fa-a458485f96e4",
+"a_kind": "segment",
+"b": "f4a09434-870f-4a2c-ba22-2f6ec60be8f8",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "7da11763-13d3-46db-9c6a-ec9f436f25ce",
+"b_kind": "segment",
+"distance_mm": 1.10901
+},
+{
+"layer": "F.Cu",
+"a": "38bdd695-0594-4dbc-9a5c-319c981c707e",
+"a_kind": "segment",
+"b": "582483d6-3c3c-42c6-b537-39d318f5d57a",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "58d0aa90-0fb2-43a7-94ae-261c4905fdf4",
+"a_kind": "segment",
+"b": "cedbe1ca-9f12-4887-a039-be820a5b82e7",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "3f2ae207-0307-46c6-af5c-f0e4944145bc",
+"b_kind": "segment",
+"distance_mm": 1.13684
+},
+{
+"layer": "B.Cu",
+"a": "7025092d-74c5-47c7-8afd-d49cdc098042",
+"a_kind": "segment",
+"b": "830b43dc-ad00-4dda-983c-f455fc20e11c",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "763c025a-070d-4ed4-811a-3666b6ba51d9",
+"a_kind": "pad",
+"b": "eb23d389-d530-4c6e-a1d9-40d6ebd02f5b",
+"b_kind": "via",
+"distance_mm": 0.37573
+},
+{
+"layer": "B.Cu",
+"a": "606a6724-f8b4-4ef3-b778-7219f36a9a5d",
+"a_kind": "segment",
+"b": "b8bec65c-e871-4c6c-8810-fb50fdc6090f",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "013f4438-b88c-4cc9-99e3-6d2b01ef242d",
+"a_kind": "segment",
+"b": "26d1dfec-2080-4168-be58-e8e45eb5d3a3",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "55eaac3f-1456-4305-95b2-0f76d8b96e3a",
+"a_kind": "via",
+"b": "dfe1d66e-425c-4d25-9abf-e9aa6225fa14",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "a243ce36-6dd3-45d2-8e37-142d5cc26927",
+"b_kind": "segment",
+"distance_mm": 1.04663
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "d653379c-df79-4183-8032-3f327bb61349",
+"b_kind": "segment",
+"distance_mm": 0.46277
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "69df8ed7-40cf-454d-ae30-2d3c56e11dbd",
+"b_kind": "segment",
+"distance_mm": 0.77185
+},
+{
+"layer": "F.Cu",
+"a": "013f4438-b88c-4cc9-99e3-6d2b01ef242d",
+"a_kind": "segment",
+"b": "953e2a6b-923f-4946-8c93-82f9bc43dcf8",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "c156ab70-804c-48e1-b32a-ab54defcc220",
+"a_kind": "pad",
+"b": "fd3af7ac-3585-4a44-8db6-3beb82e47bdc",
+"b_kind": "segment",
+"distance_mm": 0.58942
+},
+{
+"layer": "F.Cu",
+"a": "96cf8b82-9e5a-4675-b57d-c3f831c48e0e",
+"a_kind": "segment",
+"b": "97c6487a-dda8-4be8-b49c-6d8880fbb7cf",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "e08a6307-8480-4284-8aa0-cba527685810",
+"a_kind": "segment",
+"b": "430f93f0-9087-4b3a-bb05-a0a834830029",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "7025092d-74c5-47c7-8afd-d49cdc098042",
+"a_kind": "segment",
+"b": "d80bcb9d-4516-4a6e-8a63-19b168e6dd35",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "07dcc186-4cea-4376-9bc1-5ee091615767",
+"a_kind": "segment",
+"b": "94c52c77-51b7-43f0-a01b-ec9ce7e477e3",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "38bdd695-0594-4dbc-9a5c-319c981c707e",
+"a_kind": "segment",
+"b": "8f0ef741-2247-470d-894c-30420fa2a274",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "b1f3ca9f-30e5-414a-9b59-5f8bd071656a",
+"b_kind": "segment",
+"distance_mm": 0.77972
+},
+{
+"layer": "B.Cu",
+"a": "cedbe1ca-9f12-4887-a039-be820a5b82e7",
+"a_kind": "segment",
+"b": "d50ad4ad-27fc-4989-9d60-0e0c9da921ff",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "4a0252fa-ce74-4300-9190-c917b23c6f9f",
+"a_kind": "segment",
+"b": "e96cd8d8-71c4-442f-be5d-0d69f4e2bdcd",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "e441b8cb-cac1-48fd-bace-cc2b6e82c125",
+"b_kind": "segment",
+"distance_mm": 0.73547
+},
+{
+"layer": "B.Cu",
+"a": "b48ad637-e6ee-45eb-8b96-6f0af5d70496",
+"a_kind": "segment",
+"b": "d189d63f-2f68-4e80-b946-85cb14b650eb",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "07be84c4-81a7-452d-86d6-255726e7c319",
+"a_kind": "segment",
+"b": "b1afe8ec-1bd1-4bb9-bf3b-f32e68459a84",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "49097003-4385-489d-878f-973ca0ed7a4a",
+"a_kind": "segment",
+"b": "b272357c-9c79-4ff2-921b-bfa7a8a778f9",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "5e2ca1b3-ad8f-425b-8812-4a378a7f3f5a",
+"a_kind": "segment",
+"b": "d3d09b65-4008-409c-8ad0-44b160b7c991",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "bbb37ce3-4667-4575-a685-d8653c18b506",
+"b_kind": "segment",
+"distance_mm": 0.73566
+},
+{
+"layer": "F.Cu",
+"a": "ffaf9a01-4cfd-445c-a967-44fec8c0b6e6",
+"a_kind": "pad",
+"b": "1622aa5a-336d-42f7-a391-fb35368966ca",
+"b_kind": "segment",
+"distance_mm": 0.90704
+},
+{
+"layer": "B.Cu",
+"a": "02a9831b-0193-4d73-b3a8-a8ac085ebbf2",
+"a_kind": "segment",
+"b": "5cdc1915-5f80-437f-bcc0-a343498c831d",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "bd2bfa1e-9494-459a-81a0-b7986a6ba265",
+"a_kind": "via",
+"b": "0b383ac8-1fc7-49b1-a6fa-a458485f96e4",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "1b01231e-d1b4-4406-9906-19919bd0eb79",
+"a_kind": "segment",
+"b": "70ceb24c-c2a4-4ea1-9313-08585c815a17",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "edc3b75f-2179-416c-b987-a3027441692e",
+"a_kind": "pad",
+"b": "b8bec65c-e871-4c6c-8810-fb50fdc6090f",
+"b_kind": "segment",
+"distance_mm": 0.72003
+},
+{
+"layer": "F.Cu",
+"a": "3de5a59c-dab3-4ecb-8d23-491060203e4c",
+"a_kind": "segment",
+"b": "e29d0133-7b05-483d-922b-425e87e6e95e",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "135f7e87-2442-428d-afab-c65b479d788b",
+"a_kind": "segment",
+"b": "ca3cbd26-b0b1-424c-96c9-a52266d89e06",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "167c4d57-2f52-4c30-8e12-105f620abb4b",
+"a_kind": "pad",
+"b": "c9d13b59-1492-4b48-9169-59cc467e15af",
+"b_kind": "segment",
+"distance_mm": 0.26001
+},
+{
+"layer": "F.Cu",
+"a": "bbb37ce3-4667-4575-a685-d8653c18b506",
+"a_kind": "segment",
+"b": "f6ccb7e7-6b3f-4b45-89a8-4d35580b6d51",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "c20ed437-ccdf-47f3-9708-2c7b943be91e",
+"b_kind": "segment",
+"distance_mm": 0.75909
+},
+{
+"layer": "B.Cu",
+"a": "96ac1e02-74c9-45cc-a996-751e5d5375aa",
+"a_kind": "segment",
+"b": "b8bec65c-e871-4c6c-8810-fb50fdc6090f",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "f6ccb7e7-6b3f-4b45-89a8-4d35580b6d51",
+"a_kind": "segment",
+"b": "e79d7c9f-aa84-4b6a-8291-00c652b457e7",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "5b576b28-edae-44ce-b275-2dd32c266e1c",
+"a_kind": "via",
+"b": "1201699b-2f63-43df-9b1d-dc0c760d7eca",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "f43ed9f8-8b9e-4b71-a767-419240ef059b",
+"a_kind": "pad",
+"b": "5f9951b1-3c01-41aa-9f0b-489631014715",
+"b_kind": "via",
+"distance_mm": 0.20544
+},
+{
+"layer": "F.Cu",
+"a": "5f56a999-3205-4e91-aec9-eff5d2562e3a",
+"a_kind": "segment",
+"b": "e223c5fe-fbc1-4051-bcdb-05cd7248e815",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "b94bc8f1-3f88-4df1-9c4d-669edc728c81",
+"a_kind": "pad",
+"b": "3de5a59c-dab3-4ecb-8d23-491060203e4c",
+"b_kind": "segment",
+"distance_mm": 0.22583
+},
+{
+"layer": "F.Cu",
+"a": "91c69f3d-c219-47f5-b4c8-95e4b3ceed04",
+"a_kind": "segment",
+"b": "fe63df00-f6c5-4f45-9b16-c9597cccec46",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "8ab2ba86-5295-4c33-a04a-4e88f288224f",
+"b_kind": "segment",
+"distance_mm": 0.70819
+},
+{
+"layer": "F.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "e9b401c0-38f5-4c10-8372-85b0ab64ebe4",
+"b_kind": "via",
+"distance_mm": 0.32709
+},
+{
+"layer": "B.Cu",
+"a": "630ea360-6b23-4ece-b556-42efaa84e083",
+"a_kind": "segment",
+"b": "6f2de2cf-3903-4013-bec9-cf54394dcc4a",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "69df8ed7-40cf-454d-ae30-2d3c56e11dbd",
+"a_kind": "segment",
+"b": "c20ed437-ccdf-47f3-9708-2c7b943be91e",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "18a97dcb-8e6d-43c4-b046-9885728cfdd8",
+"a_kind": "segment",
+"b": "959f1af0-35ae-46c1-b574-f5b02c4b5aa6",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "849483fc-8227-4aee-88b5-7259f15db33c",
+"a_kind": "via",
+"b": "670f208f-39a6-40a6-b152-1d7f889ce41c",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "ee0f3780-9cfd-4449-9c11-cb18b95246f8",
+"a_kind": "segment",
+"b": "a0e3c4a1-5462-4a13-b828-8783267c9a09",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "4934e036-561c-4a47-99d1-0d11e36169ac",
+"a_kind": "pad",
+"b": "ddead667-3947-4c64-a98c-e447d88d3237",
+"b_kind": "via",
+"distance_mm": 0.55005
+},
+{
+"layer": "F.Cu",
+"a": "66cb3344-f51b-4849-bac6-c8d0132ca5a1",
+"a_kind": "segment",
+"b": "f6ccb7e7-6b3f-4b45-89a8-4d35580b6d51",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "4cbcc9c8-0907-42fa-bd15-08f410e3f984",
+"a_kind": "segment",
+"b": "df7d9705-e992-48ce-a404-23a021370353",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "3bb5246d-d29e-444d-b10a-eeb699e867aa",
+"a_kind": "via",
+"b": "e4cef779-9e6d-401b-8930-d8942bf0b35f",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "81e9b7f3-04fe-4eb0-b888-765bf17d06d7",
+"a_kind": "segment",
+"b": "85a841a9-4ac6-4ca3-bf93-a5437b0d9b0c",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "c1a5b3d2-04bd-47c8-89a7-43a4d3a980d0",
+"b_kind": "segment",
+"distance_mm": 0.24243
+},
+{
+"layer": "F.Cu",
+"a": "a0e3c4a1-5462-4a13-b828-8783267c9a09",
+"a_kind": "segment",
+"b": "906baea4-753a-4a5e-972b-0d527745257a",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "4934e036-561c-4a47-99d1-0d11e36169ac",
+"a_kind": "pad",
+"b": "cedbe1ca-9f12-4887-a039-be820a5b82e7",
+"b_kind": "segment",
+"distance_mm": 0.47003
+},
+{
+"layer": "B.Cu",
+"a": "4934e036-561c-4a47-99d1-0d11e36169ac",
+"a_kind": "pad",
+"b": "4a0252fa-ce74-4300-9190-c917b23c6f9f",
+"b_kind": "segment",
+"distance_mm": 0.71435
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "86adcad8-ca42-45c6-b82f-ad3083e9532a",
+"b_kind": "segment",
+"distance_mm": 0.86853
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "bd2bfa1e-9494-459a-81a0-b7986a6ba265",
+"b_kind": "via",
+"distance_mm": 0.39612
+},
+{
+"layer": "F.Cu",
+"a": "ffaf9a01-4cfd-445c-a967-44fec8c0b6e6",
+"a_kind": "pad",
+"b": "a380610d-84ac-4892-ab62-a642915c8eba",
+"b_kind": "segment",
+"distance_mm": 0.97882
+},
+{
+"layer": "F.Cu",
+"a": "fcb8ceb8-f7b3-4508-a914-7a2c1c6212c1",
+"a_kind": "pad",
+"b": "3453c6ff-abe6-4168-ad90-110bcd96ab2f",
+"b_kind": "segment",
+"distance_mm": 0.74707
+},
+{
+"layer": "B.Cu",
+"a": "6bf98de5-1c44-43ba-892a-4b9708b2dd67",
+"a_kind": "segment",
+"b": "d5f086d8-defe-4d0b-a628-28d9735fb010",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "1b75ce8b-7f16-4831-b382-3528eed4e783",
+"a_kind": "via",
+"b": "b4c4d0ad-6617-4f82-b5dd-366873aff844",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "18a97dcb-8e6d-43c4-b046-9885728cfdd8",
+"a_kind": "segment",
+"b": "98cb310e-f264-4b58-b49e-43b5d0f46452",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "51bd0beb-84b3-414f-9caa-0eecb6a96200",
+"a_kind": "segment",
+"b": "430f93f0-9087-4b3a-bb05-a0a834830029",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "167c4d57-2f52-4c30-8e12-105f620abb4b",
+"a_kind": "pad",
+"b": "849483fc-8227-4aee-88b5-7259f15db33c",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "278e0bfe-5533-4fba-976f-712e0e786cbb",
+"a_kind": "pad",
+"b": "aec3f597-18c5-4597-a36e-751178d8db68",
+"b_kind": "segment",
+"distance_mm": 1.04437
+},
+{
+"layer": "F.Cu",
+"a": "2420d8c3-8ed8-42ed-9743-db374c1fc08f",
+"a_kind": "segment",
+"b": "97057fab-7fe2-4485-a9f2-c9b61afc4523",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "7019467e-83f4-4ffa-bc22-0d179cd8e8fa",
+"a_kind": "pad",
+"b": "d4a177fa-bb25-49ac-9b15-61caab8f3b9b",
+"b_kind": "segment",
+"distance_mm": 0.40002
+},
+{
+"layer": "F.Cu",
+"a": "a4bed650-e8c7-4ec7-8808-d437889c9b8b",
+"a_kind": "pad",
+"b": "51bd0beb-84b3-414f-9caa-0eecb6a96200",
+"b_kind": "segment",
+"distance_mm": 0.41724
+},
+{
+"layer": "B.Cu",
+"a": "b94bc8f1-3f88-4df1-9c4d-669edc728c81",
+"a_kind": "pad",
+"b": "2c1603b9-38e5-4b7c-82e6-1bb98ab0b90f",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "d3da2d4d-f1c7-410a-b731-2f4de8a0180a",
+"b_kind": "segment",
+"distance_mm": 1.2337
+},
+{
+"layer": "B.Cu",
+"a": "16dd37d5-6294-49b8-8ed2-f5d50aab94b7",
+"a_kind": "via",
+"b": "d189d63f-2f68-4e80-b946-85cb14b650eb",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "3522ba0c-393d-4d71-a828-0c2d3771ed47",
+"a_kind": "segment",
+"b": "af30e268-723a-4b5d-bf69-357f3113552a",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "0088d2c7-8d53-456c-b79e-9118f6983e1a",
+"a_kind": "pad",
+"b": "42c7c39a-2a4f-470a-8936-a944ba6b9058",
+"b_kind": "segment",
+"distance_mm": 1.18536
+},
+{
+"layer": "F.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "f6ccb7e7-6b3f-4b45-89a8-4d35580b6d51",
+"b_kind": "segment",
+"distance_mm": 0.13708
+},
+{
+"layer": "F.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "52f5c0e1-027f-436b-b4bc-4543a0d215d8",
+"b_kind": "segment",
+"distance_mm": 1.16406
+},
+{
+"layer": "B.Cu",
+"a": "92ca5e91-7e53-450c-87e7-c426d4ef75e4",
+"a_kind": "segment",
+"b": "a861bcf7-e303-48eb-b937-ba3d12e0f942",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "eba8f396-5f37-4bd5-a550-92b6a16a95bf",
+"b_kind": "segment",
+"distance_mm": 1.0282
+},
+{
+"layer": "F.Cu",
+"a": "ee0f3780-9cfd-4449-9c11-cb18b95246f8",
+"a_kind": "segment",
+"b": "906baea4-753a-4a5e-972b-0d527745257a",
+"b_kind": "via",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "7bc7e832-e6de-4e9e-939a-944ed5b7dc08",
+"a_kind": "pad",
+"b": "7ec20c20-eb22-4947-a09a-d321324bc679",
+"b_kind": "segment",
+"distance_mm": 0.58942
+},
+{
+"layer": "F.Cu",
+"a": "26670171-592f-42f7-9a0f-80a7b5677e79",
+"a_kind": "segment",
+"b": "871b6e58-4143-4771-aac4-2c6b5c8a0e59",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "7019467e-83f4-4ffa-bc22-0d179cd8e8fa",
+"a_kind": "pad",
+"b": "7d63f099-1486-4356-9ff0-923979144710",
+"b_kind": "segment",
+"distance_mm": 0.99707
+},
+{
+"layer": "F.Cu",
+"a": "12bf304d-ed08-4e7d-be9d-0d6eb230c95f",
+"a_kind": "segment",
+"b": "1622aa5a-336d-42f7-a391-fb35368966ca",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "89fd10aa-3a06-4ea4-aeaf-24e2c3125df8",
+"a_kind": "segment",
+"b": "9e1aa11a-51bc-4f5e-a26b-2d06671a0424",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "94c52c77-51b7-43f0-a01b-ec9ce7e477e3",
+"b_kind": "segment",
+"distance_mm": 0.97461
+},
+{
+"layer": "B.Cu",
+"a": "4934e036-561c-4a47-99d1-0d11e36169ac",
+"a_kind": "pad",
+"b": "b54b18b9-8003-4c66-8f89-733d755f602b",
+"b_kind": "segment",
+"distance_mm": 0.9115
+},
+{
+"layer": "F.Cu",
+"a": "f8f37974-c118-422d-aa02-98efc14b2c5c",
+"a_kind": "pad",
+"b": "1ce4c50a-bc26-45c0-9623-891a8b6430e0",
+"b_kind": "segment",
+"distance_mm": 0.70819
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "9e1aa11a-51bc-4f5e-a26b-2d06671a0424",
+"b_kind": "segment",
+"distance_mm": 0.76044
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "6429881a-7b36-40ee-80f5-cd617cd4871e",
+"b_kind": "segment",
+"distance_mm": 0.76788
+},
+{
+"layer": "B.Cu",
+"a": "063deb7b-c0a6-4e1d-812f-4ce22da6cb02",
+"a_kind": "segment",
+"b": "83a6e1fe-4a07-4932-b83a-cf3b3c20b545",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "852c5d0b-2923-4512-a37c-08c5b8cf8a78",
+"b_kind": "segment",
+"distance_mm": 0.52722
+},
+{
+"layer": "B.Cu",
+"a": "a0691ba3-0a2c-49c3-8b3b-017465b5582d",
+"a_kind": "via",
+"b": "af30e268-723a-4b5d-bf69-357f3113552a",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "30a3988a-36b4-4bd6-abf5-8f27f3f9fa9e",
+"a_kind": "segment",
+"b": "9e1aa11a-51bc-4f5e-a26b-2d06671a0424",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "81a4f402-14d2-4989-b24b-2c46f60b46f1",
+"b_kind": "segment",
+"distance_mm": 0.25757
+},
+{
+"layer": "B.Cu",
+"a": "849483fc-8227-4aee-88b5-7259f15db33c",
+"a_kind": "via",
+"b": "0e9e034f-0e7d-4c3f-83df-5fd0422da4ea",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "fcb8ceb8-f7b3-4508-a914-7a2c1c6212c1",
+"a_kind": "pad",
+"b": "b1afe8ec-1bd1-4bb9-bf3b-f32e68459a84",
+"b_kind": "segment",
+"distance_mm": 0.51111
+},
+{
+"layer": "F.Cu",
+"a": "adb3dfc8-8bfa-4d60-9c04-07e035194295",
+"a_kind": "segment",
+"b": "ea134955-ea81-4437-b331-7460638da383",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "98988d98-d9a1-4d26-9303-b0460c508c8d",
+"a_kind": "segment",
+"b": "e0cd978c-a619-4c95-9069-d8ff727c297d",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "f43ed9f8-8b9e-4b71-a767-419240ef059b",
+"a_kind": "pad",
+"b": "864d33dd-93d7-43eb-ab6b-272a0e3a9bad",
+"b_kind": "segment",
+"distance_mm": 1.07538
+},
+{
+"layer": "B.Cu",
+"a": "16dd37d5-6294-49b8-8ed2-f5d50aab94b7",
+"a_kind": "via",
+"b": "a68ccaed-dbed-40af-bbcb-1e2e52cb80a2",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "822833df-1288-4791-b572-09e02caad92a",
+"a_kind": "segment",
+"b": "b54b18b9-8003-4c66-8f89-733d755f602b",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "c7489a32-35a3-415d-b39f-4f7b49076cff",
+"b_kind": "via",
+"distance_mm": 0.25006
+},
+{
+"layer": "F.Cu",
+"a": "0088d2c7-8d53-456c-b79e-9118f6983e1a",
+"a_kind": "pad",
+"b": "bd246868-6658-4346-9efa-5c704316e264",
+"b_kind": "segment",
+"distance_mm": 0.81006
+},
+{
+"layer": "F.Cu",
+"a": "7da11763-13d3-46db-9c6a-ec9f436f25ce",
+"a_kind": "segment",
+"b": "d3da2d4d-f1c7-410a-b731-2f4de8a0180a",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "6131b9df-90e2-47cd-a0d3-e34d9396cf26",
+"a_kind": "segment",
+"b": "d77adf00-8326-43a8-b23e-bda3a70ed8fa",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "0b0dc83c-7483-4ff8-af60-abbc079afa19",
+"a_kind": "segment",
+"b": "acd96ed7-c49e-4d41-a300-db0bd808c682",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "4934e036-561c-4a47-99d1-0d11e36169ac",
+"a_kind": "pad",
+"b": "d50ad4ad-27fc-4989-9d60-0e0c9da921ff",
+"b_kind": "segment",
+"distance_mm": 0.39795
+},
+{
+"layer": "F.Cu",
+"a": "1990a1ac-c81c-4d59-a7d3-b6b33fa5ffbe",
+"a_kind": "pad",
+"b": "7d38dc72-87b9-4b84-8924-e3a1f021b76c",
+"b_kind": "segment",
+"distance_mm": 0.98224
+},
+{
+"layer": "F.Cu",
+"a": "380f358e-24f4-487c-9fa6-9f164c72167e",
+"a_kind": "segment",
+"b": "9a026820-3969-47e4-a0f5-fa180e4da932",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "F.Cu",
+"a": "364aa83c-a347-4afd-b73b-73d8b5c4680e",
+"a_kind": "segment",
+"b": "7a0be243-a460-4584-8eb8-d6a88c6df900",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "8b2a984e-af2d-4d84-ba72-a2cccfd77275",
+"a_kind": "segment",
+"b": "a3d1536d-bc60-41ec-ac94-b15970842ff8",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "04751914-23e3-414b-8875-f0bc6597d47c",
+"a_kind": "segment",
+"b": "d49d82b8-710c-4eea-9423-6dc5faf4db42",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "7855a274-f136-44fa-8b38-991dac59c37d",
+"b_kind": "segment",
+"distance_mm": 1.2746
+},
+{
+"layer": "B.Cu",
+"a": "d80bcb9d-4516-4a6e-8a63-19b168e6dd35",
+"a_kind": "segment",
+"b": "ff381905-c911-4011-b810-fd875319681b",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "35b38aff-5f3a-44e0-8094-353dc3b245eb",
+"a_kind": "segment",
+"b": "54ccef2c-0133-4a3e-90a1-093ad6d028f8",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "cbc93f0d-95f1-4b49-8d6a-b98fc1564afc",
+"a_kind": "pad",
+"b": "02a9831b-0193-4d73-b3a8-a8ac085ebbf2",
+"b_kind": "segment",
+"distance_mm": 0.91003
+},
+{
+"layer": "F.Cu",
+"a": "f9d324a7-1fb3-4c58-adf5-bbe8af947395",
+"a_kind": "segment",
+"b": "0fb4f712-a4f5-44d1-bf34-9e8863544afe",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "7e4aa3c0-6828-4630-a5fa-f11a70fc8917",
+"b_kind": "segment",
+"distance_mm": 0.29504
+},
+{
+"layer": "F.Cu",
+"a": "7d63f099-1486-4356-9ff0-923979144710",
+"a_kind": "segment",
+"b": "b272357c-9c79-4ff2-921b-bfa7a8a778f9",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "5f9951b1-3c01-41aa-9f0b-489631014715",
+"a_kind": "via",
+"b": "2fa10198-8e9e-423f-ac45-a3ed14f29da9",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "045509b2-bf96-4167-a994-a8ca26f33ef3",
+"b_kind": "segment",
+"distance_mm": 0.62488
+},
+{
+"layer": "F.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "1836d269-f50e-4b9e-81bc-021c19b11ea2",
+"b_kind": "segment",
+"distance_mm": 0.86432
+},
+{
+"layer": "F.Cu",
+"a": "7d38dc72-87b9-4b84-8924-e3a1f021b76c",
+"a_kind": "segment",
+"b": "e441b8cb-cac1-48fd-bace-cc2b6e82c125",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "B.Cu",
+"a": "5f9951b1-3c01-41aa-9f0b-489631014715",
+"a_kind": "via",
+"b": "2055831f-6811-4852-abb3-8abf92bf985a",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "af30e268-723a-4b5d-bf69-357f3113552a",
+"b_kind": "segment",
+"distance_mm": 0.6546
+},
+{
+"layer": "B.Cu",
+"a": "54c0e08b-211b-4362-b88b-88adec1bb171",
+"a_kind": "segment",
+"b": "ba6b8e20-6141-495a-87cc-922581d0f890",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "5b576b28-edae-44ce-b275-2dd32c266e1c",
+"a_kind": "via",
+"b": "0e018778-af7a-4ec6-8772-a113a7ed1c1b",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "72608300-38e5-4cdb-b046-b8a18aae619d",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "3522ba0c-393d-4d71-a828-0c2d3771ed47",
+"a_kind": "segment",
+"b": "d5ef0fa0-ce33-49f2-ae99-bf6b5734a2cb",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "68b6b42f-ccc8-474e-b895-548d8b978b95",
+"b_kind": "segment",
+"distance_mm": 0.84631
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "3522ba0c-393d-4d71-a828-0c2d3771ed47",
+"b_kind": "segment",
+"distance_mm": 0.93756
+},
+{
+"layer": "F.Cu",
+"a": "4f42f1a6-6007-4a2d-ad2f-91ec4d3ed856",
+"a_kind": "segment",
+"b": "a380610d-84ac-4892-ab62-a642915c8eba",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "F.Cu",
+"a": "2b976ef7-f161-44e1-95cd-d4514834a385",
+"a_kind": "pad",
+"b": "ee0f3780-9cfd-4449-9c11-cb18b95246f8",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "54c0e08b-211b-4362-b88b-88adec1bb171",
+"a_kind": "segment",
+"b": "aec3f597-18c5-4597-a36e-751178d8db68",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "2c7165b5-4edf-4ba5-bd4d-aac47cc2d90c",
+"a_kind": "segment",
+"b": "fe63df00-f6c5-4f45-9b16-c9597cccec46",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "98cb310e-f264-4b58-b49e-43b5d0f46452",
+"a_kind": "segment",
+"b": "ba4f4f6a-0069-4d03-bfaa-4a18d8baabfe",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "f4a09434-870f-4a2c-ba22-2f6ec60be8f8",
+"b_kind": "segment",
+"distance_mm": 1.05371
+},
+{
+"layer": "F.Cu",
+"a": "ffaf9a01-4cfd-445c-a967-44fec8c0b6e6",
+"a_kind": "pad",
+"b": "cf2ca9bf-ddf3-4ab7-908d-2a0fde492c1c",
+"b_kind": "segment",
+"distance_mm": 0.66553
+},
+{
+"layer": "F.Cu",
+"a": "5b576b28-edae-44ce-b275-2dd32c266e1c",
+"a_kind": "via",
+"b": "91d2cdda-ad3b-40e2-b86f-85285dcb1b74",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "f34a1dd4-c83a-4c9e-8e81-a21aa3b68921",
+"a_kind": "segment",
+"b": "2a0d3cb6-f4ae-4869-bad9-4f153e29a776",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "dfe1d66e-425c-4d25-9abf-e9aa6225fa14",
+"b_kind": "segment",
+"distance_mm": 0.37829
+},
+{
+"layer": "F.Cu",
+"a": "42ec3aee-3e66-40a3-9163-73d9062af8c6",
+"a_kind": "pad",
+"b": "d49d82b8-710c-4eea-9423-6dc5faf4db42",
+"b_kind": "segment",
+"distance_mm": 0.28003
+},
+{
+"layer": "F.Cu",
+"a": "e441b8cb-cac1-48fd-bace-cc2b6e82c125",
+"a_kind": "segment",
+"b": "34c5852f-79dd-4970-ac39-e29be021ff8a",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "cbc93f0d-95f1-4b49-8d6a-b98fc1564afc",
+"a_kind": "pad",
+"b": "83a6e1fe-4a07-4932-b83a-cf3b3c20b545",
+"b_kind": "segment",
+"distance_mm": 0.40002
+},
+{
+"layer": "F.Cu",
+"a": "871b6e58-4143-4771-aac4-2c6b5c8a0e59",
+"a_kind": "segment",
+"b": "e7a44cdf-fe60-4055-b4a3-2a359bd903d9",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "c7489a32-35a3-415d-b39f-4f7b49076cff",
+"b_kind": "via",
+"distance_mm": 0.25006
+},
+{
+"layer": "B.Cu",
+"a": "e9b401c0-38f5-4c10-8372-85b0ab64ebe4",
+"a_kind": "via",
+"b": "520aee33-bec0-4393-91ef-a41aa03b9b6d",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "9ec8974e-17a1-49f4-8475-b2288c049057",
+"a_kind": "segment",
+"b": "e08a6307-8480-4284-8aa0-cba527685810",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "16a3583a-d3a5-4763-b60d-86a87a18d339",
+"a_kind": "pad",
+"b": "8f0ef741-2247-470d-894c-30420fa2a274",
+"b_kind": "segment",
+"distance_mm": 0.56006
+},
+{
+"layer": "F.Cu",
+"a": "7019467e-83f4-4ffa-bc22-0d179cd8e8fa",
+"a_kind": "pad",
+"b": "0ba30ba2-152d-46f5-9c37-db9d46d6b003",
+"b_kind": "segment",
+"distance_mm": 0.68329
+},
+{
+"layer": "B.Cu",
+"a": "c156ab70-804c-48e1-b32a-ab54defcc220",
+"a_kind": "pad",
+"b": "a4ffd4e8-7c68-4d41-9bfd-8aa703d9ffa7",
+"b_kind": "segment",
+"distance_mm": 0.63074
+},
+{
+"layer": "F.Cu",
+"a": "709ecf2a-c8b6-4619-88c0-f49eb51a66d9",
+"a_kind": "segment",
+"b": "a29faaf7-918a-4b0b-a4fc-538a14d457a9",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "b94bc8f1-3f88-4df1-9c4d-669edc728c81",
+"a_kind": "pad",
+"b": "6ee9573d-a304-4fe1-9dad-fd4955e07ee7",
+"b_kind": "segment",
+"distance_mm": 0.52081
+},
+{
+"layer": "F.Cu",
+"a": "7019467e-83f4-4ffa-bc22-0d179cd8e8fa",
+"a_kind": "pad",
+"b": "8eee898b-cdb5-478c-bedc-56caa32c6e93",
+"b_kind": "segment",
+"distance_mm": 0.91003
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "369a1c09-269a-4b5e-91ee-34dec2d69e8d",
+"b_kind": "segment",
+"distance_mm": 0.58356
+},
+{
+"layer": "B.Cu",
+"a": "e9b401c0-38f5-4c10-8372-85b0ab64ebe4",
+"a_kind": "via",
+"b": "86adcad8-ca42-45c6-b82f-ad3083e9532a",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "694024c0-2a6a-4a30-8a57-119dd3050f5e",
+"a_kind": "segment",
+"b": "734fd753-2cd7-4185-9c3e-7496ae04b71c",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "02a9831b-0193-4d73-b3a8-a8ac085ebbf2",
+"a_kind": "segment",
+"b": "630ea360-6b23-4ece-b556-42efaa84e083",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "F.Cu",
+"a": "e7a44cdf-fe60-4055-b4a3-2a359bd903d9",
+"a_kind": "segment",
+"b": "ca3cbd26-b0b1-424c-96c9-a52266d89e06",
+"b_kind": "via",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "d3da2d4d-f1c7-410a-b731-2f4de8a0180a",
+"a_kind": "segment",
+"b": "ecebac40-e5ab-4a0c-be6d-9309d8d10f4e",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "66e9f2d6-ff74-4d1a-b734-af763049349d",
+"a_kind": "segment",
+"b": "940e7cde-e074-4772-ac2d-0ef47cf8fd1e",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "c7489a32-35a3-415d-b39f-4f7b49076cff",
+"a_kind": "via",
+"b": "ba4f4f6a-0069-4d03-bfaa-4a18d8baabfe",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "B.Cu",
+"a": "a0691ba3-0a2c-49c3-8b3b-017465b5582d",
+"a_kind": "via",
+"b": "7a4daeb2-86a5-4ce2-9e8d-25039555cfc9",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "9a026820-3969-47e4-a0f5-fa180e4da932",
+"b_kind": "segment",
+"distance_mm": 0.71002
+},
+{
+"layer": "F.Cu",
+"a": "763c025a-070d-4ed4-811a-3666b6ba51d9",
+"a_kind": "pad",
+"b": "fe63df00-f6c5-4f45-9b16-c9597cccec46",
+"b_kind": "segment",
+"distance_mm": 0.5022
+},
+{
+"layer": "B.Cu",
+"a": "d2272f62-363c-4a5d-a0a0-e031167faa49",
+"a_kind": "pad",
+"b": "16dd37d5-6294-49b8-8ed2-f5d50aab94b7",
+"b_kind": "via",
+"distance_mm": 0.35004
+},
+{
+"layer": "B.Cu",
+"a": "c46f807a-636f-47b5-9735-958607d51f17",
+"a_kind": "pad",
+"b": "0b383ac8-1fc7-49b1-a6fa-a458485f96e4",
+"b_kind": "segment",
+"distance_mm": 0.67804
+},
+{
+"layer": "F.Cu",
+"a": "140c9061-ad17-40a1-9514-6c577ff30b96",
+"a_kind": "segment",
+"b": "906baea4-753a-4a5e-972b-0d527745257a",
+"b_kind": "via",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "d5424eec-a411-4612-8920-9fc4a83c4edc",
+"a_kind": "segment",
+"b": "e91d4f95-1e88-44b4-b4c8-18ef689f5100",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "F.Cu",
+"a": "2c1603b9-38e5-4b7c-82e6-1bb98ab0b90f",
+"a_kind": "via",
+"b": "6ee9573d-a304-4fe1-9dad-fd4955e07ee7",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "a68ccaed-dbed-40af-bbcb-1e2e52cb80a2",
+"a_kind": "segment",
+"b": "d3c90780-2e8d-4af3-a63c-16818cd5abbd",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "55eaac3f-1456-4305-95b2-0f76d8b96e3a",
+"a_kind": "via",
+"b": "734fd753-2cd7-4185-9c3e-7496ae04b71c",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "7e4aa3c0-6828-4630-a5fa-f11a70fc8917",
+"a_kind": "segment",
+"b": "d21b15ec-bce4-426c-9b18-d4ef5548bf19",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "c9468a85-5c8e-4421-b98e-4fe2718e13bb",
+"a_kind": "segment",
+"b": "d004b82d-f2f8-470f-85a1-5bb9c41124be",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "180f806b-0641-4976-9f32-ceeac308761d",
+"a_kind": "segment",
+"b": "6791a069-e81d-4b63-870c-69b15fb4c83f",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "8c49c1b2-4697-44a3-bbb6-ff2fa7d86c60",
+"a_kind": "segment",
+"b": "cf2ca9bf-ddf3-4ab7-908d-2a0fde492c1c",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "7f4bc978-cc07-41e8-b19b-aa498e347075",
+"a_kind": "pad",
+"b": "70b47fd5-dc9f-4a84-b62a-c3cd07dd0cbf",
+"b_kind": "segment",
+"distance_mm": 0.63
+},
+{
+"layer": "F.Cu",
+"a": "d7aff691-9c68-49f2-a85b-882ea7773f8b",
+"a_kind": "segment",
+"b": "f9d324a7-1fb3-4c58-adf5-bbe8af947395",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "fd347ae5-f565-4951-9dfa-21da86e529da",
+"b_kind": "via",
+"distance_mm": 0.11505
+},
+{
+"layer": "B.Cu",
+"a": "86c7bc1a-648d-416b-935c-c2129f286ccb",
+"a_kind": "segment",
+"b": "c8427d91-d81e-4a29-8fef-f904e1a1297e",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "91d2cdda-ad3b-40e2-b86f-85285dcb1b74",
+"a_kind": "segment",
+"b": "d77adf00-8326-43a8-b23e-bda3a70ed8fa",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "ddead667-3947-4c64-a98c-e447d88d3237",
+"a_kind": "via",
+"b": "58d0aa90-0fb2-43a7-94ae-261c4905fdf4",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "6c1ca338-ac2b-4f98-adc2-2e44a8be08ea",
+"b_kind": "segment",
+"distance_mm": 0.38635
+},
+{
+"layer": "F.Cu",
+"a": "42c7c39a-2a4f-470a-8936-a944ba6b9058",
+"a_kind": "segment",
+"b": "ff8d9c94-6d1c-4d6c-9aa2-3a54b1cb9f00",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "0947a037-ec94-41f2-bf92-6eacfd6efe0e",
+"a_kind": "segment",
+"b": "51c351d3-f030-4b27-b29a-3fc2effd0563",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "F.Cu",
+"a": "4f5c0388-07d7-464d-868c-eed6b02f57ce",
+"a_kind": "segment",
+"b": "b4f787f9-d76b-4c22-94f0-98916e47f7eb",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "91c69f3d-c219-47f5-b4c8-95e4b3ceed04",
+"a_kind": "segment",
+"b": "eb23d389-d530-4c6e-a1d9-40d6ebd02f5b",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "70ceb24c-c2a4-4ea1-9313-08585c815a17",
+"b_kind": "via",
+"distance_mm": 0.10266
+},
+{
+"layer": "B.Cu",
+"a": "9594b9c9-5875-446e-b1e8-445f46cc0bd2",
+"a_kind": "pad",
+"b": "55eaac3f-1456-4305-95b2-0f76d8b96e3a",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "B.Cu",
+"a": "897d6d39-fa65-4070-91bb-a892ae44c8cf",
+"a_kind": "segment",
+"b": "b4c4d0ad-6617-4f82-b5dd-366873aff844",
+"b_kind": "segment",
+"distance_mm": 0.41296
+},
+{
+"layer": "B.Cu",
+"a": "e6841c4e-490f-423e-bf86-da8f2ff1a091",
+"a_kind": "pad",
+"b": "75940030-4ca5-4fcb-bbd4-957f762fc109",
+"b_kind": "segment",
+"distance_mm": 0.69031
+},
+{
+"layer": "F.Cu",
+"a": "a4f401ff-cca0-40ca-bdad-e86ba2c9411e",
+"a_kind": "segment",
+"b": "d4a177fa-bb25-49ac-9b15-61caab8f3b9b",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "d2272f62-363c-4a5d-a0a0-e031167faa49",
+"a_kind": "pad",
+"b": "d3c90780-2e8d-4af3-a63c-16818cd5abbd",
+"b_kind": "segment",
+"distance_mm": 0.72003
+},
+{
+"layer": "B.Cu",
+"a": "128c7576-2c54-4879-8284-b6b70c6290c8",
+"a_kind": "via",
+"b": "8b2a984e-af2d-4d84-ba72-a2cccfd77275",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "B.Cu",
+"a": "daecbdbc-5b0f-40cb-b55f-854540a9fbff",
+"a_kind": "pad",
+"b": "180f806b-0641-4976-9f32-ceeac308761d",
+"b_kind": "segment",
+"distance_mm": 0.46277
+},
+{
+"layer": "F.Cu",
+"a": "1f1dc583-86d5-49fd-803b-2badc7944d90",
+"a_kind": "segment",
+"b": "47fe81dd-d7f2-4059-a10d-f2b77c779a43",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "2e7217ff-44d7-4c2b-a093-5a57093741be",
+"a_kind": "segment",
+"b": "bfe28bbd-26bd-4816-bde7-ad5db64d7bbd",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "16a3583a-d3a5-4763-b60d-86a87a18d339",
+"a_kind": "pad",
+"b": "8e74b88a-b133-4001-a2e9-1b189c47d4e5",
+"b_kind": "segment",
+"distance_mm": 0.88
+},
+{
+"layer": "B.Cu",
+"a": "b8c129c3-4cf9-4ef5-8722-786b5867d575",
+"a_kind": "via",
+"b": "02a9831b-0193-4d73-b3a8-a8ac085ebbf2",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "16a3583a-d3a5-4763-b60d-86a87a18d339",
+"a_kind": "pad",
+"b": "f3800fdb-84b4-496e-bd1a-91b3a4aec3df",
+"b_kind": "segment",
+"distance_mm": 0.84015
+},
+{
+"layer": "B.Cu",
+"a": "3f9c16e5-d28a-428a-9590-ea68b83a4895",
+"a_kind": "via",
+"b": "ba6b8e20-6141-495a-87cc-922581d0f890",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "66cb3344-f51b-4849-bac6-c8d0132ca5a1",
+"b_kind": "segment",
+"distance_mm": 0.56519
+},
+{
+"layer": "B.Cu",
+"a": "f43ed9f8-8b9e-4b71-a767-419240ef059b",
+"a_kind": "pad",
+"b": "ea397b97-658a-41ca-b696-961c08e1e39c",
+"b_kind": "segment",
+"distance_mm": 1.14667
+},
+{
+"layer": "F.Cu",
+"a": "0e018778-af7a-4ec6-8772-a113a7ed1c1b",
+"a_kind": "segment",
+"b": "1201699b-2f63-43df-9b1d-dc0c760d7eca",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "505e3fce-df36-4c65-8c56-3740c8847d89",
+"a_kind": "segment",
+"b": "70b47fd5-dc9f-4a84-b62a-c3cd07dd0cbf",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "7a4daeb2-86a5-4ce2-9e8d-25039555cfc9",
+"a_kind": "segment",
+"b": "d653379c-df79-4183-8032-3f327bb61349",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "B.Cu",
+"a": "f952fc70-0858-4d72-a8c9-ab73a9d0ffdd",
+"a_kind": "via",
+"b": "08debdb3-3263-44bc-b720-dfdedcd1bcc6",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "7f142c11-3cae-4c12-9df6-141981bf71ed",
+"a_kind": "pad",
+"b": "e79d7c9f-aa84-4b6a-8291-00c652b457e7",
+"b_kind": "via",
+"distance_mm": 0.25714
+},
+{
+"layer": "F.Cu",
+"a": "0947a037-ec94-41f2-bf92-6eacfd6efe0e",
+"a_kind": "segment",
+"b": "c6521e5a-2b8a-4c42-8c63-55f281fbfa7f",
+"b_kind": "segment",
+"distance_mm": 0.69189
+},
+{
+"layer": "B.Cu",
+"a": "a0691ba3-0a2c-49c3-8b3b-017465b5582d",
+"a_kind": "via",
+"b": "d653379c-df79-4183-8032-3f327bb61349",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "F.Cu",
+"a": "9bd452ed-46a5-4f14-a751-8cf2ef4453a8",
+"a_kind": "segment",
+"b": "c1a5b3d2-04bd-47c8-89a7-43a4d3a980d0",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "B.Cu",
+"a": "c7489a32-35a3-415d-b39f-4f7b49076cff",
+"a_kind": "via",
+"b": "98cb310e-f264-4b58-b49e-43b5d0f46452",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "ffaf9a01-4cfd-445c-a967-44fec8c0b6e6",
+"a_kind": "pad",
+"b": "e79d31fa-0252-4394-a7fe-83d5acce2a85",
+"b_kind": "segment",
+"distance_mm": 0.58703
+},
+{
+"layer": "B.Cu",
+"a": "1b75ce8b-7f16-4831-b382-3528eed4e783",
+"a_kind": "via",
+"b": "e46809fc-26f2-4246-92d4-d58215f974c2",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "f43ed9f8-8b9e-4b71-a767-419240ef059b",
+"a_kind": "pad",
+"b": "5f9951b1-3c01-41aa-9f0b-489631014715",
+"b_kind": "via",
+"distance_mm": 0.20544
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "d004b82d-f2f8-470f-85a1-5bb9c41124be",
+"b_kind": "segment",
+"distance_mm": 0.25159
+},
+{
+"layer": "F.Cu",
+"a": "8c49c1b2-4697-44a3-bbb6-ff2fa7d86c60",
+"a_kind": "segment",
+"b": "2a0d3cb6-f4ae-4869-bad9-4f153e29a776",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "2b976ef7-f161-44e1-95cd-d4514834a385",
+"a_kind": "pad",
+"b": "a2511d3f-281e-43af-988f-d2dd2c4e552a",
+"b_kind": "segment",
+"distance_mm": 1.01849
+},
+{
+"layer": "B.Cu",
+"a": "a0691ba3-0a2c-49c3-8b3b-017465b5582d",
+"a_kind": "via",
+"b": "3522ba0c-393d-4d71-a828-0c2d3771ed47",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "9280722f-a89f-4e36-8e96-5c034dd17e4a",
+"a_kind": "pad",
+"b": "d5424eec-a411-4612-8920-9fc4a83c4edc",
+"b_kind": "segment",
+"distance_mm": 0.53851
+},
+{
+"layer": "F.Cu",
+"a": "2de52ea4-7823-407e-8ee5-90d6f2a74d59",
+"a_kind": "segment",
+"b": "f78e9af8-551e-4a5f-844e-a1f629fdd0e7",
+"b_kind": "segment",
+"distance_mm": 0.36059
+},
+{
+"layer": "F.Cu",
+"a": "d117b296-2016-4c57-8809-b79680c6484c",
+"a_kind": "pad",
+"b": "009ba47a-5bc1-45cf-936b-634438c9218b",
+"b_kind": "segment",
+"distance_mm": 0.47589
+},
+{
+"layer": "B.Cu",
+"a": "a79dd554-8f3f-4d25-9651-ca355a26d999",
+"a_kind": "pad",
+"b": "07dcc186-4cea-4376-9bc1-5ee091615767",
+"b_kind": "segment",
+"distance_mm": 1.24664
+},
+{
+"layer": "B.Cu",
+"a": "fd347ae5-f565-4951-9dfa-21da86e529da",
+"a_kind": "via",
+"b": "180f806b-0641-4976-9f32-ceeac308761d",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "ddead667-3947-4c64-a98c-e447d88d3237",
+"a_kind": "via",
+"b": "e96cd8d8-71c4-442f-be5d-0d69f4e2bdcd",
+"b_kind": "segment",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "16a3583a-d3a5-4763-b60d-86a87a18d339",
+"a_kind": "pad",
+"b": "dd8b41c8-f1fd-406d-9743-6840068a44f5",
+"b_kind": "segment",
+"distance_mm": 0.52759
+},
+{
+"layer": "B.Cu",
+"a": "b1404ac6-76fd-431e-853b-b7f5a2e2ea09",
+"a_kind": "segment",
+"b": "e46809fc-26f2-4246-92d4-d58215f974c2",
+"b_kind": "segment",
+"distance_mm": 0.52191
+},
+{
+"layer": "B.Cu",
+"a": "3988ec25-2832-4bd7-abb3-36fbee830a96",
+"a_kind": "segment",
+"b": "c9468a85-5c8e-4421-b98e-4fe2718e13bb",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "441b314d-0dc3-4634-90fe-146ee21e30df",
+"a_kind": "segment",
+"b": "740c1df5-9fec-43f5-b3e6-fd67f70e49c7",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "309b20b4-38a8-4291-87b1-b90849acf45c",
+"a_kind": "segment",
+"b": "5f56a999-3205-4e91-aec9-eff5d2562e3a",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "fcb8ceb8-f7b3-4508-a914-7a2c1c6212c1",
+"a_kind": "pad",
+"b": "35b38aff-5f3a-44e0-8094-353dc3b245eb",
+"b_kind": "segment",
+"distance_mm": 0.8219
+},
+{
+"layer": "B.Cu",
+"a": "b8c129c3-4cf9-4ef5-8722-786b5867d575",
+"a_kind": "via",
+"b": "630ea360-6b23-4ece-b556-42efaa84e083",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "16a3583a-d3a5-4763-b60d-86a87a18d339",
+"a_kind": "pad",
+"b": "5f56a999-3205-4e91-aec9-eff5d2562e3a",
+"b_kind": "segment",
+"distance_mm": 0.75006
+},
+{
+"layer": "B.Cu",
+"a": "d2272f62-363c-4a5d-a0a0-e031167faa49",
+"a_kind": "pad",
+"b": "a68ccaed-dbed-40af-bbcb-1e2e52cb80a2",
+"b_kind": "segment",
+"distance_mm": 0.74896
+},
+{
+"layer": "B.Cu",
+"a": "5f9951b1-3c01-41aa-9f0b-489631014715",
+"a_kind": "via",
+"b": "864d33dd-93d7-43eb-ab6b-272a0e3a9bad",
+"b_kind": "segment",
+"distance_mm": 0.55835
+},
+{
+"layer": "F.Cu",
+"a": "b94bc8f1-3f88-4df1-9c4d-669edc728c81",
+"a_kind": "pad",
+"b": "2c1603b9-38e5-4b7c-82e6-1bb98ab0b90f",
+"b_kind": "via",
+"distance_mm": 0.0
+},
+{
+"layer": "F.Cu",
+"a": "3f2ae207-0307-46c6-af5c-f0e4944145bc",
+"a_kind": "segment",
+"b": "5b6f98a9-d687-457c-8317-f8ec17104771",
+"b_kind": "segment",
+"distance_mm": 0.57788
+},
+{
+"layer": "F.Cu",
+"a": "7019467e-83f4-4ffa-bc22-0d179cd8e8fa",
+"a_kind": "pad",
+"b": "a4f401ff-cca0-40ca-bdad-e86ba2c9411e",
+"b_kind": "segment",
+"distance_mm": 0.58703
+},
+{
+"layer": "B.Cu",
+"a": "a8c12df1-a567-456d-8ed0-dc3e855b162c",
+"a_kind": "pad",
+"b": "c9468a85-5c8e-4421-b98e-4fe2718e13bb",
+"b_kind": "segment",
+"distance_mm": 1.06006
+},
+{
+"layer": "B.Cu",
+"a": "df3f8a69-4337-4f5d-a68c-67a4a3572ca9",
+"a_kind": "pad",
+"b": "897d6d39-fa65-4070-91bb-a892ae44c8cf",
+"b_kind": "segment",
+"distance_mm": 0.56006
+},
+{
+"layer": "F.Cu",
+"a": "daa19c75-e9eb-41d7-b4c5-fcc44b47e20a",
+"a_kind": "pad",
+"b": "d7aff691-9c68-49f2-a85b-882ea7773f8b",
+"b_kind": "segment",
+"distance_mm": 0.19379
+},
+{
+"layer": "F.Cu",
+"a": "763c025a-070d-4ed4-811a-3666b6ba51d9",
+"a_kind": "pad",
+"b": "c5485ec6-5c6f-4480-bcd4-178d378531cb",
+"b_kind": "segment",
+"distance_mm": 0.72003
+},
+{
+"layer": "F.Cu",
+"a": "2b2c79f2-fdc9-4467-b778-c963c85cd76f",
+"a_kind": "segment",
+"b": "905a6c0c-edb0-4cb6-a819-0ed31342e5bf",
+"b_kind": "segment",
+"distance_mm": 0.63458
+},
+{
+"layer": "B.Cu",
+"a": "167c4d57-2f52-4c30-8e12-105f620abb4b",
+"a_kind": "pad",
+"b": "7025092d-74c5-47c7-8afd-d49cdc098042",
+"b_kind": "segment",
+"distance_mm": 1.20434
+},
+{
+"layer": "F.Cu",
+"a": "16a3583a-d3a5-4763-b60d-86a87a18d339",
+"a_kind": "pad",
+"b": "38bdd695-0594-4dbc-9a5c-319c981c707e",
+"b_kind": "segment",
+"distance_mm": 0.74707
+},
+{
+"layer": "B.Cu",
+"a": "f952fc70-0858-4d72-a8c9-ab73a9d0ffdd",
+"a_kind": "via",
+"b": "4cbcc9c8-0907-42fa-bd15-08f410e3f984",
+"b_kind": "segment",
+"distance_mm": 1.15564
+},
+{
+"layer": "B.Cu",
+"a": "a2058955-51dc-4b92-99e8-75756563dc8b",
+"a_kind": "pad",
+"b": "26d1dfec-2080-4168-be58-e8e45eb5d3a3",
+"b_kind": "via",
+"distance_mm": 0.30481
+},
+{
+"layer": "F.Cu",
+"a": "b94bc8f1-3f88-4df1-9c4d-669edc728c81",
+"a_kind": "pad",
+"b": "c6521e5a-2b8a-4c42-8c63-55f281fbfa7f",
+"b_kind": "segment",
+"distance_mm": 0.914
+},
+{
+"layer": "B.Cu",
+"a": "16dd37d5-6294-49b8-8ed2-f5d50aab94b7",
+"a_kind": "via",
+"b": "b48ad637-e6ee-45eb-8b96-6f0af5d70496",
+"b_kind": "segment",
+"distance_mm": 0.38574
+},
+{
+"layer": "F.Cu",
+"a": "b2e61cb6-4c65-4ccd-ab4e-8c5e3abd3996",
+"a_kind": "pad",
+"b": "135f7e87-2442-428d-afab-c65b479d788b",
+"b_kind": "segment",
+"distance_mm": 0.65002
+},
+{
+"layer": "F.Cu",
+"a": "9280722f-a89f-4e36-8e96-5c034dd17e4a",
+"a_kind": "pad",
+"b": "897ea256-f2dd-4402-816c-d43656c8f4e2",
+"b_kind": "via",
+"distance_mm": 0.2229
+},
+{
+"layer": "B.Cu",
+"a": "60f7ab73-0853-4873-b311-a166c0797024",
+"a_kind": "segment",
+"b": "a4ffd4e8-7c68-4d41-9bfd-8aa703d9ffa7",
+"b_kind": "segment",
+"distance_mm": 0.46686
+},
+{
+"layer": "B.Cu",
+"a": "faa4a6c3-8e93-4e52-a660-cc91cd6d3be1",
+"a_kind": "pad",
+"b": "df7d9705-e992-48ce-a404-23a021370353",
+"b_kind": "segment",
+"distance_mm": 0.4361
+},
+{
+"layer": "F.Cu",
+"a": "140c9061-ad17-40a1-9514-6c577ff30b96",
+"a_kind": "segment",
+"b": "a2511d3f-281e-43af-988f-d2dd2c4e552a",
+"b_kind": "segment",
+"distance_mm": 0.51544
+},
+{
+"layer": "F.Cu",
+"a": "b1f3ca9f-30e5-414a-9b59-5f8bd071656a",
+"a_kind": "segment",
+"b": "f78e9af8-551e-4a5f-844e-a1f629fdd0e7",
+"b_kind": "segment",
+"distance_mm": 0.51544
+}
+]
+}

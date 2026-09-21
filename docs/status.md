@@ -31,6 +31,16 @@ What is still missing here:
 - **Board-level content has no views.** Zones, groups, tracks, vias and the `setup` block round-trip
   intact but are only reachable as raw s-expressions.
 
+**Copper geometry and Specctra.**
+
+- **A padstack that differs per layer** (KiCad 9's `(padstack (mode custom) …)`) is described by its
+  main shape on every layer, in both `CopperGeometry` and the design a board exports.
+- **A custom pad** is exported to a design as the convex hull of its primitives, which covers it;
+  KiCad exports the outline of their union. Its geometry in `CopperGeometry` is exact.
+- **A session's `placement` is not applied.** A router does not move parts.
+- **Net classes are an input, not something read.** They live in the `.kicad_pro`, resolved through
+  patterns and priorities; `SpecctraOptions` takes them resolved.
+
 **IPC surface.**
 
 - **The schematic half of the IPC API is not there in KiCad 10.0.6, and this is what that looks

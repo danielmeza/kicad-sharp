@@ -17,7 +17,7 @@
        command line (-p:SExpressionsVersion=0.1.0-local.1) is how you build against a locally packed
        SExpressions; see README, "Developing against local SExpressions sources". -->
   <PropertyGroup>
-    <SExpressionsVersion Condition="'$(SExpressionsVersion)' == ''">0.1.1</SExpressionsVersion>
+    <SExpressionsVersion Condition="'$(SExpressionsVersion)' == ''">0.1.3</SExpressionsVersion>
   </PropertyGroup>
 
   <!-- NuGet package metadata, applied to the projects that set IsPackable=true.

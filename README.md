@@ -46,7 +46,7 @@ document model here covers symbol and footprint libraries well; its write path i
 
 | Package | What it's for |
 |---|---|
-| [`KiCadSharp`](https://www.nuget.org/packages/KiCadSharp) | The client: IPC, plus the on-disk symbol and footprint formats. |
+| [`KiCadSharp`](https://www.nuget.org/packages/KiCadSharp) | The client: IPC, plus the on-disk symbol, footprint and board formats, copper geometry checked against KiCad's own, and Specctra DSN export and session import for an autorouter. |
 | [`KiCadSharp.Protos`](https://www.nuget.org/packages/KiCadSharp.Protos) | Generated C# types for KiCad's protobuf API. Separate package because they appear in `KiCadSharp`'s public surface. |
 | [`KiCadSharp.Cli`](https://www.nuget.org/packages/KiCadSharp.Cli) | A dotnet tool, `kicadsharp`, for s-expression files from a shell. |
 

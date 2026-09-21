@@ -1,0 +1,332 @@
+(session "SNEdge-unrouted"
+  (base_design "SNEdge-unrouted")
+  (placement
+    (resolution um 10)
+    (component "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
+      (place R4 1540750 -976250 front 0)
+      (place R5 1503750 -976250 front 0)
+      (place R15 1414750 -1056048 front 0)
+      (place R9 1466750 -957250 front 0)
+      (place R2 1373750 -926250 front 90)
+      (place R1 1329750 -926250 front 90)
+      (place R3 1417750 -926250 front 90)
+      (place R12 1453750 -1037250 front 90)
+      (place R7 1540750 -957250 front 180)
+      (place R11 1500750 -1006250 front 180)
+      (place R10 1377750 -1060150 front 180)
+      (place R6 1466750 -976250 front 180)
+      (place R8 1503750 -957250 front 180)
+      (place R13 1510750 -1037250 front 270)
+      (place R14 1491750 -1037250 front 270)
+    )
+    (component "TestPoint:TestPoint_Pad_1.5x1.5mm"
+      (place TP5 1351750 -915250 front 0)
+      (place TP4 1395750 -915250 front 0)
+      (place TP7 1502750 -915250 front 0)
+      (place TP6 1540750 -915250 front 0)
+      (place TP3 1439750 -915250 front 0)
+      (place TP8 1464750 -915250 front 0)
+      (place TP1 1725750 -1000250 front 90)
+      (place TP2 1725750 -975250 front 90)
+    )
+    (component "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
+      (place C8 1464750 -937750 front 0)
+      (place C2 1339125 -1040641 front 0)
+      (place C1 1694125 -972250 front 180)
+      (place C7 1502750 -937750 front 180)
+      (place C6 1540750 -937750 front 180)
+      (place C3 1331750 -992250 front 90)
+      (place C5 1430750 -992250 front 90)
+      (place C4 1410750 -992250 front 90)
+    )
+    (component "TT_Connectors:CON_527460771_MOL"
+      (place J1 1613750 -974250 front 0)
+    )
+    (component "TT_Jumpers:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder_Jumper_Closed"
+      (place JP1 1694125 -1000250 front 180)
+    )
+    (component "Connector_Coaxial:U.FL_Hirose_U.FL-R-SMT-1_Vertical"
+      (place J9 1584750 -923250 front 90)
+      (place J8 1648750 -923250 front 90)
+      (place J10 1712750 -923250 front 90)
+    )
+    (component "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
+      (place U1 1372750 -992250 front 270)
+    )
+  )
+  (was_is
+  )
+  (routes 
+    (resolution um 10)
+    (parser
+      (host_cad "KiCad's Pcbnew")
+      (host_version "10.0.6-10.0.6~ubuntu26.04.1")
+    )
+    (library_out 
+      (padstack "Via[0-1]_600:300_um"
+        (shape
+          (circle F.Cu 6000 0 0)
+        )
+        (shape
+          (circle B.Cu 6000 0 0)
+        )
+        (attach off)
+      )
+    )
+    (network_out 
+      (net GND
+        (via "Via[0-1]_600:300_um" 1386250 -1043107
+        )
+      )
+      (net "Net-(U1-CH4_OUT)"
+        (wire
+          (path B.Cu 2000
+            1403836 -1040444
+            1411735 -1048343
+            1500397 -1048343
+            1555150 -993590
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1530750 -976250
+            1548090 -993590
+            1555150 -993590
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1403836 -1040444
+            1394649 -1049631
+            1378269 -1049631
+            1367750 -1060150
+          )
+        )
+        (via "Via[0-1]_600:300_um" 1403836 -1040444
+        )
+        (via "Via[0-1]_600:300_um" 1555150 -993590
+        )
+      )
+      (net "Net-(C6-Pad1)"
+        (wire
+          (path F.Cu 2000
+            1550750 -957250
+            1550750 -938125
+            1551125 -937750
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1550750 -957250
+            1550750 -976250
+          )
+        )
+      )
+      (net "Net-(U1-CH3_OUT)"
+        (wire
+          (path F.Cu 2000
+            1493750 -976250
+            1490750 -979250
+            1490750 -1006250
+          )
+        )
+      )
+      (net "Net-(C7-Pad1)"
+        (wire
+          (path F.Cu 2000
+            1513750 -957250
+            1513125 -956625
+            1513125 -937750
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1513750 -957250
+            1513750 -976250
+          )
+        )
+      )
+      (net "Net-(C8-Pad1)"
+        (wire
+          (path F.Cu 2000
+            1456750 -957250
+            1454375 -954875
+            1454375 -937750
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1456750 -976250
+            1456750 -957250
+          )
+        )
+      )
+      (net VCC
+        (wire
+          (path F.Cu 2000
+            1349500 -1040641
+            1349500 -1040640
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1684125 -1000250
+            1683750 -1000250
+          )
+        )
+      )
+      (net "Net-(JP1-A)"
+        (wire
+          (path F.Cu 2000
+            1725750 -1000250
+            1704125 -1000250
+          )
+        )
+      )
+      (net "Net-(U1-CH2_OUT)"
+        (wire
+          (path F.Cu 2000
+            1453750 -1027250
+            1453750 -999250
+            1476750 -976250
+          )
+        )
+      )
+      (net "Net-(J1-Pin_2)"
+        (wire
+          (path B.Cu 2000
+            1561779 -951815
+            1557195 -951815
+            1516988 -992022
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1516988 -992022
+            1510750 -998260
+            1510750 -1006250
+          )
+        )
+        (via "Via[0-1]_600:300_um" 1516988 -992022
+        )
+        (wire
+          (path F.Cu 2000
+            1491750 -1027250
+            1491750 -1025250
+            1510750 -1006250
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1561779 -951815
+            1579844 -933750
+            1584750 -933750
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1603750 -943233
+            1594267 -933750
+            1584750 -933750
+          )
+        )
+        (via "Via[0-1]_600:300_um" 1561779 -951815
+        )
+        (wire
+          (path F.Cu 2000
+            1603750 -950250
+            1603750 -943233
+          )
+        )
+      )
+      (net "Net-(J1-Pin_4)"
+        (wire
+          (path F.Cu 2000
+            1611950 -968106
+            1576610 -1003446
+            1534554 -1003446
+            1510750 -1027250
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1510750 -1027250
+            1501500 -1036500
+            1464500 -1036500
+            1453750 -1047250
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1611950 -968106
+            1613750 -966306
+            1613750 -950250
+          )
+        )
+        (via "Via[0-1]_600:300_um" 1611950 -968106
+        )
+        (wire
+          (path F.Cu 2000
+            1613750 -950250
+            1613750 -943233
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1648750 -933750
+            1623233 -933750
+            1613750 -943233
+          )
+        )
+      )
+      (net "Net-(J1-Pin_6)"
+        (wire
+          (path B.Cu 2000
+            1668750 -941895
+            1594044 -941895
+            1494095 -1041844
+            1413978 -1041844
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1413978 -1041844
+            1404750 -1051072
+            1404750 -1056048
+          )
+        )
+        (via "Via[0-1]_600:300_um" 1413978 -1041844
+        )
+        (wire
+          (path F.Cu 2000
+            1387750 -1060150
+            1400648 -1060150
+            1404750 -1056048
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1668750 -941895
+            1704605 -941895
+            1712750 -933750
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1623750 -943233
+            1667412 -943233
+            1668750 -941895
+          )
+        )
+        (wire
+          (path F.Cu 2000
+            1623750 -950250
+            1623750 -943233
+          )
+        )
+        (via "Via[0-1]_600:300_um" 1668750 -941895
+        )
+      )
+    )
+  )
+)
