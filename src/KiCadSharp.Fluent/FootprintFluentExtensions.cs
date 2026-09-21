@@ -24,8 +24,8 @@ namespace KiCadSharp.Fluent
     public static class FootprintFluentExtensions
     {
         /// <summary>
-        /// Appends a footprint, as <see cref="KiCadFootprintLibrary.AddFootprint"/> does, and returns
-        /// the library.
+        /// Appends a footprint, moving it out of wherever it was, as
+        /// <see cref="KiCadFootprintLibrary.AddFootprint"/> does, and returns the library.
         /// </summary>
         /// <typeparam name="TFootprint">The footprint's type, which the callback receives.</typeparam>
         /// <param name="library">The library to append to.</param>
@@ -33,6 +33,12 @@ namespace KiCadSharp.Fluent
         /// <param name="configure">Called with <paramref name="footprint"/> once it is a child of the library.</param>
         /// <returns><paramref name="library"/>.</returns>
         /// <exception cref="InvalidOperationException">The file is a single footprint and cannot hold another.</exception>
+        /// <remarks>
+        /// The node itself moves, as it does for <c>AddFootprint</c>: a footprint taken from another
+        /// board leaves that board, and one taken from a <c>.kicad_mod</c> leaves that file empty (see
+        /// <see cref="KiCadNode"/>). To keep the source as it was, pass
+        /// <c>new KiCadFootprint(footprint.Node.Clone())</c>, or <see cref="KiCadFootprint.CloneAs"/>.
+        /// </remarks>
         public static KiCadFootprintLibrary WithFootprint<TFootprint>(this KiCadFootprintLibrary library, TFootprint footprint, Action<TFootprint>? configure = null)
             where TFootprint : KiCadFootprint
         {

@@ -64,6 +64,26 @@ public class NodeListFluentTests
     }
 
     [Fact]
+    public void With_GivenAnElementOfAnotherFile_MovesIt_ExactlyAsAddDoes()
+    {
+        var from = new KiCadBoard();
+        from.Zones.With(z => z.WithPoint(0, 0).WithPoint(5, 0).WithPoint(5, 5));
+        var to = new KiCadBoard();
+
+        to.Zones.With(from.Zones[0]);
+
+        Assert.Empty(from.Zones);
+        Assert.Equal(3, Assert.Single(to.Zones).Points.Count);
+
+        var addFrom = new KiCadBoard();
+        addFrom.Zones.With(z => z.WithPoint(0, 0).WithPoint(5, 0).WithPoint(5, 5));
+        var addTo = new KiCadBoard();
+        addTo.Zones.Add(addFrom.Zones[0]);
+        Assert.Equal(addFrom.ToText(), from.ToText());
+        Assert.Equal(addTo.ToText(), to.ToText());
+    }
+
+    [Fact]
     public void With_GivenAnElementOfTheWrongToken_ThrowsWhatAddThrows_AndNeverCallsBack()
     {
         var board = new KiCadBoard();

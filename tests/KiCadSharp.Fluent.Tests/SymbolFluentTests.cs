@@ -38,6 +38,47 @@ public class SymbolFluentTests
     }
 
     [Fact]
+    public void WithSymbol_MovesASymbolOutOfItsLibrary_ExactlyAsAddSymbolDoes()
+    {
+        // A node has one parent, so adding a symbol that lives in another library moves it there.
+        // The copy loop over a live list must move every one, not every other one (#50).
+        var source = new KiCadSymbolLibrary().WithSymbol("R").WithSymbol("C").WithSymbol("L");
+        var destination = new KiCadSymbolLibrary();
+        foreach (var symbol in source.Symbols)
+        {
+            destination.WithSymbol(symbol);
+        }
+
+        var addSource = new KiCadSymbolLibrary();
+        addSource.AddSymbol("R");
+        addSource.AddSymbol("C");
+        addSource.AddSymbol("L");
+        var addDestination = new KiCadSymbolLibrary();
+        foreach (var symbol in addSource.Symbols)
+        {
+            addDestination.AddSymbol(symbol);
+        }
+
+        Assert.Empty(source.Symbols);
+        Assert.Equal(["R", "C", "L"], destination.Symbols.Select(s => s.Id));
+        Assert.Equal(addSource.ToText(), source.ToText());
+        Assert.Equal(addDestination.ToText(), destination.ToText());
+    }
+
+    [Fact]
+    public void WithSymbol_GivenAClone_LeavesTheOriginalWhereItWas()
+    {
+        var source = new KiCadSymbolLibrary().WithSymbol("R");
+        var original = source.Symbols[0];
+
+        var destination = new KiCadSymbolLibrary().WithSymbol(new KiCadSymbol(original.Node.Clone()));
+
+        Assert.Same(original.Node, Assert.Single(source.Symbols).Node);
+        Assert.NotSame(original.Node, Assert.Single(destination.Symbols).Node);
+        Assert.Equal(source.ToText(), destination.ToText());
+    }
+
+    [Fact]
     public void WithSymbol_GivenAName_ReturnsTheLibrary_CreatesTheSymbol_AndHandsItOver()
     {
         var library = new KiCadSymbolLibrary();

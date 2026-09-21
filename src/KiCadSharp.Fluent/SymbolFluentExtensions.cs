@@ -22,6 +22,12 @@ namespace KiCadSharp.Fluent
     /// passed in, which the <c>Add*</c> has just made a child.
     /// </para>
     /// <para>
+    /// Those methods move the node they are given, because the <c>Add*</c> they call does: a node has
+    /// one parent, so a symbol, pin or item that belonged somewhere else leaves it (see
+    /// <see cref="KiCadNode"/>). To leave the original where it is, pass a copy —
+    /// <c>new KiCadSymbol(symbol.Node.Clone())</c>.
+    /// </para>
+    /// <para>
     /// <see cref="KiCadPolyline.AddPoint"/> returns nothing, so <see cref="WithPoint"/> has no
     /// callback: there is no child view to hand over.
     /// </para>
@@ -29,14 +35,20 @@ namespace KiCadSharp.Fluent
     public static class SymbolFluentExtensions
     {
         /// <summary>
-        /// Appends an existing symbol, as <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/>
-        /// does, and returns the library.
+        /// Appends an existing symbol, moving it out of wherever it was, as
+        /// <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/> does, and returns the library.
         /// </summary>
         /// <typeparam name="TSymbol">The symbol's type, which the callback receives.</typeparam>
         /// <param name="library">The library to append to.</param>
         /// <param name="symbol">The symbol to append.</param>
         /// <param name="configure">Called with <paramref name="symbol"/> once it is a child of the library.</param>
         /// <returns><paramref name="library"/>.</returns>
+        /// <remarks>
+        /// A symbol taken from another library leaves that library: the node itself moves, bytes and
+        /// all (see <see cref="KiCadNode"/>). <c>foreach (var s in source.Symbols)
+        /// destination.WithSymbol(s)</c> moves every symbol and leaves <c>source</c> with none. To keep
+        /// the source as it was, pass <c>new KiCadSymbol(s.Node.Clone())</c> instead.
+        /// </remarks>
         public static KiCadSymbolLibrary WithSymbol<TSymbol>(this KiCadSymbolLibrary library, TSymbol symbol, Action<TSymbol>? configure = null)
             where TSymbol : KiCadSymbol
         {
@@ -75,8 +87,8 @@ namespace KiCadSharp.Fluent
         }
 
         /// <summary>
-        /// Appends a pin to the symbol form itself, as <see cref="KiCadSymbol.AddPin"/> does, and
-        /// returns the symbol.
+        /// Appends a pin to the symbol form itself, moving it out of wherever it was, as
+        /// <see cref="KiCadSymbol.AddPin"/> does, and returns the symbol.
         /// </summary>
         /// <typeparam name="TPin">The pin's type, which the callback receives.</typeparam>
         /// <param name="symbol">The symbol to append to.</param>
@@ -86,7 +98,8 @@ namespace KiCadSharp.Fluent
         /// <remarks>
         /// KiCad puts pins in a sub-unit, not on the outer form. To match what the editor writes, use
         /// <see cref="WithUnit"/> and <see cref="WithPin{TPin}(KiCadSymbolUnit, TPin, Action{TPin})"/>
-        /// on the unit; this one is for symbols built entirely in memory.
+        /// on the unit; this one is for symbols built entirely in memory. A pin that belongs to another
+        /// symbol or sub-unit leaves it (see <see cref="KiCadNode"/>).
         /// </remarks>
         public static KiCadSymbol WithPin<TPin>(this KiCadSymbol symbol, TPin pin, Action<TPin>? configure = null)
             where TPin : KiCadPin
@@ -97,7 +110,7 @@ namespace KiCadSharp.Fluent
         }
 
         /// <summary>
-        /// Appends a graphical item to the symbol form itself, as
+        /// Appends a graphical item to the symbol form itself, moving it out of wherever it was, as
         /// <see cref="KiCadSymbol.AddGraphicalItem"/> does, and returns the symbol.
         /// </summary>
         /// <typeparam name="TItem">The item's type, which the callback receives.</typeparam>
@@ -105,6 +118,7 @@ namespace KiCadSharp.Fluent
         /// <param name="item">The item: a <see cref="KiCadPolyline"/>, <see cref="KiCadRectangle"/>, <see cref="KiCadCircle"/>, and so on.</param>
         /// <param name="configure">Called with <paramref name="item"/> once it is a child of the symbol.</param>
         /// <returns><paramref name="symbol"/>.</returns>
+        /// <remarks>An item that belongs to another symbol or sub-unit leaves it (see <see cref="KiCadNode"/>).</remarks>
         public static KiCadSymbol WithGraphicalItem<TItem>(this KiCadSymbol symbol, TItem item, Action<TItem>? configure = null)
             where TItem : KiCadGraphicalItem
         {
@@ -128,13 +142,15 @@ namespace KiCadSharp.Fluent
         }
 
         /// <summary>
-        /// Appends a pin, as <see cref="KiCadSymbolUnit.AddPin"/> does, and returns the sub-unit.
+        /// Appends a pin, moving it out of wherever it was, as <see cref="KiCadSymbolUnit.AddPin"/>
+        /// does, and returns the sub-unit.
         /// </summary>
         /// <typeparam name="TPin">The pin's type, which the callback receives.</typeparam>
         /// <param name="unit">The sub-unit to append to.</param>
         /// <param name="pin">The pin.</param>
         /// <param name="configure">Called with <paramref name="pin"/> once it is a child of the sub-unit.</param>
         /// <returns><paramref name="unit"/>.</returns>
+        /// <remarks>A pin that belongs to another sub-unit or symbol leaves it (see <see cref="KiCadNode"/>).</remarks>
         public static KiCadSymbolUnit WithPin<TPin>(this KiCadSymbolUnit unit, TPin pin, Action<TPin>? configure = null)
             where TPin : KiCadPin
         {

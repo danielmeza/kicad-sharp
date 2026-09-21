@@ -36,7 +36,8 @@ namespace KiCadSharp.Fluent
         }
 
         /// <summary>
-        /// Appends an existing element, as <see cref="KiCadNodeList{T}.Add(T)"/> does, and returns the list.
+        /// Appends an existing element, moving it out of wherever it was, as
+        /// <see cref="KiCadNodeList{T}.Add(T)"/> does, and returns the list.
         /// </summary>
         /// <typeparam name="T">The element type.</typeparam>
         /// <param name="list">The list to append to.</param>
@@ -44,6 +45,10 @@ namespace KiCadSharp.Fluent
         /// <param name="configure">Called with the appended element.</param>
         /// <returns><paramref name="list"/>.</returns>
         /// <exception cref="ArgumentException">The node's token does not match.</exception>
+        /// <remarks>
+        /// The node leaves its previous parent, in this file or another; see <see cref="KiCadNode"/>.
+        /// Pass <c>item.Node.Clone()</c> wrapped in a view to keep the original.
+        /// </remarks>
         public static KiCadNodeList<T> With<T>(this KiCadNodeList<T> list, T item, Action<T>? configure = null)
             where T : KiCadNode
         {

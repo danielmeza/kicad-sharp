@@ -289,6 +289,10 @@ one rule:
 - **Same arguments, same names, same exceptions.** When the caller passes the child in (a symbol,
   a pin, a graphical item), the method is generic in its type, so the callback sees what was passed:
   `symbol.WithGraphicalItem(new KiCadPolyline(), p => p.WithPoint(0, 0))` needs no cast.
+- **A `With*` that takes an existing view moves it, as its `Add*` does.** A node has one parent,
+  so a symbol, footprint, pin, item or list element that belonged somewhere else leaves it. That
+  includes another file. `foreach (var s in source.Symbols) destination.WithSymbol(s)` moves every
+  symbol. To leave the original where it is, pass a copy: `new KiCadSymbol(s.Node.Clone())`.
 - **An optional `width` is an overload, not a default.** `AddLine` and `AddCircle` default `width`.
   Leave it out of `WithLine`/`WithCircle` and they call the `Add*` without one, so the default stays
   the core's.
