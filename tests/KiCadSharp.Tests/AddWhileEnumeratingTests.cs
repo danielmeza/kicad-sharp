@@ -437,4 +437,25 @@ public class AddWhileEnumeratingTests
         Assert.Null(file.Document.Root);
         Assert.DoesNotContain(id, file.ToText(), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void ExportSymbolToLibrary_LeavesTheSymbolWhereItWas()
+    {
+        // An export writes a file; it does not take the symbol out of the library it came from.
+        var library = KiCadSymbolLibrary.Load(TestData.SymbolLibrary);
+        var before = library.ToText();
+        var directory = TestData.NewScratchDirectory();
+
+        foreach (var symbol in library.Symbols)
+        {
+            KiCadUtils.ExportSymbolToLibrary(symbol, Path.Combine(directory, symbol.Id + ".kicad_sym"));
+        }
+
+        Assert.Equal(OrbionSymbols, library.Symbols.Count);
+        Assert.Equal(before, library.ToText());
+        Assert.Equal(OrbionSymbols, Directory.GetFiles(directory, "*.kicad_sym").Length);
+
+        var exported = KiCadSymbolLibrary.Load(Path.Combine(directory, "Conn_01x02.kicad_sym"));
+        Assert.Equal(library.GetSymbol("Conn_01x02")?.Node.ToText(), Assert.Single(exported.Symbols).Node.ToText());
+    }
 }

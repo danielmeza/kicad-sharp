@@ -35,10 +35,17 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="symbol">Symbol to export</param>
         /// <param name="filePath">Path to the output file</param>
+        /// <remarks>
+        /// The file gets a copy of the symbol's node, so the symbol stays in the library it came from
+        /// and the export still writes its original bytes. Adding the node itself would move it out
+        /// of that library (see <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/>), and saving
+        /// the library afterwards would lose the symbol.
+        /// </remarks>
         public static void ExportSymbolToLibrary(KiCadSymbol symbol, string filePath)
         {
+            ArgumentNullException.ThrowIfNull(symbol);
             var library = new KiCadSymbolLibrary();
-            library.AddSymbol(symbol);
+            library.AddSymbol(new KiCadSymbol(symbol.Node.Clone()));
             library.Save(filePath);
         }
 
