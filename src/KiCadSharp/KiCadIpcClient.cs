@@ -42,11 +42,10 @@ namespace KiCadSharp
         /// instead of setting this globally.
         /// </para>
         /// <para>
-        /// This also bounds the send, as nng's <c>send-timeout</c>, and there a token does not reach:
-        /// measured, a KiCad that goes away after the dial leaves <c>nng_sendmsg</c> waiting for a
-        /// peer on the calling thread until this runs out. Either way the
-        /// <see cref="KiCadConnectionException"/> carries a <see cref="TimeoutException"/> as its
-        /// inner exception.
+        /// It bounds the send the same way, separately. A KiCad that goes away after the dial leaves
+        /// the request with nobody to take it, and the send waits for somebody until this runs out,
+        /// or until the token is cancelled. Either way the <see cref="KiCadConnectionException"/>
+        /// carries a <see cref="TimeoutException"/> as its inner exception.
         /// </para>
         /// </remarks>
         public TimeSpan RequestTimeout { get; set; } = Timeout.InfiniteTimeSpan;
@@ -120,10 +119,10 @@ namespace KiCadSharp
             NngRequestSocket socket;
             try
             {
-                // Sending is a blocking nng call, so it is bounded by a socket option; receiving is
-                // polled and bounded by the loop in Receive. The dial itself is blocking, as before:
-                // nng bounds it at about 10 s against a socket that is bound but not answering, and
-                // fails immediately against a path that is not there.
+                // Sending and receiving are both polled, and bounded by the loop in Poll; the socket
+                // options are set too, but no call this client makes waits on them. The dial itself
+                // is blocking, as before: nng bounds it at about 10 s against a socket that is bound
+                // but not answering, and fails immediately against a path that is not there.
                 socket = NngRequestSocket.Dial(_settings.PipeName, _settings.RequestTimeout, _settings.RequestTimeout);
             }
             catch (NngException exception)
@@ -150,10 +149,9 @@ namespace KiCadSharp
         /// <typeparam name="TResult">The message type the command returns.</typeparam>
         /// <param name="command">The command to send.</param>
         /// <param name="cancellationToken">
-        /// Cancels the round trip, including while the reply is awaited. It cannot interrupt the send
-        /// itself: with no KiCad to take the request, <c>nng_sendmsg</c> blocks the calling thread
-        /// until <see cref="KiCadClientSettings.RequestTimeout"/> runs out, which by default it never
-        /// does, or until <see cref="Disconnect"/> closes the socket.
+        /// Cancels the round trip at any point in it: while the send waits for KiCad to take the
+        /// request, which it does without holding a thread when KiCad has gone away, and while the
+        /// reply is awaited.
         /// </param>
         /// <returns>KiCad's reply.</returns>
         /// <remarks>
@@ -172,8 +170,9 @@ namespace KiCadSharp
         /// <typeparamref name="TResult"/> in the reply.
         /// </exception>
         /// <exception cref="OperationCanceledException">
-        /// <paramref name="cancellationToken"/> was cancelled, or <see cref="Disconnect"/> was called
-        /// while the request was outstanding.
+        /// <paramref name="cancellationToken"/> was cancelled, and the exception carries it as its
+        /// <see cref="OperationCanceledException.CancellationToken"/>; or <see cref="Disconnect"/> was
+        /// called while the request was outstanding.
         /// </exception>
         /// <exception cref="ArgumentNullException"><paramref name="command"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The client has been disposed.</exception>
@@ -200,10 +199,10 @@ namespace KiCadSharp
             //
             // The linked token used to be built and then never looked at, so nothing this client did
             // could be cancelled or would even notice a disconnect. It is now honoured for the whole
-            // round trip: the reply is polled for rather than blocked on, so cancelling while the
-            // request is on the wire returns here instead of waiting for KiCad.
+            // round trip: the send and the reply are both polled for rather than blocked on, so
+            // cancelling while either waits returns here instead of waiting for KiCad.
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(_connectionCancellationSource.Token, cancellationToken);
-            linked.Token.ThrowIfCancellationRequested();
+            ThrowIfAbandoned(linked.Token, cancellationToken);
 
             var envelope = new ApiRequest();
             envelope.Message = Any.Pack(command);
@@ -229,41 +228,33 @@ namespace KiCadSharp
 
             // REQ carries one request at a time. Two callers sharing a client would otherwise
             // interleave their sends and take each other's replies.
-            await _exchange.WaitAsync(linked.Token);
+            try
+            {
+                await _exchange.WaitAsync(linked.Token);
+            }
+            catch (OperationCanceledException) when (linked.Token.IsCancellationRequested)
+            {
+                // Queued behind another caller's request. The same cancellation as anywhere else in
+                // the round trip, carrying the caller's own token rather than the linked one.
+                throw Abandoned(linked.Token, cancellationToken);
+            }
+
             try
             {
                 try
                 {
-                    socket.Send(envelope.ToByteArray());
-                }
-                catch (Exception exception) when ((exception is NngException or ObjectDisposedException) && linked.Token.IsCancellationRequested)
-                {
-                    // Disconnect() cancels the connection's token and then closes the socket. A send
-                    // blocked in nng when the socket closes fails with NNG_ECLOSED -- measured: with
-                    // the default infinite RequestTimeout and KiCad gone, nng_sendmsg waits for a peer
-                    // until the socket is closed under it -- and one that starts between the two finds
-                    // the socket disposed. Either way the disconnect cut the request off, and it ends
-                    // the way the poll in Receive ends one: as a cancellation.
-                    throw new OperationCanceledException("The request was abandoned: the client was disconnected or the operation was cancelled.", exception, linked.Token);
-                }
-                catch (NngException exception) when (exception.Error == Nng.TimedOut)
-                {
-                    // RequestTimeout is also the socket's send-timeout, and a REQ socket with no peer
-                    // to hand the request to -- KiCad went away after the dial -- waits in
-                    // nng_sendmsg until it runs out. The same budget as the wait for the reply, so
-                    // the same TimeoutException inside.
-                    throw new KiCadConnectionException(
-                        $"KiCad did not take the request within {_settings.RequestTimeout}: {exception.Message}",
-                        new TimeoutException($"KiCad did not take the request within {_settings.RequestTimeout}.", exception));
+                    await SendRequest(socket, envelope.ToByteArray(), linked.Token, cancellationToken);
                 }
                 catch (NngException exception)
                 {
+                    // A cancellation, a disconnect and RequestTimeout are already the exceptions they
+                    // should be; anything else nng refused is a connection failure.
                     throw new KiCadConnectionException($"Failed to send command to KiCad: {exception.Message}", exception);
                 }
 
                 try
                 {
-                    var response = await Receive(socket, linked.Token);
+                    var response = await Receive(socket, linked.Token, cancellationToken);
                     reply = ApiResponse.Parser.ParseFrom(response);
                 }
                 catch (Exception exception) when (exception is NngException or InvalidProtocolBufferException)
@@ -290,7 +281,7 @@ namespace KiCadSharp
                 _settings.Token = header.KicadToken;
             }
 
-            linked.Token.ThrowIfCancellationRequested();
+            ThrowIfAbandoned(linked.Token, cancellationToken);
             return result;
         }
 
@@ -371,16 +362,71 @@ namespace KiCadSharp
             ?? $"status {(int)code}";
 
         /// <summary>
-        /// Waits for the reply to the request just sent, without blocking on nng.
+        /// Hands the request to nng once it has a connection to send it on, without blocking on nng.
         /// </summary>
         /// <remarks>
-        /// A blocking <c>nng_recvmsg</c> with a timeout cannot be used for this: measured, a receive
-        /// that times out destroys the outstanding request, and the reply that arrives afterwards is
-        /// discarded rather than returned by a second receive. Polling a non-blocking receive leaves
-        /// the request standing between looks, which is what gives the token somewhere to be
-        /// observed.
+        /// Against a KiCad that is there, the first attempt sends it. The wait is for a KiCad that went
+        /// away after the dial: the REQ socket then has nobody to hand the request to, and this polls
+        /// until somebody takes it, the token is cancelled, or
+        /// <see cref="KiCadClientSettings.RequestTimeout"/> runs out.
         /// </remarks>
-        private async ValueTask<byte[]> Receive(NngRequestSocket socket, CancellationToken cancellationToken)
+        private ValueTask SendRequest(NngRequestSocket socket, byte[] request, CancellationToken linked, CancellationToken caller) =>
+            Poll(
+                () => socket.TrySend(request),
+                timeout => new KiCadConnectionException(
+                    $"KiCad did not take the request within {timeout}: nng had no connection ready to send it on.",
+                    // The same TimeoutException inside as for the reply, around what nng answered the
+                    // last attempt: NNG_EAGAIN, "not now".
+                    new TimeoutException(
+                        $"KiCad did not take the request within {timeout}.",
+                        new NngException(nameof(Nng.nng_sendmsg), Nng.Again))),
+                linked,
+                caller);
+
+        /// <summary>
+        /// Waits for the reply to the request just sent, without blocking on nng.
+        /// </summary>
+        private async ValueTask<byte[]> Receive(NngRequestSocket socket, CancellationToken linked, CancellationToken caller)
+        {
+            byte[]? payload = null;
+
+            await Poll(
+                () => socket.TryReceive(out payload),
+                // A TimeoutException inside, as HttpClient does for its own Timeout, so a caller can
+                // tell RequestTimeout running out from the other connection failures without reading
+                // the message.
+                timeout => new KiCadConnectionException(
+                    $"KiCad did not reply within {timeout}. The request is still outstanding and will be replaced by the next one.",
+                    new TimeoutException($"No reply from KiCad within {timeout}.")),
+                linked,
+                caller);
+
+            // Poll returns only once TryReceive has returned true, and then the payload is set.
+            return payload!;
+        }
+
+        /// <summary>
+        /// Calls <paramref name="attempt"/> until it returns <see langword="true"/>, without ever
+        /// blocking in nng: on the calling thread for the first <see cref="SpinWindow"/>, then on a
+        /// timer with a doubling delay.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Both halves of the round trip go through here, because neither can be a blocking nng call.
+        /// A blocking <c>nng_recvmsg</c> that times out destroys the outstanding request: measured,
+        /// the reply that arrives afterwards is discarded rather than returned by a second receive. A
+        /// blocking <c>nng_sendmsg</c> with nobody to take the request waits in nng for as long as
+        /// <c>send-timeout</c> allows, which by default is forever, on the calling thread, and no
+        /// token reaches it (#58). Asking nng for "now or not at all", and asking again, leaves the
+        /// request standing between looks, and gives the token somewhere to be observed.
+        /// </para>
+        /// <para>
+        /// <see cref="KiCadClientSettings.RequestTimeout"/> bounds each call separately, as the
+        /// socket's <c>send-timeout</c> and the receive loop used to. When it runs out, the exception
+        /// <paramref name="timedOut"/> builds for it is thrown.
+        /// </para>
+        /// </remarks>
+        private async ValueTask Poll(Func<bool> attempt, Func<TimeSpan, KiCadConnectionException> timedOut, CancellationToken linked, CancellationToken caller)
         {
             var elapsed = Stopwatch.StartNew();
             var timeout = _settings.RequestTimeout;
@@ -388,33 +434,28 @@ namespace KiCadSharp
 
             while (true)
             {
-                // Before the receive, not after: Disconnect() cancels this token and then closes the
+                // Before the attempt, not after: Disconnect() cancels this token and then closes the
                 // socket, so a poll that reads the token first reports the disconnect as a
                 // cancellation rather than as a use of a closed socket.
-                cancellationToken.ThrowIfCancellationRequested();
+                ThrowIfAbandoned(linked, caller);
 
                 try
                 {
-                    if (socket.TryReceive(out var payload))
+                    if (attempt())
                     {
-                        return payload;
+                        return;
                     }
                 }
-                catch (Exception exception) when ((exception is NngException or ObjectDisposedException) && cancellationToken.IsCancellationRequested)
+                catch (Exception exception) when ((exception is NngException or ObjectDisposedException) && linked.IsCancellationRequested)
                 {
-                    // The same disconnect, arriving between the look at the token above and the
-                    // receive: the socket is disposed, or nng closed it during the call.
-                    throw new OperationCanceledException("The request was abandoned: the client was disconnected or the operation was cancelled.", exception, cancellationToken);
+                    // The same disconnect, arriving between the look at the token above and the nng
+                    // call: the socket is disposed, or nng closed it during the call.
+                    throw Abandoned(linked, caller, exception);
                 }
 
                 if (timeout != Timeout.InfiniteTimeSpan && elapsed.Elapsed >= timeout)
                 {
-                    // A TimeoutException inside, as HttpClient does for its own Timeout, so a caller
-                    // can tell RequestTimeout running out from the other connection failures without
-                    // reading the message.
-                    throw new KiCadConnectionException(
-                        $"KiCad did not reply within {timeout}. The request is still outstanding and will be replaced by the next one.",
-                        new TimeoutException($"No reply from KiCad within {timeout}."));
+                    throw timedOut(timeout);
                 }
 
                 if (elapsed.Elapsed < SpinWindow)
@@ -424,9 +465,35 @@ namespace KiCadSharp
                 }
 
                 delay = delay == 0 ? 1 : Math.Min(delay * 2, MaximumPollDelayMilliseconds);
-                await Task.Delay(delay, cancellationToken);
+
+                // A cancelled delay does not throw here. The top of the loop reports it, with the
+                // caller's own token when it was the caller who cancelled.
+                await Task.Delay(delay, linked).ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext | ConfigureAwaitOptions.SuppressThrowing);
             }
         }
+
+        /// <summary>Throws <see cref="Abandoned"/> once <paramref name="linked"/> is cancelled.</summary>
+        private static void ThrowIfAbandoned(CancellationToken linked, CancellationToken caller)
+        {
+            if (linked.IsCancellationRequested)
+            {
+                throw Abandoned(linked, caller);
+            }
+        }
+
+        /// <summary>
+        /// The cancellation that ends a request once <paramref name="linked"/>, the connection's token
+        /// linked with the caller's, is cancelled.
+        /// </summary>
+        /// <remarks>
+        /// When the caller cancelled, it carries the caller's own token, so that the caller can tell
+        /// its cancellation from any other by <see cref="OperationCanceledException.CancellationToken"/>.
+        /// Otherwise <see cref="Disconnect"/> cut the request off, and it carries the linked token.
+        /// </remarks>
+        private static OperationCanceledException Abandoned(CancellationToken linked, CancellationToken caller, Exception? innerException = null) =>
+            caller.IsCancellationRequested
+                ? new OperationCanceledException("The request was cancelled.", innerException, caller)
+                : new OperationCanceledException("The request was abandoned: the client was disconnected.", innerException, linked);
 
         /// <summary>
         /// Sends a command whose reply carries no result. Fails exactly as

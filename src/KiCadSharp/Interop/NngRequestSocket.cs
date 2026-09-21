@@ -23,6 +23,13 @@ namespace KiCadSharp.Interop
     /// up between two looks because a cancellation token said so. That is the only way this client
     /// can be cancelled while a request is on the wire.
     /// </para>
+    /// <para>
+    /// <b>Sending does not block either</b>, for the same reason. <see cref="TrySend"/> passes
+    /// <see cref="Nng.FlagNonBlock"/> too. A blocking <c>nng_sendmsg</c> with no peer to take the
+    /// request, because KiCad went away after the dial, waits in nng for as long as <c>send-timeout</c>
+    /// allows. By default that is forever, on the calling thread, where no cancellation token reaches
+    /// it (#58).
+    /// </para>
     /// </remarks>
     internal sealed class NngRequestSocket : IDisposable
     {
@@ -110,7 +117,12 @@ namespace KiCadSharp.Interop
             Check(nameof(Nng.nng_dial), Nng.nng_dial(_socket, url, out _, 0));
         }
 
-        /// <summary>Bounds <c>nng_sendmsg</c>. <see cref="Timeout.InfiniteTimeSpan"/> removes the bound, which is nng's default.</summary>
+        /// <summary>
+        /// Bounds a blocking <c>nng_sendmsg</c>. <see cref="Timeout.InfiniteTimeSpan"/> removes the
+        /// bound, which is nng's default. This client sends non-blocking, so the option never applies
+        /// to it, as with <see cref="SetReceiveTimeout"/>: it is set so that some future blocking send
+        /// would not wait forever.
+        /// </summary>
         internal void SetSendTimeout(TimeSpan timeout) => SetTimeout(Nng.OptionSendTimeout, timeout);
 
         /// <summary>
@@ -132,16 +144,26 @@ namespace KiCadSharp.Interop
         }
 
         /// <summary>
-        /// Sends <paramref name="payload"/> as one message, replacing any request already
-        /// outstanding.
+        /// Sends <paramref name="payload"/> as one message if nng has a connection ready to take it
+        /// now, replacing any request already outstanding. Returns <see langword="false"/> without
+        /// waiting when it has not, and then nothing was sent.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Replacing is what makes an abandoned request safe. Measured: after a request is given up
         /// on, its reply still arrives, and nng discards it -- a fresh request sent afterwards gets
         /// its own reply and not the stale one, because REQ tags each request and matches the reply
         /// to the tag.
+        /// </para>
+        /// <para>
+        /// "Not now" is <c>NNG_EAGAIN</c>. In nng 1.3.2 and 1.4.0 (<c>req0_ctx_send</c>) a REQ socket
+        /// answers it when no connection is ready: none is there, because KiCad went away, or the
+        /// one there is still writing the previous request. It resets the request state before it
+        /// looks, so a request still outstanding is abandoned even then. A failed send leaves the
+        /// message with its caller, and it is freed here.
+        /// </para>
         /// </remarks>
-        internal void Send(byte[] payload)
+        internal bool TrySend(byte[] payload)
         {
             ObjectDisposedException.ThrowIf(_closed, this);
             ArgumentNullException.ThrowIfNull(payload);
@@ -152,7 +174,12 @@ namespace KiCadSharp.Interop
             {
                 Check(nameof(Nng.nng_msg_append), Nng.nng_msg_append(message, payload, (nuint)payload.Length));
 
-                var result = Nng.nng_sendmsg(_socket, message, 0);
+                var result = Nng.nng_sendmsg(_socket, message, Nng.FlagNonBlock);
+                if (result == Nng.Again)
+                {
+                    return false;
+                }
+
                 if (result != 0)
                 {
                     throw new NngException(nameof(Nng.nng_sendmsg), result);
@@ -160,6 +187,7 @@ namespace KiCadSharp.Interop
 
                 // nng took ownership; freeing it here would be a double free.
                 message = IntPtr.Zero;
+                return true;
             }
             finally
             {

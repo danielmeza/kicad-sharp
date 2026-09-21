@@ -52,6 +52,35 @@ public class IpcFailureTests
         $"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}";
 
     /// <summary>
+    /// A connected client whose KiCad went away after the dial: the peer it dialled has closed.
+    /// </summary>
+    /// <remarks>
+    /// The REQ socket learns that its connection closed on nng's own thread, a moment after the peer's
+    /// socket closes. A request sent inside that moment still finds the connection ready. It goes out
+    /// on the dying connection, nng queues it to be sent again, and the call then waits for a reply
+    /// rather than for somebody to take the request, which is not the case these tests are about.
+    /// Measured, sending straight after the peer closed hit that window in 21, then 19, of 300 runs,
+    /// and in 12 of 300 on the blocking send before #58. Waiting 20 ms first, it hit it in none of
+    /// 300, nor did waiting 100 ms, which is the wait here.
+    /// </remarks>
+    private static async Task<KiCadIPCClient> AClientWhoseKiCadWentAway(TimeSpan? requestTimeout = null)
+    {
+        var peer = NngTestPeer.Start(TimeSpan.Zero);
+        var client = Client(peer.Url, requestTimeout);
+        try
+        {
+            await client.Connect();
+        }
+        finally
+        {
+            peer.Dispose();
+        }
+
+        await Task.Delay(TimeSpan.FromMilliseconds(100));
+        return client;
+    }
+
+    /// <summary>
     /// Asserts <paramref name="call"/> throws exactly <typeparamref name="T"/>, and that a caller
     /// catching only <see cref="KiCadIpcException"/> would have caught it.
     /// </summary>
@@ -170,17 +199,18 @@ public class IpcFailureTests
     [Fact]
     public async Task ASendWithNoKiCadToTakeItIsAConnectionFailureWithATimeoutInside()
     {
-        // RequestTimeout is also nng's send-timeout. With the peer gone after the dial, a REQ socket
-        // has nobody to hand the request to and waits in nng_sendmsg until that runs out.
-        var peer = NngTestPeer.Start(TimeSpan.Zero);
-        using var client = Client(peer.Url, TimeSpan.FromMilliseconds(500));
-        await client.Connect();
-        peer.Dispose();
+        // With the peer gone after the dial, a REQ socket has nobody to hand the request to, and the
+        // send waits for somebody until RequestTimeout runs out. It used to wait in nng_sendmsg, on
+        // nng's send-timeout, and nng's NNG_ETIMEDOUT was inside. Since #58 the send is polled, and
+        // what is inside is what nng answered the last attempt: NNG_EAGAIN, from nng_sendmsg.
+        using var client = await AClientWhoseKiCadWentAway(TimeSpan.FromMilliseconds(500));
 
         var failure = await FailsWith<KiCadConnectionException>(async () => await client.Send(new Ping()));
 
         var timeout = Assert.IsType<TimeoutException>(failure.InnerException);
-        Assert.Equal(Nng.TimedOut, Assert.IsType<NngException>(timeout.InnerException).Error);
+        var nng = Assert.IsType<NngException>(timeout.InnerException);
+        Assert.Equal(nameof(Nng.nng_sendmsg), nng.Operation);
+        Assert.Equal(Nng.Again, nng.Error);
     }
 
     // ----------------------------------------------------------------------- the transport mid-call
@@ -203,25 +233,77 @@ public class IpcFailureTests
     }
 
     [Fact]
-    public async Task DisconnectingWhileTheSendIsBlockedIsACancellationNotAFailure()
+    public async Task DisconnectingWhileTheSendWaitsForAKiCadIsACancellationNotAFailure()
     {
-        // With the default infinite RequestTimeout and no peer, nng_sendmsg blocks. Closing the socket
-        // under it fails the send with NNG_ECLOSED, which used to surface as a KiCadConnectionException.
-        // It is the disconnect that ended the request, and a request a disconnect ends is reported as
-        // a cancellation wherever it is -- the same as DisconnectingWhileTheRequestIsOnTheWire.
-        var peer = NngTestPeer.Start(TimeSpan.Zero);
-        using var client = Client(peer.Url);
-        await client.Connect();
-        peer.Dispose();
+        // With the default infinite RequestTimeout and no peer, the send waits for one. It used to wait
+        // blocked in nng_sendmsg, and closing the socket under it failed the send with NNG_ECLOSED,
+        // which used to surface as a KiCadConnectionException. It is the disconnect that ended the
+        // request, and a request a disconnect ends is reported as a cancellation wherever it is -- the
+        // same as DisconnectingWhileTheRequestIsOnTheWire. Since #58 the send is polled, so the
+        // disconnect is usually seen on the token rather than as NNG_ECLOSED, and no inner exception is
+        // asserted: either way it is the same cancellation.
+        using var client = await AClientWhoseKiCadWentAway();
 
         var call = Task.Run(async () => await client.Send(new Ping()));
         await Task.Delay(TimeSpan.FromMilliseconds(500));
-        Assert.False(call.IsCompleted, "the send was expected to be blocked in nng");
+        Assert.False(call.IsCompleted, "the send was expected to be waiting for a peer");
 
+        var elapsed = Stopwatch.StartNew();
         client.Disconnect();
 
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => call);
+        Assert.InRange(elapsed.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public async Task CancellingASendThatHasNoKiCadToTakeItEndsItPromptlyAndHoldsNoThread()
+    {
+        // #58. With the default infinite RequestTimeout and the peer gone after the dial, a REQ socket
+        // has no one to hand the request to. The send used to be one blocking nng_sendmsg that the
+        // token did not reach: measured when #58 was filed, it was still blocked 5 s after the cancel,
+        // on the thread that called it. It is now attempted without blocking and retried on a timer, the way the reply is
+        // polled for, so the caller gets its thread back and the token ends the wait.
+        using var client = await AClientWhoseKiCadWentAway();
+
+        // A thread of its own, so that "held" can be observed: it ends when Send hands it back. A send
+        // parked in nng would keep it until the socket closes, which is when the client is disposed.
+        using var cancellation = new CancellationTokenSource();
+        Task? call = null;
+        var caller = new Thread(() => call = client.Send(new Ping(), cancellation.Token).AsTask()) { IsBackground = true };
+        caller.Start();
+
+        Assert.True(caller.Join(TimeSpan.FromSeconds(5)), "the send kept the thread that called it");
+        await Task.Delay(TimeSpan.FromMilliseconds(500));
+        Assert.False(call!.IsCompleted, "the send was expected to be waiting for a peer");
+
+        var elapsed = Stopwatch.StartNew();
+        await cancellation.CancelAsync();
         var cancelled = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => call);
-        Assert.IsType<NngException>(cancelled.InnerException);
+
+        Assert.InRange(elapsed.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+        Assert.Equal(cancellation.Token, cancelled.CancellationToken);
+    }
+
+    [Fact]
+    public async Task ASendToAKiCadThatIsThereIsUnaffected()
+    {
+        // The other side of #58. Each request goes out exactly once and gets its own reply: the peer
+        // numbers its answers, so a request sent twice, or one lost, would put every reply after it
+        // out by one.
+        var answered = 0;
+        using var peer = NngTestPeer.StartRaw(_ => NngTestPeer.Answer(
+            ApiStatusCode.AsOk,
+            payload: new GetVersionResponse { Version = new() { Major = (uint)Interlocked.Increment(ref answered) } }));
+        using var client = Client(peer.Url);
+        using var cancellation = new CancellationTokenSource();
+
+        for (var i = 1; i <= 20; i++)
+        {
+            var reply = await client.Send<GetVersionResponse>(new GetVersion(), cancellation.Token);
+            Assert.Equal((uint)i, reply.Version.Major);
+        }
+
+        Assert.Equal(20, peer.RequestsReceived);
     }
 
     // ------------------------------------------------------------------- KiCad answers with an error
@@ -420,9 +502,36 @@ public class IpcFailureTests
         using var client = Client(peer.Url);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(250));
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await client.Send(new Ping(), cancellation.Token));
+        var cancelled = await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await client.Send(new Ping(), cancellation.Token));
 
         Assert.True(cancellation.IsCancellationRequested);
+        Assert.Equal(cancellation.Token, cancelled.CancellationToken);
+    }
+
+    [Fact]
+    public async Task ACallQueuedBehindAnotherIsCancelledWithItsOwnToken()
+    {
+        // REQ carries one request at a time, so a second call on the same client waits for the first
+        // to finish. Cancelling it while it waits there is the same cancellation as anywhere else in
+        // the round trip, and leaves the first call alone.
+        using var peer = NngTestPeer.Start(TimeSpan.FromSeconds(30));
+        using var client = Client(peer.Url);
+        using var first = new CancellationTokenSource();
+        using var second = new CancellationTokenSource();
+
+        var firstCall = client.Send(new Ping(), first.Token).AsTask();
+        await WaitUntil(() => peer.RequestsReceived == 1);
+        var secondCall = client.Send(new Ping(), second.Token).AsTask();
+
+        await second.CancelAsync();
+        var cancelled = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => secondCall);
+        Assert.Equal(second.Token, cancelled.CancellationToken);
+        Assert.False(firstCall.IsCompleted, "cancelling the second call ended the first");
+
+        await first.CancelAsync();
+        cancelled = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => firstCall);
+        Assert.Equal(first.Token, cancelled.CancellationToken);
+        Assert.Equal(1, peer.RequestsReceived);
     }
 
     // ------------------------------------------------------------------------------- the client itself
