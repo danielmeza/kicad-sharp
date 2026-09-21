@@ -48,8 +48,9 @@ namespace KiCadSharp.Interop
         /// <summary>Do not block; return <see cref="Again"/> when the operation would wait.</summary>
         internal const int FlagNonBlock = 2;
 
-        // The three nng error codes this client reasons about by number. Everything else is turned
+        // The four nng error codes this client reasons about by number. Everything else is turned
         // into text by nng_strerror rather than enumerated here.
+        internal const int TimedOut = 5;    // NNG_ETIMEDOUT  -- a send that outlived send-timeout
         internal const int Again = 8;       // NNG_EAGAIN     -- nothing to receive yet
         internal const int Closed = 7;      // NNG_ECLOSED    -- the socket went away underneath us
         internal const int State = 11;      // NNG_ESTATE     -- receive with no request outstanding

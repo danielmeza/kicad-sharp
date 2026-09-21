@@ -77,9 +77,18 @@ What is still missing here:
 - **`KiCad.RefreshPaths()` and `KiCad.ImportLibrary(...)` are no-ops.** The commands they would send
   do not exist in KiCad's IPC API; the methods return `ValueTask.CompletedTask` and do nothing. A
   `GetPath(PathType)` is commented out for the same reason.
-- **`ApiException` is `internal`.** It is what a non-OK API status throws, and the XML docs name it,
-  but a consumer in another assembly cannot `catch` it by name — catch `Exception` or
-  `KiCadConnectionException`.
+- **A send cannot be cancelled.** The reply is polled for, so a `CancellationToken` ends the wait
+  for it; the send is one blocking `nng_sendmsg`, and nothing reaches it. Measured against the
+  in-process peer: with KiCad gone after the dial, a REQ socket has no one to hand the request to,
+  and with the default infinite `RequestTimeout` the send was still blocked on the calling thread
+  5 s after the token was cancelled. What ends it is `RequestTimeout`, which is also nng's
+  `send-timeout`, or `Disconnect()` from another thread. A KiCad that goes away *after* taking the
+  request is not reported by nng either: the receive goes on answering "not yet", and the token or
+  `RequestTimeout` is what ends the call.
+- **A `KICADSHARP_NNG_LIBRARY` that names something other than nng** surfaces as the runtime's
+  `EntryPointNotFoundException`, not a `KiCadConnectionException`. Only the loader's two failures
+  (`DllNotFoundException`, `BadImageFormatException`) are converted. It is untested: the process
+  loads one libnng and keeps it, so a test cannot load a second one.
 - **The configured client name is not transmitted.** `AddKiCad("my-plugin")` sets
   `KiCadClientSettings.ClientName`, but the envelope header is populated from `PipeName`.
 - **`KiCadEnvironment.GetDefaultSocketPath()` is never called.** `AddKiCad` wires `PipeName`
@@ -100,8 +109,8 @@ What is still missing here:
   package at all.
 - **`tests/KiCadSharp.Tests` is the only gate on the document layer.** Tests over the vendored KiCad
   10 fixtures, with the byte counts in the assertions. The IPC surface is covered two ways: the
-  transport and its timeout behaviour against an in-process nng peer (`NngInteropTests`,
-  `IpcTimeoutTests`, no KiCad needed), and the client against a real KiCad (`IpcTests`, which returns
+  transport, its timeout behaviour and every way a call fails against an in-process nng peer
+  (`NngInteropTests`, `IpcTimeoutTests`, `IpcFailureTests`, no KiCad needed), and the client against a real KiCad (`IpcTests`, which returns
   early unless `KICADSHARP_IPC_SOCKET` names a socket — see `scripts/kicad-ipc-container.sh`). The one
   test that shells out to `kicad-cli` returns early unless `KICADSHARP_KICAD_CLI` points at one. Run
   them with `dotnet test KiCadSharp.slnx`.
