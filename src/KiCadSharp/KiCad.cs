@@ -86,7 +86,10 @@ namespace KiCadSharp
         /// Gets a board object for the first open board
         /// </summary>
         /// <returns>Board object</returns>
-        /// <exception cref="ApiException">Thrown if no board is open</exception>
+        /// <exception cref="ApiException">
+        /// No board is open. KiCad answers the question successfully, with no documents, so the
+        /// exception's <see cref="ApiException.StatusCode"/> is <see langword="null"/>.
+        /// </exception>
         public async ValueTask<Board> GetBoard(CancellationToken cancellationToken = default)
         {
             var docs = await GetOpenDocuments(DocumentType.DoctypePcb, cancellationToken);

@@ -14,18 +14,59 @@ Every type and member. The short version is in the [README](../README.md).
 | `KiCadEnvironment` | Static reader for `KICAD_API_SOCKET`, `KICAD_API_TOKEN`, `KIPRJMOD`, `KICAD_USER_TEMPLATE_DIR`, `KICAD9_3DMODEL_DIR`, `KICAD9_FOOTPRINT_DIR`, `KICAD9_SYMBOL_DIR`, `KICAD9_DESIGN_BLOCK_DIR`, `VIRTUAL_ENV`; plus `GetDefaultSocketPath()`, `GenerateRandomClientName()`, `IsRunningOnKiCad()`. |
 | `KiCadServicesExtensions.AddKiCad(...)` | DI registration: a keyed `KiCadIPCClient`, a keyed `KiCad`, and `IKiCadFactory`. |
 | `IKiCadFactory` | `KiCad Create(string? clientName = null)`. |
-| `KiCadConnectionException` | Dial/send/receive failures. |
+| `KiCadIpcException` | Abstract base of the two below: the one type to catch for any IPC failure. |
+| `KiCadConnectionException : KiCadIpcException` | KiCad could not be reached: no socket path, nothing listening, no native nng, a send or receive nng refused, a reply that is not an `ApiResponse`, or `RequestTimeout` running out. |
+| `ApiException : KiCadIpcException` | KiCad answered and the answer was not the result. `StatusCode` (`ApiStatusCode?`) is the status it sent, `ErrorMessage` its text. |
 
 Requests are framed as an `ApiRequest` envelope with the command packed into `Any` and a header
 carrying the KiCad token; the reply is an `ApiResponse` unpacked back to `TResult`. If no token was
 configured, the client adopts the one KiCad returns on the first successful round trip.
+
+**When a call fails** it throws a `KiCadIpcException`, with the underlying failure as its
+`InnerException` when there is one, and a cancellation throws `OperationCanceledException` as itself:
+
+| What happened | Thrown | Inside |
+|---|---|---|
+| No socket path, or nothing listening at it | `KiCadConnectionException` | nng's error (connection refused) |
+| A socket that never completes nng's handshake (a KiCad still starting) | `KiCadConnectionException`, after nng's own 10 s | nng's error (timed out) |
+| No native nng for this platform | `KiCadConnectionException` | the loader's `DllNotFoundException` or `BadImageFormatException` |
+| `RequestTimeout` ran out, waiting for the reply or to send | `KiCadConnectionException` | `TimeoutException` |
+| Bytes back that are not an `ApiResponse` | `KiCadConnectionException` | `InvalidProtocolBufferException` |
+| KiCad answered a status other than `AS_OK` — `AS_UNHANDLED`, `AS_BAD_REQUEST`, `AS_NOT_READY`, `AS_BUSY`, `AS_TOKEN_MISMATCH`, … | `ApiException`, `StatusCode` = that status | — |
+| A reply with no status | `ApiException`, `StatusCode` = `AS_UNKNOWN` | — |
+| `AS_OK` with no payload, the wrong type, or one that does not parse | `ApiException`, `StatusCode` = `AS_OK` | `InvalidProtocolBufferException` for the last |
+| `GetBoard()` with no board open | `ApiException`, `StatusCode` = `null` | — |
+| The caller's token was cancelled, or `Disconnect()` cut the request off | `OperationCanceledException` | — |
+
+`AS_UNHANDLED` is how KiCad says it has no handler for a command, so it is how a caller finds out a
+command is not there:
+
+```csharp
+try
+{
+    await kicad.Ping();
+}
+catch (ApiException e) when (e.StatusCode == ApiStatusCode.AsUnhandled)
+{
+    // this editor does not handle Ping -- eeschema on KiCad 10.0.6, for one
+}
+catch (KiCadIpcException e)
+{
+    // KiCad is not there, or it refused
+}
+```
+
+A token that was empty is not a failure: KiCad answers it with its own, which the client adopts. A
+token from another KiCad instance is `AS_TOKEN_MISMATCH`.
 
 `RequestTimeout` defaults to `Timeout.InfiniteTimeSpan`, which is nng's own default and what this
 client has always done. Waiting is not the same as hanging, though: the reply is polled for rather
 than blocked on, so a `CancellationToken` is observed **while the request is on the wire** and not
 only before it goes out. Pass one with a deadline for a per-call bound, or set `RequestTimeout` for
 a client-wide one. There is no useful single default — `Ping` returns in under a millisecond and
-`RefillZones` on a large board does not.
+`RefillZones` on a large board does not. The send is the exception: with no KiCad to take the
+request, it blocks the calling thread until `RequestTimeout` runs out, and a token does not reach
+it — see [docs/status.md](status.md).
 
 ### `KiCad` — the connection handle
 
