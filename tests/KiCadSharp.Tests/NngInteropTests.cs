@@ -222,6 +222,37 @@ public class NngInteropTests
         Assert.Equal(2, peer.RequestsReceived);
     }
 
+    [Fact]
+    public void EachPlaceIsProbedAndReportedOnce()
+    {
+        // #84. The two roots are the application directory and the directory of the assembly, and in
+        // the usual layout, this one included, they are the same directory spelled two ways:
+        // AppContext.BaseDirectory ends in a separator and Path.GetDirectoryName does not. Compared
+        // as strings they differed, so the same runtimes/ path was probed twice and listed twice
+        // under "Looked in:".
+        Assert.Equal(
+            Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory),
+            Path.GetDirectoryName(typeof(Nng).Assembly.Location));
+
+        var probed = NngLibraryResolver.ProbePaths(typeof(Nng).Assembly).ToArray();
+        Assert.Equal(probed.Distinct(StringComparer.Ordinal), probed);
+
+        var reported = NngLibraryResolver.DiagnosticPaths().ToArray();
+        Assert.Equal(reported.Distinct(StringComparer.Ordinal), reported);
+
+        // Only the list: here the shipped file is present, so the message also names it once before
+        // the list, as the one the loader refused.
+        const string LookedIn = "Looked in: ";
+        var message = NngLibraryResolver.DescribeFailure();
+        Assert.Contains(LookedIn, message);
+        var list = message[(message.IndexOf(LookedIn, StringComparison.Ordinal) + LookedIn.Length)..];
+        foreach (var path in reported)
+        {
+            var times = list.Split(path).Length - 1;
+            Assert.True(times == 1, $"{path} is listed {times} times in: {list}");
+        }
+    }
+
     private static byte[] Poll(NngRequestSocket socket, TimeSpan within)
     {
         var elapsed = Stopwatch.StartNew();
