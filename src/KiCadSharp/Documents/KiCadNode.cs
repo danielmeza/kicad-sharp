@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 using SExpressions;
@@ -26,6 +27,18 @@ namespace KiCadSharp.Documents
     /// Views are cheap and disposable: asking a collection for the same element twice returns two
     /// wrappers over one node. They compare equal, and writing through either is writing to the
     /// same place.
+    /// </para>
+    /// <para>
+    /// <b>Adding a view moves its node.</b> A node has one parent, so every <c>Add…</c> that takes an
+    /// existing view — <see cref="KiCadNodeList{T}.Add(T)"/>, <see cref="KiCadNodeList{T}.Insert"/>,
+    /// <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/>,
+    /// <see cref="KiCadFootprintLibrary.AddFootprint"/>, <c>AddPin</c>,
+    /// <see cref="KiCadSymbol.AddGraphicalItem"/> — takes the node out of wherever it was, including
+    /// another file, and puts that same node here. That is what keeps the view you hold and the
+    /// element in the destination one thing, and the node keeps the bytes it was parsed from. To leave
+    /// the original where it is, add a copy: <c>new KiCadSymbol(symbol.Node.Clone())</c>, or
+    /// <c>CloneAs</c> to rename it on the way. Moving out of a list while a <c>foreach</c> walks it is
+    /// safe (see <see cref="KiCadNodeList{T}"/>); walking it forward by index is not.
     /// </para>
     /// </remarks>
     public abstract class KiCadNode : IEquatable<KiCadNode>
@@ -171,6 +184,19 @@ namespace KiCadSharp.Documents
     /// snapshot that stops tracking the file the moment someone adds to it. Mutating such a list
     /// throws, because there is nothing to mutate — take the <c>Require…()</c> accessor instead.
     /// </para>
+    /// <para>
+    /// <b>Enumerating walks the children that were there when it started.</b> <see cref="Count"/>,
+    /// the indexer, <see cref="Add(T)"/>, <see cref="Remove"/> and <see cref="Insert"/> stay live;
+    /// only a walk is fixed at its start. So a <c>foreach</c> may move, remove or append elements of
+    /// the list it is walking — the natural copy loop,
+    /// <c>foreach (var s in source.Symbols) destination.AddSymbol(s)</c>, moves every symbol, where
+    /// a live walk skipped every other one (#50), and a loop that appends to its own list ends. An
+    /// element removed during the walk is still visited; one appended is not; the next walk sees the
+    /// list as it is then. The indexer does not snapshot: a forward index loop over a list that a
+    /// move is shrinking still steps over every other element, as it would over a
+    /// <see cref="List{T}"/>. Walk it with <c>foreach</c>, backwards, or take <c>[0]</c> until
+    /// <see cref="Count"/> is 0.
+    /// </para>
     /// </remarks>
     public sealed class KiCadNodeList<T> : IReadOnlyList<T>
         where T : KiCadNode
@@ -233,10 +259,17 @@ namespace KiCadSharp.Documents
         /// <returns>The new element.</returns>
         public T Add() => _view(Owner.CreateChild(_token));
 
-        /// <summary>Appends an existing node as a child. It must carry this list's token.</summary>
+        /// <summary>
+        /// Appends an existing node as a child, moving it out of wherever it was. It must carry this
+        /// list's token.
+        /// </summary>
         /// <param name="item">The view whose node to append.</param>
-        /// <returns>The appended element.</returns>
+        /// <returns>The appended element: <paramref name="item"/> itself, now in this list.</returns>
         /// <exception cref="ArgumentException">The node's token does not match.</exception>
+        /// <remarks>
+        /// The node leaves its previous parent, in this file or another; see <see cref="KiCadNode"/>.
+        /// Add <c>item.Node.Clone()</c> wrapped in a view to keep the original.
+        /// </remarks>
         public T Add(T item)
         {
             ArgumentNullException.ThrowIfNull(item);
@@ -258,21 +291,35 @@ namespace KiCadSharp.Documents
             return Owner.Children.Remove(item.Node);
         }
 
-        /// <summary>Inserts a new child at <paramref name="index"/> among this node's children.</summary>
+        /// <summary>
+        /// Inserts an existing node at <paramref name="index"/> among this node's children, moving it
+        /// out of wherever it was.
+        /// </summary>
         /// <param name="index">Zero-based position among all child forms of the owner.</param>
         /// <param name="item">The view whose node to insert.</param>
+        /// <remarks>The node leaves its previous parent, as with <see cref="Add(T)"/>.</remarks>
         public void Insert(int index, T item)
         {
             ArgumentNullException.ThrowIfNull(item);
             Owner.Children.Insert(index, item.Node);
         }
 
-        /// <inheritdoc />
-        public IEnumerator<T> GetEnumerator()
+        /// <summary>
+        /// Walks the children that carry the token at the moment this is called, as views.
+        /// </summary>
+        /// <returns>An enumerator over that set, unaffected by later changes to the list.</returns>
+        /// <remarks>
+        /// The children are listed here, eagerly, and not inside an iterator: an iterator body only
+        /// runs at the first <c>MoveNext</c>, so the set would depend on what happened in between.
+        /// Only the node references are copied; each view is made as it is reached.
+        /// </remarks>
+        public IEnumerator<T> GetEnumerator() => Walk(_owner?.GetChildren(_token).ToArray() ?? [], _view);
+
+        private static IEnumerator<T> Walk(SExpression[] children, Func<SExpression, T> view)
         {
-            foreach (var child in _owner?.GetChildren(_token) ?? None)
+            foreach (var child in children)
             {
-                yield return _view(child);
+                yield return view(child);
             }
         }
 

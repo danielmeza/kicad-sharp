@@ -116,9 +116,16 @@ namespace KiCadSharp.Documents
         /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
         public static KiCadSymbolLibrary Parse(string text) => new(SDocument.Parse(text), null);
 
-        /// <summary>Appends an existing symbol to the library.</summary>
+        /// <summary>Appends an existing symbol to the library, moving it out of wherever it was.</summary>
         /// <param name="symbol">The symbol to append.</param>
         /// <returns>The symbol, now a child of this library.</returns>
+        /// <remarks>
+        /// A symbol taken from another library leaves that library: the node itself moves, bytes and
+        /// all, so the view you passed is the symbol in this one (see <see cref="KiCadNode"/>).
+        /// <c>foreach (var s in source.Symbols) AddSymbol(s)</c> moves every symbol and leaves
+        /// <c>source</c> with none. To keep the source as it was, add
+        /// <c>new KiCadSymbol(s.Node.Clone())</c> instead.
+        /// </remarks>
         public KiCadSymbol AddSymbol(KiCadSymbol symbol)
         {
             ArgumentNullException.ThrowIfNull(symbol);
@@ -273,12 +280,13 @@ namespace KiCadSharp.Documents
             return property;
         }
 
-        /// <summary>Appends a pin to the symbol form itself.</summary>
+        /// <summary>Appends a pin to the symbol form itself, moving it out of wherever it was.</summary>
         /// <param name="pin">The pin.</param>
         /// <returns>The pin.</returns>
         /// <remarks>
         /// KiCad puts pins in a sub-unit, not on the outer form. Use <c>Units[i].AddPin(pin)</c> to
-        /// match what the editor writes; this overload is for symbols built entirely in memory.
+        /// match what the editor writes; this overload is for symbols built entirely in memory. A pin
+        /// that belongs to another symbol or sub-unit leaves it (see <see cref="KiCadNode"/>).
         /// </remarks>
         public KiCadPin AddPin(KiCadPin pin)
         {
@@ -287,9 +295,10 @@ namespace KiCadSharp.Documents
             return pin;
         }
 
-        /// <summary>Appends a graphical item to the symbol form itself.</summary>
+        /// <summary>Appends a graphical item to the symbol form itself, moving it out of wherever it was.</summary>
         /// <param name="item">The item.</param>
         /// <returns>The item.</returns>
+        /// <remarks>An item that belongs to another symbol or sub-unit leaves it (see <see cref="KiCadNode"/>).</remarks>
         public KiCadGraphicalItem AddGraphicalItem(KiCadGraphicalItem item)
         {
             ArgumentNullException.ThrowIfNull(item);
@@ -408,9 +417,10 @@ namespace KiCadSharp.Documents
         /// <summary>Gets the graphical items of this sub-unit.</summary>
         public IReadOnlyList<KiCadGraphicalItem> GraphicalItems => KiCadGraphicalItem.In(Node).ToArray();
 
-        /// <summary>Appends a pin.</summary>
+        /// <summary>Appends a pin, moving it out of wherever it was.</summary>
         /// <param name="pin">The pin.</param>
         /// <returns>The pin.</returns>
+        /// <remarks>A pin that belongs to another sub-unit or symbol leaves it (see <see cref="KiCadNode"/>).</remarks>
         public KiCadPin AddPin(KiCadPin pin)
         {
             ArgumentNullException.ThrowIfNull(pin);

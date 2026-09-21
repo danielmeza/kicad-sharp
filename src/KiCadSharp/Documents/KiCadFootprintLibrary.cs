@@ -153,10 +153,16 @@ namespace KiCadSharp.Documents
         /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
         public static KiCadFootprintLibrary Parse(string text) => new(SDocument.Parse(text), null);
 
-        /// <summary>Appends a footprint.</summary>
+        /// <summary>Appends a footprint, moving it out of wherever it was.</summary>
         /// <param name="footprint">The footprint.</param>
         /// <returns>The footprint, now a child of this file.</returns>
         /// <exception cref="InvalidOperationException">The file is a single footprint and cannot hold another.</exception>
+        /// <remarks>
+        /// A footprint taken from another board leaves that board, and one taken from a
+        /// <c>.kicad_mod</c> leaves that file empty: the node itself moves, bytes and all (see
+        /// <see cref="KiCadNode"/>). To keep the source as it was, add
+        /// <c>new KiCadFootprint(footprint.Node.Clone())</c>, or <see cref="KiCadFootprint.CloneAs"/>.
+        /// </remarks>
         public KiCadFootprint AddFootprint(KiCadFootprint footprint)
         {
             ArgumentNullException.ThrowIfNull(footprint);

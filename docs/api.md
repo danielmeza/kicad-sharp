@@ -53,7 +53,7 @@ plus `Document` and `Name`.
 | Type | File | What it actually does |
 |---|---|---|
 | `KiCadNode` | — | Base of every typed view: `Node` (the live s-expression), `ToSExpression()`. Everything below reads and writes through it. |
-| `KiCadNodeList<T>` | — | A live view over a node's children with one token: `Count`, indexer, `Add`, `Remove`, `Insert`. |
+| `KiCadNodeList<T>` | — | A live view over a node's children with one token: `Count`, indexer, `Add`, `Remove`, `Insert`. A `foreach` walks the children that were there when it started, so the loop may move, remove or append. |
 | `KiCadSymbolLibrary` | `.kicad_sym` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddSymbol`, `RemoveSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`, `Document`, `Node`. |
 | `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. |
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
@@ -84,6 +84,19 @@ the `SExpression` it was built over, and `Save` writes the parsed document back.
 re-serialised, so a token this library has never heard of survives the round trip untouched, and a
 save that changed one property differs from the input in exactly that property's bytes. Reach
 anything not modelled through `Node`.
+
+**Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
+`KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of
+wherever it was, another file included. The view you hold is then the element in the destination,
+bytes and all. To leave the source as it was, add a copy: `new KiCadSymbol(symbol.Node.Clone())`.
+
+```csharp
+foreach (var symbol in source.Symbols)      // walks the 35 that were there when it started
+    destination.AddSymbol(symbol);          // all 35 move; source.Symbols is now empty
+```
+
+`Count` and the indexer stay live, so a forward `for` loop over a list you are moving out of steps
+over every other element. Use `foreach`, walk backwards, or take `[0]` until `Count` is 0.
 
 Anything in the "No" rows is still fully readable and *losslessly writable* through
 [`SExpressions`](https://github.com/danielmeza/sexpressions), which is a dependency of this package —
