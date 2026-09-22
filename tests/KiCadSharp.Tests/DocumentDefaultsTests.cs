@@ -57,6 +57,14 @@ public class DocumentDefaultsTests
         Assert.Equal(1.6, board.General!.Thickness);
     }
 
+    /// <summary>
+    /// MEASURED against kicad-cli 10.0.6: a zone with no <c>(connect_pads …)</c> is re-saved by
+    /// <c>pcb upgrade</c> with <c>(connect_pads (clearance 0.5))</c> (#102).
+    /// </summary>
+    [Fact]
+    public void AZoneWithNoClearanceIsHalfAMillimetreFromItsPads() =>
+        Assert.Equal(0.5, new KiCadZone().ConnectPadsClearance);
+
     [Fact]
     public void TheGeneratorNamesAreWhatEachDocumentTypeAnnounces()
     {
@@ -95,6 +103,24 @@ public class DocumentDefaultsTests
 
         Assert.Equal(KiCadDefaults.BoardVersion, board.Version);
         Assert.Equal(KiCadDefaults.BoardThicknessMm, board.General!.Thickness);
+    }
+
+    /// <summary>
+    /// The clearance has one half only, the getter's: KiCad writes a clearance on every zone, so no
+    /// constructor here puts one in. A zone that lost its <c>(connect_pads …)</c> and a zone built in
+    /// memory must still agree with each other, and with <see cref="KiCadZone.MinThickness"/>'s way
+    /// of falling back to what KiCad reads.
+    /// </summary>
+    [Fact]
+    public void AZoneWithNoConnectPadsReportsTheClearanceKiCadReads()
+    {
+        var board = KiCadBoard.Load(TestData.Kicad10Board);
+        var zone = board.Zones[0];
+        Assert.NotNull(zone.Node.GetChild(KiCadTokens.Board.ConnectPads));
+        zone.Node.RemoveChild(KiCadTokens.Board.ConnectPads);
+
+        Assert.Equal(KiCadDefaults.ZoneClearanceMm, zone.ConnectPadsClearance);
+        Assert.Equal(KiCadDefaults.ZoneClearanceMm, new KiCadZone().ConnectPadsClearance);
     }
 
     [Fact]
