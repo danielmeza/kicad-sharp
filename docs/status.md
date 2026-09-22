@@ -90,11 +90,12 @@ What has no view round-trips intact and is reachable through `Node`.
 - **A KiCad that goes away *after* taking the request is not reported by nng.** Measured against
   the in-process peer: the receive goes on answering "not yet", and the token or `RequestTimeout` is
   what ends the call. With neither, it waits.
-- **Nothing interrupts a dial.** `Connect()`, and a `Send` that has to connect first, block in nng's
-  dial, which returns at once against a path with nothing at it and after nng's own 10 s against a
-  socket that never completes the handshake. The caller's token is read before the dial, not during
-  it, and `Dispose()` does not end it either: a call it catches there ends with its
-  `OperationCanceledException` only when the dial returns.
+- **A dial holds a thread, though not the caller's.** nng's dial is blocking, so `Connect()`, and a
+  `Send` that has to connect first, run it on a thread of its own: for under a millisecond against a
+  KiCad that is there or a path with nothing at it, and for nng's own 10 s against a socket that
+  never completes the handshake. The caller's token and `Dispose()` end it at once, by closing the
+  socket under it (measured: `nng_dial` returns `NNG_ECLOSED` within 0.1 ms, on nng 1.3.2 and
+  1.4.0). `Disconnect()` does not touch a dial under way. `RequestTimeout` does not bound the dial.
 - **No `Async` suffixes, and one sync/async asymmetry**: `GetProject(DocumentSpecifier)` is
   synchronous while the parameterless `GetProject()` is not.
 

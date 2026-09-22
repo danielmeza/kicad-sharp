@@ -38,9 +38,9 @@ configured, the client adopts the one KiCad returns on the first successful roun
 | A reply with no status | `ApiException`, `StatusCode` = `AS_UNKNOWN` | — |
 | `AS_OK` with no payload, the wrong type, or one that does not parse | `ApiException`, `StatusCode` = `AS_OK` | `InvalidProtocolBufferException` for the last |
 | `GetBoard()` with no board open | `ApiException`, `StatusCode` = `null` | — |
-| The caller's token was cancelled: before the request went out, while the send waits for a KiCad to take it, or while the reply is awaited | `OperationCanceledException`, whose `CancellationToken` is the caller's | — |
+| The caller's token was cancelled: while the client dialed KiCad, before the request went out, while the send waits for a KiCad to take it, or while the reply is awaited | `OperationCanceledException`, whose `CancellationToken` is the caller's | nng's `NNG_ECLOSED` from the dial, when the dial is what it ended |
 | `Disconnect()` cut the request off | `OperationCanceledException` | — |
-| `Dispose()` while the call was under way: connecting, waiting behind another call on the same client, waiting to send, or waiting for the reply | `OperationCanceledException`, the same at every one of those points | the dial's failure, for a dial that failed after `Dispose()` |
+| `Dispose()` while the call was under way: dialing, waiting behind another call on the same client, waiting to send, or waiting for the reply | `OperationCanceledException`, the same at every one of those points | nng's `NNG_ECLOSED` from the dial, for a call that was dialing |
 | A call made after `Dispose()` | `ObjectDisposedException` | — |
 
 `AS_UNHANDLED` is how KiCad says it has no handler for a command, so it is how a caller finds out a
@@ -73,13 +73,21 @@ thread, until the token or `RequestTimeout` ends the wait. Pass a token with a d
 per-call bound, or set `RequestTimeout` for a client-wide one. There is no useful single default —
 `Ping` returns in under a millisecond and `RefillZones` on a large board does not.
 
+`Connect()`, and a `Send` that has to connect first, do not hold the calling thread for the dial.
+nng's dial is blocking, and against a socket that is bound but never completes nng's handshake, a
+KiCad that has opened its API socket and is not serving yet, it takes nng's own 10 s to give up. So
+the dial runs on a thread of its own, and the caller's task completes when it returns. The caller's
+token ends the dial: the call then fails with an `OperationCanceledException` carrying that token, and
+the socket the dial opened is closed. Against a path with nothing at it the dial still fails at once,
+with connection refused, and nothing retries it. Measured on nng 1.3.2 and 1.4.0, the two this
+package ships: closing the socket under a dial makes `nng_dial` return `NNG_ECLOSED` within 0.1 ms,
+whether the listener never accepted or accepted and held the handshake.
+
 `Dispose()` ends every call under way as a cancellation, as `HttpClient` does its pending requests:
 the call did not fail, it was stopped. It is safe to call more than once, and from any thread while
-calls, `Disconnect()` or another `Dispose()` run. It does not wait for the calls it ends. The one call
-it cannot end at once is one that is dialing, because nng's dial cannot be interrupted. That call ends
-with the same `OperationCanceledException` when the dial returns, and the socket the dial opened is
-closed. The dial returns at once against a path with nothing at it, and after nng's own 10 s at most
-against a socket that never completes the handshake.
+calls, `Disconnect()` or another `Dispose()` run. It does not wait for the calls it ends. A call that
+is dialing is ended the same way, by closing the socket under its dial. `Disconnect()` closes the
+connection only: a dial under way is not on it yet, and goes on.
 
 ### `KiCad` — the connection handle
 
