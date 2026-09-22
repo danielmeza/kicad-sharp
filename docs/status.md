@@ -49,6 +49,14 @@ What has no view round-trips intact and is reachable through `Node`.
 - **A session's `placement` is not applied.** A router does not move parts.
 - **Net classes are an input, not something read.** They live in the `.kicad_pro`, resolved through
   patterns and priorities; `SpecctraOptions` takes them resolved.
+- **KiCad 10.0.6's DRC types a contact with no-net copper by UUID order** (#71). It puts two
+  colliding items in UUID order and reports a touch, distance 0, as `shorting_items` only when the
+  item that comes second has a net; otherwise it is a `clearance` violation. MEASURED with kicad-cli
+  10.0.6 on a one-track board: swapping the two UUIDs swaps the type and changes nothing else.
+  `SpecctraSession.ApplyTo` gives new copper random UUIDs, as KiCad's own import does, so two
+  imports of one session can differ in the type of such a contact. A comparison of DRC reports
+  across boards should count `clearance` and `shorting_items` at distance 0 as one finding, or give
+  the copper the same UUIDs first, as `SpecctraKiCadCliTests` does. Not this library's to fix.
 
 **IPC surface.**
 
