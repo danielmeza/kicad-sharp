@@ -37,6 +37,11 @@ jobs:
       - name: List packages
         run: ls -l packages
 
+      # Nothing is published unless KiCadSharp carries libnng for exactly the eight runtime
+      # identifiers the README names, each built for its own architecture.
+      - name: Check the native libraries in the package
+        run: scripts/check-natives.sh packages/KiCadSharp.[0-9]*.nupkg
+
       - uses: actions/upload-artifact@v7
         with:
           name: nupkg

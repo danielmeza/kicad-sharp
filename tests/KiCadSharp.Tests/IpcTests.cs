@@ -70,7 +70,10 @@ public class IpcTests
         // "Pipename not provided". KiCadEnvironment.GetDefaultSocketPath() existed for this and was
         // never called.
         Assert.Equal(KiCadEnvironment.GetDefaultSocketPath(), settings.PipeName);
-        Assert.Equal("ipc:///tmp/kicad/api.sock", OperatingSystem.IsWindows() ? "ipc:///tmp/kicad/api.sock" : settings.PipeName);
+
+        // Which directory depends on TMPDIR and the platform, as it does for KiCad (#97);
+        // DefaultSocketPathTests pins that. This used to assert /tmp, which a TMPDIR broke.
+        Assert.EndsWith(OperatingSystem.IsWindows() ? @"\kicad\api.sock" : "/kicad/api.sock", settings.PipeName);
 
         // And the name passed to AddKiCad is the client name, which is what goes in the envelope.
         Assert.Equal("my-plugin", settings.ClientName);

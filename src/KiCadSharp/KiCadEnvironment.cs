@@ -257,26 +257,159 @@ namespace KiCadSharp
 
 
         /// <summary>
-        /// Gets the default socket path based on the operating system
+        /// The address of KiCad's API server: <c>KICAD_API_SOCKET</c> when it is set, and otherwise
+        /// the address KiCad 10 listens on, worked out the way KiCad works it out.
         /// </summary>
-        /// <returns>Default socket path for the current platform</returns>
+        /// <returns>An <c>ipc://</c> address, such as <c>ipc:///tmp/kicad/api.sock</c>.</returns>
+        /// <remarks>
+        /// <para>
+        /// KiCad sets <c>KICAD_API_SOCKET</c> only for a plugin it launches. Any other client (a
+        /// test, a CLI, an application started by hand) needs the path KiCad chose, which
+        /// <c>KICAD_API_SERVER::Start</c> builds as <c>&lt;temp&gt;/kicad/api.sock</c>
+        /// (<c>common/api/api_server.cpp</c>, lines 79-86, in KiCad 10.0.6). <c>&lt;temp&gt;</c> is:
+        /// </para>
+        /// <list type="bullet">
+        /// <item><description>
+        /// <b>macOS:</b> <c>/tmp</c>, always. KiCad ignores <c>TMPDIR</c> there, which macOS sets
+        /// for every user.
+        /// </description></item>
+        /// <item><description>
+        /// <b>Linux and other Unix systems:</b> <c>wxStandardPaths::GetTempDir()</c>, which is
+        /// <c>wxFileName::GetTempDir()</c>. That takes the first of <c>TMPDIR</c>, <c>TMP</c> and
+        /// <c>TEMP</c> that names an existing directory, then <c>/tmp</c>. A variable naming a
+        /// directory that does not exist is skipped.
+        /// </description></item>
+        /// <item><description>
+        /// <b>Windows:</b> the same three variables first, then the Win32 <c>GetTempPath</c>.
+        /// <see cref="Path.GetTempPath"/> calls <c>GetTempPath2</c> where it exists, which answers
+        /// the same for every process not running as SYSTEM. <c>ipc://</c> on Windows is a named pipe, not a file:
+        /// nng opens <c>\\.\pipe\</c> followed by the path, so the path has to match KiCad's
+        /// character for character.
+        /// </description></item>
+        /// </list>
+        /// <para>
+        /// The directory is then written the way <c>wxFileName</c> writes it: trailing and repeated
+        /// separators dropped, and on Windows every <c>/</c> written as <c>\</c>. So a
+        /// <c>TMPDIR</c> of <c>/tmp//x/</c> gives <c>ipc:///tmp/x/kicad/api.sock</c>, and a Windows
+        /// temp path of <c>C:\Users\me\AppData\Local\Temp\</c> gives
+        /// <c>ipc://C:\Users\me\AppData\Local\Temp\kicad\api.sock</c>.
+        /// </para>
+        /// <para>
+        /// This is the first KiCad's address. A second KiCad started while the first holds the
+        /// socket listens on <c>api-&lt;pid&gt;.sock</c> in the same directory
+        /// (<c>api_server.cpp</c>, lines 115-125). No default can know that process id.
+        /// </para>
+        /// <para>
+        /// The path can be longer than the platform allows. KiCad does not shorten it. On Linux a
+        /// socket path has to fit in <c>sun_path</c>, 108 bytes with its terminating NUL, so a
+        /// <c>TMPDIR</c> longer than 92 characters leaves KiCad with no socket at all. The
+        /// address returned here is still the one KiCad chose, and dialling it fails with a
+        /// <see cref="KiCadConnectionException"/>. See docs/ipc.md.
+        /// </para>
+        /// </remarks>
         public static string GetDefaultSocketPath()
         {
-            string? path = GetApiSocket();
-            if (!string.IsNullOrEmpty(path))
+            return GetDefaultSocketPath(
+                CurrentSocketPlatform, Environment.GetEnvironmentVariable, Directory.Exists, Path.GetTempPath);
+        }
+
+        /// <summary>The three ways KiCad places its socket; see <see cref="GetDefaultSocketPath()"/>.</summary>
+        internal enum SocketPlatform
+        {
+            Unix,
+            MacOS,
+            Windows,
+        }
+
+        private static SocketPlatform CurrentSocketPlatform =>
+            OperatingSystem.IsWindows() ? SocketPlatform.Windows
+            : OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst() ? SocketPlatform.MacOS
+            : SocketPlatform.Unix;
+
+        /// <summary>
+        /// <see cref="GetDefaultSocketPath()"/> over a platform, an environment, a file system and a
+        /// system temp directory the caller supplies, so a test can describe each one.
+        /// </summary>
+        internal static string GetDefaultSocketPath(
+            SocketPlatform platform,
+            Func<string, string?> getVariable,
+            Func<string, bool> directoryExists,
+            Func<string> systemTempPath)
+        {
+            var configured = getVariable("KICAD_API_SOCKET");
+            if (!string.IsNullOrEmpty(configured))
             {
-                return path;
+                return configured;
             }
 
-            // Use the same logic as the Python implementation
-            if (OperatingSystem.IsWindows())
-            {
-                return $"ipc://{Path.GetTempPath()}\\kicad\\api.sock";
-            }
-            else
+            if (platform == SocketPlatform.MacOS)
             {
                 return "ipc:///tmp/kicad/api.sock";
             }
+
+            var directory = TempDirectory(platform, getVariable, directoryExists, systemTempPath);
+            return "ipc://" + SocketFileIn(directory, windows: platform == SocketPlatform.Windows);
+        }
+
+        private static readonly string[] TempVariables = ["TMPDIR", "TMP", "TEMP"];
+
+        /// <summary>
+        /// <c>wxFileName::GetTempDir()</c>, the same in wxWidgets 3.2.9 (what Ubuntu builds KiCad
+        /// 10.0.6 against) and 3.3.1 (what KiCad's own Windows build pins in <c>vcpkg.json</c>):
+        /// <c>src/common/filename.cpp</c>, lines 1215-1266 and 1228-1279.
+        /// </summary>
+        private static string TempDirectory(
+            SocketPlatform platform,
+            Func<string, string?> getVariable,
+            Func<string, bool> directoryExists,
+            Func<string> systemTempPath)
+        {
+            foreach (var name in TempVariables)
+            {
+                var value = getVariable(name);
+                if (!string.IsNullOrEmpty(value) && directoryExists(value))
+                {
+                    return value;
+                }
+            }
+
+            if (platform == SocketPlatform.Windows)
+            {
+                var system = systemTempPath();
+                if (!string.IsNullOrEmpty(system))
+                {
+                    return system;
+                }
+            }
+            else if (directoryExists("/tmp"))
+            {
+                return "/tmp";
+            }
+
+            // wx's last resort: the working directory -- KiCad's, which is not this process's.
+            return ".";
+        }
+
+        /// <summary>
+        /// <c>&lt;directory&gt;/kicad/api.sock</c>, written as <c>wxFileName</c> writes it after
+        /// <c>AssignDir</c>, <c>AppendDir</c> and <c>SetFullName</c>. An empty component, from a
+        /// trailing or a repeated separator, is dropped (<c>wxFileName::DoSetPath</c>), and the
+        /// native separator joins the rest. On Windows both <c>\</c> and <c>/</c> separate, and a
+        /// UNC path keeps its leading <c>\\</c>.
+        /// </summary>
+        private static string SocketFileIn(string directory, bool windows)
+        {
+            char[] separators = windows ? ['\\', '/'] : ['/'];
+            var separator = windows ? '\\' : '/';
+
+            var root = "";
+            if (directory.Length > 0 && separators.Contains(directory[0]))
+            {
+                root = windows && directory.Length > 1 && separators.Contains(directory[1]) ? @"\\" : separator.ToString();
+            }
+
+            var components = directory.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+            return root + string.Join(separator, [.. components, "kicad", "api.sock"]);
         }
 
         /// <summary>

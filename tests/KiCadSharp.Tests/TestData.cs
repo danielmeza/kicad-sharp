@@ -18,6 +18,13 @@ public static class TestData
     /// <summary>A 108,583-byte, 35-symbol KiCad 10 symbol library holding 112 pins in 67 sub-units.</summary>
     public static string SymbolLibrary => Path.Combine(Root, "orbion.kicad_sym");
 
+    /// <summary>
+    /// A 3,734-byte symbol library kicad-cli 10.0.6 wrote: <c>BASE</c> with two sub-units,
+    /// <c>BASE_X</c> whose sub-unit also starts with <c>BASE_</c>, and <c>DERIVED</c>, which
+    /// <c>(extends "BASE")</c>. The only symbol fixture with a derived symbol in it.
+    /// </summary>
+    public static string DerivedSymbolLibrary => Path.Combine(Root, "derived-symbols.kicad_sym");
+
     /// <summary>A standalone KiCad 6+ <c>.kicad_mod</c>: the root token is <c>footprint</c>, not <c>module</c>.</summary>
     public static string Footprint => Path.Combine(Root, "LED_0603_1608Metric.kicad_mod");
 

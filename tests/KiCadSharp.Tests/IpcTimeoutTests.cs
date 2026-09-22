@@ -1,5 +1,8 @@
 using System.Diagnostics;
 
+using Google.Protobuf.WellKnownTypes;
+
+using Kiapi.Common;
 using Kiapi.Common.Commands;
 
 using Microsoft.Extensions.Logging.Abstractions;
@@ -77,7 +80,11 @@ public class IpcTimeoutTests
         await client.Connect();
         var elapsed = Stopwatch.StartNew();
 
-        var request = Task.Run(async () => await client.Send(new Ping()));
+        // Called directly, not through Task.Run: Send hands the request to nng before it returns its
+        // task, so it is on the wire before the Disconnect below. Through Task.Run it went out only
+        // once the thread pool started it, and on a busy 2-CPU machine that could be after the
+        // Disconnect. Send then connected again, and got the peer's reply 30 s later (#68).
+        var request = client.Send(new Ping()).AsTask();
         await Task.Delay(250);
         client.Disconnect();
 
@@ -94,23 +101,45 @@ public class IpcTimeoutTests
         // Giving up leaves a request outstanding and its reply still arrives. The next request must
         // get its own answer, not the abandoned one's -- otherwise every reply after a single
         // timeout is off by one.
-        using var peer = NngTestPeer.Start(TimeSpan.FromMilliseconds(700));
-        using var client = Client(peer.Url, TimeSpan.FromMilliseconds(50));
+        //
+        // The peer holds the reply until the client has given up, and only then sends it. A reply
+        // that is merely late races the client's clock: the client looks for its reply before it
+        // checks RequestTimeout, so a look that runs after the reply has arrived takes it, as it
+        // should. The reply used to come after 700 ms, against a 50 ms timeout. On a busy 2-CPU
+        // machine the client's next look could run more than 700 ms late, and then the first call
+        // succeeded (#68).
+        using var mayAnswer = new ManualResetEventSlim();
+        using var peer = NngTestPeer.StartRaw(_ =>
+        {
+            mayAnswer.Wait();
+            return NngTestPeer.Answer(ApiStatusCode.AsOk, payload: new Empty());
+        });
 
-        await Assert.ThrowsAsync<KiCadConnectionException>(async () => await client.Send(new Ping()));
+        try
+        {
+            using var client = Client(peer.Url, TimeSpan.FromMilliseconds(50));
 
-        await Task.Delay(TimeSpan.FromSeconds(1.5));   // the abandoned reply lands during this
+            await Assert.ThrowsAsync<KiCadConnectionException>(async () => await client.Send(new Ping()));
+            mayAnswer.Set();
 
-        using var recovered = Client(peer.Url, TimeSpan.FromSeconds(10));
-        await recovered.Send(new Ping());
+            await Task.Delay(TimeSpan.FromSeconds(1.5));   // the abandoned reply lands during this
 
-        Assert.Equal(2, peer.RequestsReceived);
+            using var recovered = Client(peer.Url, TimeSpan.FromSeconds(10));
+            await recovered.Send(new Ping());
+
+            Assert.Equal(2, peer.RequestsReceived);
+        }
+        finally
+        {
+            // Never leave the peer's thread waiting, whatever failed above.
+            mayAnswer.Set();
+        }
     }
 
     [Fact]
     public async Task ConnectingToAPathThatIsNotThereThrowsAConnectionException()
     {
-        using var client = Client($"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}");
+        using var client = Client(SocketPaths.NewUrl("absent"));
 
         var failure = await Assert.ThrowsAsync<KiCadConnectionException>(async () => await client.Connect());
 

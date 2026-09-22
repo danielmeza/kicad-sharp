@@ -49,7 +49,7 @@ public class IpcFailureTests
             NullLogger<KiCadIPCClient>.Instance);
 
     private static string AbsentSocket() =>
-        $"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}";
+        SocketPaths.NewUrl("absent");
 
     /// <summary>
     /// A connected client whose KiCad went away after the dial: the peer it dialled has closed.
@@ -119,7 +119,7 @@ public class IpcFailureTests
     {
         // A KiCad that has bound its socket and is not serving yet. nng gives up on the dial after
         // its own 10 s, which is the cost of this test.
-        var path = Path.Combine(Path.GetTempPath(), $"kicadsharp-silent-{Guid.NewGuid():N}.sock");
+        var path = SocketPaths.New("silent");
         using var listener = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
         listener.Bind(new UnixDomainSocketEndPoint(path));
         listener.Listen(8);
@@ -244,7 +244,11 @@ public class IpcFailureTests
         // asserted: either way it is the same cancellation.
         using var client = await AClientWhoseKiCadWentAway();
 
-        var call = Task.Run(async () => await client.Send(new Ping()));
+        // Called directly, not through Task.Run, so the send is waiting before the Disconnect below.
+        // Through Task.Run, a thread pool slow to start it could run the send after the Disconnect.
+        // The send would then connect again, to a peer that is gone, and fail with "Connection
+        // refused" instead of being cancelled (#68).
+        var call = client.Send(new Ping()).AsTask();
         await Task.Delay(TimeSpan.FromMilliseconds(500));
         Assert.False(call.IsCompleted, "the send was expected to be waiting for a peer");
 

@@ -32,6 +32,27 @@ property to go back to the released one.
 There is deliberately no "swap to `ProjectReference`" switch. Consuming the real `.nupkg` is what
 proves the package works, and the package is the thing that actually breaks.
 
+### The two libnng built here
+
+`osx-arm64` and `win-arm64` get their `libnng` from `native/`, because `nng.NET` publishes none for
+them ([docs/ipc.md](ipc.md#nng-and-which-platforms-it-reaches) has the whole table). The files are
+committed, so building and packing need nothing extra. To rebuild one:
+
+```
+scripts/build-nng.sh osx-arm64        # on an Apple silicon Mac, with Xcode's tools and CMake
+scripts/build-nng.sh win-arm64        # on Windows on Arm, in Git Bash, with Visual Studio 2022 and CMake
+scripts/build-nng.sh <rid> --check    # rebuild, and fail unless it is the committed file
+```
+
+Without `--check` the script writes `native/<rid>/<file>` and puts its SHA-256 in `native/NNG_PIN`.
+The `nng` workflow runs `--check` for both whenever `native/` or either script changes, and uploads
+what it built. A newer Xcode or MSVC on a runner image can change the bytes with the pin unchanged.
+When that is why it fails, commit the uploaded file and its new SHA-256. Do not loosen the check. To
+move to another nng release, change the tag and the commit in `native/NNG_PIN`, and do the same.
+
+`scripts/check-natives.sh <KiCadSharp.nupkg>` checks a packed package the way CI and the release
+workflow do: exactly the eight libraries, each built for its own architecture.
+
 ## Testing
 
 ```
