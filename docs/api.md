@@ -11,7 +11,7 @@ Every type and member. The short version is in the [README](../README.md).
 | `KiCadIPCClient : IDisposable` | The transport. `Connect(ct)`, `Send<TResult>(IMessage, ct)`, `Send(IMessage, ct)`, `Disconnect()`, `IsConnected`. |
 | `KiCadClientSettings` | `PipeName`, `Token`, `ClientName`, `RequestTimeout`, `DefaultClientName = "kicad.client"`. |
 | `KiCadIPCProxy` | Abstract base for `KiCad` / `Board` / `Project`; wraps `Send`. |
-| `KiCadEnvironment` | Static reader for `KICAD_API_SOCKET`, `KICAD_API_TOKEN`, `KIPRJMOD`, `KICAD_USER_TEMPLATE_DIR`, `VIRTUAL_ENV`, and KiCad's versioned library paths: `GetModelsDirectory()` (`KICAD<n>_3DMODEL_DIR`), `GetFootprintDirectory()` (`KICAD<n>_FOOTPRINT_DIR`), `GetSymbolDirectory()` (`KICAD<n>_SYMBOL_DIR`), `GetDesignBlockDirectory()` (`KICAD<n>_DESIGN_BLOCK_DIR`), `GetTemplateDirectory()` (`KICAD<n>_TEMPLATE_DIR`), `GetThirdPartyDirectory()` (`KICAD<n>_3RD_PARTY`). Each reads the newest version `<n>` that is set, so KiCad 10's `KICAD10_*` wins over a leftover `KICAD9_*`. `GetVersionedVariable(baseName)` does the same for any name, and `GetVersionedVariable(baseName, majorVersion)` tries a known version first. See [what KiCad puts in a plugin's environment](ipc.md#what-kicad-puts-in-a-plugins-environment). Plus `GetDefaultSocketPath()`, `GenerateRandomClientName()`, `IsRunningOnKiCad()`. |
+| `KiCadEnvironment` | Static reader for `KICAD_API_SOCKET`, `KICAD_API_TOKEN`, `KIPRJMOD`, `KICAD_USER_TEMPLATE_DIR`, `VIRTUAL_ENV`, and KiCad's versioned library paths: `GetModelsDirectory()` (`KICAD<n>_3DMODEL_DIR`), `GetFootprintDirectory()` (`KICAD<n>_FOOTPRINT_DIR`), `GetSymbolDirectory()` (`KICAD<n>_SYMBOL_DIR`), `GetDesignBlockDirectory()` (`KICAD<n>_DESIGN_BLOCK_DIR`), `GetTemplateDirectory()` (`KICAD<n>_TEMPLATE_DIR`), `GetThirdPartyDirectory()` (`KICAD<n>_3RD_PARTY`). Each reads the newest version `<n>` that is set, so KiCad 10's `KICAD10_*` wins over a leftover `KICAD9_*`. `GetVersionedVariable(baseName)` does the same for any name, and `GetVersionedVariable(baseName, majorVersion)` tries a known version first. See [what KiCad puts in a plugin's environment](ipc.md#what-kicad-puts-in-a-plugins-environment). `GetDefaultSocketPath()` is `KICAD_API_SOCKET` when it is set, and otherwise the address KiCad 10 listens on, worked out by KiCad's own rule: `<temp>/kicad/api.sock`, where `<temp>` is `/tmp` on macOS and elsewhere the first of `TMPDIR`, `TMP` and `TEMP` that names a directory, then `/tmp` or, on Windows, the system temp path. See [where KiCad listens](ipc.md#where-kicad-listens-for-a-client-it-did-not-launch). Plus `GenerateRandomClientName()`, `IsRunningOnKiCad()`. |
 | `KiCadServicesExtensions.AddKiCad(...)` | DI registration: a keyed `KiCadIPCClient`, a keyed `KiCad`, and `IKiCadFactory`. |
 | `IKiCadFactory` | `KiCad Create(string? clientName = null)`. |
 | `KiCadIpcException` | Abstract base of the two below: the one type to catch for any IPC failure. |
@@ -40,6 +40,8 @@ configured, the client adopts the one KiCad returns on the first successful roun
 | `GetBoard()` with no board open | `ApiException`, `StatusCode` = `null` | — |
 | The caller's token was cancelled: before the request went out, while the send waits for a KiCad to take it, or while the reply is awaited | `OperationCanceledException`, whose `CancellationToken` is the caller's | — |
 | `Disconnect()` cut the request off | `OperationCanceledException` | — |
+| `Dispose()` while the call was under way: connecting, waiting behind another call on the same client, waiting to send, or waiting for the reply | `OperationCanceledException`, the same at every one of those points | the dial's failure, for a dial that failed after `Dispose()` |
+| A call made after `Dispose()` | `ObjectDisposedException` | — |
 
 `AS_UNHANDLED` is how KiCad says it has no handler for a command, so it is how a caller finds out a
 command is not there:
@@ -71,6 +73,14 @@ thread, until the token or `RequestTimeout` ends the wait. Pass a token with a d
 per-call bound, or set `RequestTimeout` for a client-wide one. There is no useful single default —
 `Ping` returns in under a millisecond and `RefillZones` on a large board does not.
 
+`Dispose()` ends every call under way as a cancellation, as `HttpClient` does its pending requests:
+the call did not fail, it was stopped. It is safe to call more than once, and from any thread while
+calls, `Disconnect()` or another `Dispose()` run. It does not wait for the calls it ends. The one call
+it cannot end at once is one that is dialing, because nng's dial cannot be interrupted. That call ends
+with the same `OperationCanceledException` when the dial returns, and the socket the dial opened is
+closed. The dial returns at once against a path with nothing at it, and after nng's own 10 s at most
+against a socket that never completes the handshake.
+
 ### `KiCad` — the connection handle
 
 `Ping()`, `GetVersion()`, `GetKiCadBinaryPath(name)`, `GetPluginSettingsPath(id)`,
@@ -99,7 +109,7 @@ plus `Document` and `Name`.
 | `KiCadNode` | — | Base of every typed view: `Node` (the live s-expression), `ToSExpression()`. Everything below reads and writes through it. |
 | `KiCadNodeList<T>` | — | A live view over a node's children with one token: `Count`, indexer, `Add`, `Remove`, `Insert`. A `foreach` walks the children that were there when it started, so the loop may move, remove or append. |
 | `KiCadSymbolLibrary` | `.kicad_sym` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddSymbol`, `RemoveSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`, `Document`, `Node`. `Version` and `Generator` are what the file declares, or `null` when it declares none. |
-| `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. |
+| `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. Setting `Id` renames the sub-units with it (`R_1_1` → `UL_R_1_1`) and re-points every `(extends …)` in the same library that named the old symbol; KiCad refuses a library in which either still carries the old name. |
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
 | `KiCadText` | — | Text inside a symbol: `Text`, `Position`, `RotationDegrees`, `FontEffects`. KiCad stores this angle in **tenths of a degree**, so a vertical text is `(at x y 900)` and `Position.Rotation` reads 900. `RotationDegrees` converts. The four-argument constructor writes its angle unchanged and is obsolete. `KiCadSchematicText`, which is text on a sheet, stores degrees, so there `RotationDegrees` is the number in the file. |
 | `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`, `Version`, `Generator`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). `Version` and `Generator` are what the file declares, or `null` when it declares none. |
@@ -175,6 +185,15 @@ the `(mode …)`, and `hatch`, `polygon` and `segment` are written as they are. 
 `ArgumentException` and writes nothing. Writing back the value just read leaves the file as it was.
 A new mode does not refill the zone: its `filled_polygon`s keep the old copper until KiCad fills it
 again. `Mode` cites KiCad 10.0.6's parser and writer lines.
+
+**A zone's pad connection and outline hatch also take only KiCad's words.** `KiCadZone.ConnectPadsMode`
+reads `""` for thermal reliefs, which KiCad writes as `(connect_pads (clearance …))` with no word.
+Setting `""` removes the word, and `yes`, `no` and `thru_hole_only` go before the clearance, where
+KiCad writes them (#89). `HatchStyle` takes `none`, `edge` and `full` (#90). KiCad needs both values
+of `(hatch style pitch)`, so setting either one on a zone that has no `(hatch …)` writes both. The
+other value is the one KiCad reads for a zone without a `(hatch …)`: `none`, or 0.5 mm, which is also
+what `HatchPitch` reads there. Any other word throws `ArgumentException` and writes nothing, and
+writing back the values just read leaves the file as it was.
 
 **Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
 `KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of

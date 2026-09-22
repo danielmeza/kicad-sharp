@@ -23,8 +23,9 @@
     /// <b>Not included, on purpose:</b> <see cref="OperationCanceledException"/>. A cancelled
     /// <see cref="CancellationToken"/> surfaces as itself, never wrapped, so a caller can tell "I
     /// stopped it" from "it failed". So do the two usage errors, <see cref="ArgumentNullException"/>
-    /// for a null command and <see cref="ObjectDisposedException"/> for a client that has been
-    /// disposed: neither says anything about KiCad.
+    /// for a null command and <see cref="ObjectDisposedException"/> for a call made on a client that
+    /// has been disposed: neither says anything about KiCad. A call that was already under way when
+    /// the client was disposed ends with <see cref="OperationCanceledException"/>.
     /// </para>
     /// <para>
     /// Abstract, because it is a type to catch rather than one to throw: each failure has a more
