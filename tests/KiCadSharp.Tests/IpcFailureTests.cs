@@ -138,6 +138,27 @@ public class IpcFailureTests
         }
     }
 
+    [Fact]
+    public async Task APathTooLongForASocketIsAConnectionFailureThatSaysSo()
+    {
+        // nng refuses such a path with NNG_EADDRINVAL, "Address invalid", which reads like a
+        // malformed URL (#108). The client checks the length first and says what is wrong: how long
+        // the path is, and how long the platform allows. Nothing is dialled.
+        var limit = IpcPathLimit.ForThisPlatform;
+        var path = SocketPaths.OfLength(limit + 1);
+        using var client = Client($"ipc://{path}");
+
+        var failure = await FailsWith<KiCadConnectionException>(async () => await client.Send(new Ping()));
+
+        Assert.Contains($"'ipc://{path}'", failure.Message);
+        Assert.Contains($"{limit + 1} bytes long", failure.Message);
+        Assert.Contains($"at most {limit} bytes", failure.Message);
+        Assert.Contains(nameof(KiCadClientSettings.PipeName), failure.Message);
+        Assert.DoesNotContain("Address invalid", failure.Message);
+        Assert.Null(failure.InnerException);
+        Assert.False(client.IsConnected);
+    }
+
     // ----------------------------------------------------------------------- a missing or wrong token
 
     /// <summary>A peer that checks the token the way <c>KICAD_API_SERVER::handleApiEvent</c> does.</summary>

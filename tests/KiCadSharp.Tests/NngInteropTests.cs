@@ -151,6 +151,30 @@ public class NngInteropTests
     }
 
     [Fact]
+    public void APathOneByteOverThePlatformsLimitIsAddressInvalidToNng()
+    {
+        // The measurement IpcPathLimit rests on, taken against the libnng this package ships for the
+        // platform running the test. A path of exactly the limit is dialled: nothing listens there,
+        // so it is refused, which is the same answer a path of any length gets. One byte more is not
+        // dialled at all: "Address invalid", from sun_path on Linux and macOS and from NNG_MAXADDRLEN
+        // on Windows, with no word about length. MEASURED 2026-09-22 on linux-x64, nng 1.3.2:
+        // 107 bytes "Connection refused", 108 bytes "Address invalid".
+        var limit = IpcPathLimit.ForThisPlatform;
+
+        using (var fits = NngRequestSocket.Open())
+        {
+            var refused = Assert.Throws<NngException>(() => fits.Dial("ipc://" + SocketPaths.OfLength(limit)));
+            Assert.Contains("Connection refused", refused.Message);
+        }
+
+        using (var over = NngRequestSocket.Open())
+        {
+            var invalid = Assert.Throws<NngException>(() => over.Dial("ipc://" + SocketPaths.OfLength(limit + 1)));
+            Assert.Contains("Address invalid", invalid.Message);
+        }
+    }
+
+    [Fact]
     public void ARequestAndItsReplyRoundTripThroughTheWrapper()
     {
         using var peer = NngTestPeer.Start(TimeSpan.Zero);

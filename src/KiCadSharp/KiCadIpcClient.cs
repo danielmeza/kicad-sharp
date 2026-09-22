@@ -99,8 +99,8 @@ namespace KiCadSharp
         /// </summary>
         /// <param name="cancellationToken">Observed before the dial, not during it.</param>
         /// <exception cref="KiCadConnectionException">
-        /// No socket path is configured, nothing at it completes nng's handshake, or no native nng
-        /// library could be loaded.
+        /// No socket path is configured, it is longer than a socket path can be on this platform,
+        /// nothing at it completes nng's handshake, or no native nng library could be loaded.
         /// </exception>
         /// <exception cref="OperationCanceledException">
         /// <paramref name="cancellationToken"/> was already cancelled; or <see cref="Dispose"/> was called
@@ -158,6 +158,13 @@ namespace KiCadSharp
             }
 
             cancellationToken.ThrowIfCancellationRequested();
+
+            // Before nng sees it: nng refuses a path too long for the platform as "Address invalid",
+            // which does not say what is wrong (#108). This does. The limit is IpcPathLimit's.
+            if (IpcPathLimit.TooLong(_settings.PipeName) is { } tooLong)
+            {
+                throw new KiCadConnectionException($"Failed to connect to KiCad at '{_settings.PipeName}': {tooLong}");
+            }
 
             NngRequestSocket socket;
             try

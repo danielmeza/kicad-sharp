@@ -304,7 +304,8 @@ namespace KiCadSharp
         /// socket path has to fit in <c>sun_path</c>, 108 bytes with its terminating NUL, so a
         /// <c>TMPDIR</c> longer than 92 characters leaves KiCad with no socket at all. The
         /// address returned here is still the one KiCad chose, and dialling it fails with a
-        /// <see cref="KiCadConnectionException"/>. See docs/ipc.md.
+        /// <see cref="KiCadConnectionException"/> that says how long the path is and how long the
+        /// platform allows (<c>IpcPathLimit</c>). See docs/ipc.md.
         /// </para>
         /// </remarks>
         public static string GetDefaultSocketPath()
@@ -321,7 +322,7 @@ namespace KiCadSharp
             Windows,
         }
 
-        private static SocketPlatform CurrentSocketPlatform =>
+        internal static SocketPlatform CurrentSocketPlatform =>
             OperatingSystem.IsWindows() ? SocketPlatform.Windows
             : OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst() ? SocketPlatform.MacOS
             : SocketPlatform.Unix;

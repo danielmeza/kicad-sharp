@@ -170,6 +170,23 @@ nowhere, because nothing listens anywhere. The dial fails at once, as a `KiCadCo
 On Windows, nng refuses a path of 128 characters or more when the listener is created
 (`win_ipclisten.c:321-328`). That case was not measured.
 
+**The client says when the path is the problem.** nng's own refusal is `NNG_EADDRINVAL`, "Address
+invalid", which reads like a malformed URL (#108). So before it dials, `KiCadIPCClient` counts the
+UTF-8 bytes after `ipc://` against the platform's limit, and a path over it fails as a
+`KiCadConnectionException` that says so: "the socket path is 108 bytes long, and Linux takes at
+most 107 bytes (sun_path is 108 bytes, with its NUL)". The limits, in `IpcPathLimit`:
+
+| Platform | Longest path | Where nng stops |
+|---|---|---|
+| Linux | 107 bytes | `sun_path`, 108 bytes with its NUL: nng 1.3.2 `posix_sockaddr.c:66-69`, through `posix_ipcdial.c:168-172` |
+| macOS | 103 bytes | `sun_path`, 104 bytes with its NUL; the same code |
+| Windows | 127 bytes | `NNG_MAXADDRLEN`, 128: nng 1.4.0 `win_ipcdial.c:230-235`, when the dialer is created |
+
+MEASURED 2026-09-22 on `linux-x64` against the shipped nng 1.3.2, from `NngRequestSocket.Dial`: a
+107-byte path with nothing listening fails with "Connection refused", a 108-byte one with "Address
+invalid". macOS and Windows are from nng's source and headers; CI's `test (osx-arm64)` and
+`test (win-arm64)` jobs run the same test at each platform's limit and one byte over.
+
 Two more cases have no default address that could be right:
 
 - **A second KiCad**, started while the first one holds `api.sock`, listens on
