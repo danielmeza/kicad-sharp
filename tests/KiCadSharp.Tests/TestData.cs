@@ -155,4 +155,20 @@ public static class TestData
             return string.IsNullOrEmpty(configured) ? null : configured;
         }
     }
+
+    /// <summary>
+    /// The directory holding KiCad's own symbol libraries (<c>Timer.kicad_sym</c> and the rest), or
+    /// <see langword="null"/>. Set <c>KICADSHARP_KICAD_SYMBOLS</c> to opt in; the release image
+    /// <c>ghcr.io/danielmeza/orbion-kicad-release:10.0.6</c> ships 224 of them under
+    /// <c>/usr/share/kicad/symbols</c>. The tests that would read them return early without it, as
+    /// the libraries are not vendored here: <c>Timer.kicad_sym</c> alone is 200,370 bytes.
+    /// </summary>
+    public static string? KiCadSymbols
+    {
+        get
+        {
+            var configured = Environment.GetEnvironmentVariable("KICADSHARP_KICAD_SYMBOLS");
+            return string.IsNullOrEmpty(configured) ? null : configured;
+        }
+    }
 }
