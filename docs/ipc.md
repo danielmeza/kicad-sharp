@@ -130,6 +130,14 @@ appears on disk, and the client has to spell the path exactly as KiCad does. Unt
 wrote `…\Temp\\kicad\api.sock`: `Path.GetTempPath()` already ends in `\`, and the code added
 another.
 
+The tests that need a peer which takes nng's connection and holds, or never completes, its
+handshake bind a Unix domain socket (`HeldHandshake`), which nng never dials on Windows: the dial
+fails at once with "Connection refused". They are `[UnixSocketFact]`s, skipped there with a message
+that says so (#106). MEASURED 2026-09-22 on GitHub's `windows-11-arm` runner, nng 1.4.0, in pull
+request #125's first run: the same two silent-socket tests, run against a `NamedPipeServerStream`
+on the name nng derives, failed "Timed out" after nng's 10 s, as on Linux. So the trap they pin is
+real on Windows too; only the peer differs.
+
 Measured on Linux, in `ghcr.io/danielmeza/orbion-kicad-release:10.0.6` with no network and a fresh
 `HOME`. Each row started pcbnew with only the variables shown. Three things were read for each:
 - the Unix sockets pcbnew was listening on (`/proc/net/unix`);
@@ -169,6 +177,24 @@ nowhere, because nothing listens anywhere. The dial fails at once, as a `KiCadCo
 
 On Windows, nng refuses a path of 128 characters or more when the listener is created
 (`win_ipclisten.c:321-328`). That case was not measured.
+
+**The client says when the path is the problem.** nng's own refusal is `NNG_EADDRINVAL`, "Address
+invalid", which reads like a malformed URL (#108). So before it dials, `KiCadIPCClient` counts the
+UTF-8 bytes after `ipc://` against the platform's limit, and a path over it fails as a
+`KiCadConnectionException` that says so: "the socket path is 108 bytes long, and Linux takes at
+most 107 bytes (sun_path is 108 bytes, with its NUL)". The limits, in `IpcPathLimit`:
+
+| Platform | Longest path | Where nng stops |
+|---|---|---|
+| Linux | 107 bytes | `sun_path`, 108 bytes with its NUL: nng 1.3.2 `posix_sockaddr.c:66-69`, through `posix_ipcdial.c:168-172` |
+| macOS | 103 bytes | `sun_path`, 104 bytes with its NUL; the same code |
+| Windows | 127 bytes | `NNG_MAXADDRLEN`, 128: nng 1.4.0 `win_ipcdial.c:230-235`, when the dialer is created |
+
+MEASURED 2026-09-22, from `NngRequestSocket.Dial` against the nng this package ships for each
+platform (`NngInteropTests.APathOneByteOverThePlatformsLimitIsAddressInvalidToNng`): a path of the
+limit with nothing listening fails with "Connection refused", one byte more with "Address invalid".
+On `linux-x64` (107 and 108), on GitHub's `macos-14` runner (`osx-arm64`, 103 and 104) and on its
+`windows-11-arm` runner (`win-arm64`, 127 and 128).
 
 One more case has no default address that could be right: **a second KiCad**, started while the
 first one holds `api.sock`, listens on `api-<pid>.sock` in the same directory
@@ -283,8 +309,8 @@ nothing for Apple silicon or Windows on Arm, so those two are built in this repo
 - **Checked.** Each one exports the same nng functions as its x64 counterpart (495 on macOS, 497 on
   Windows) and links the same system libraries. The `nng` workflow rebuilds both on their own
   hardware, GitHub's `macos-14` and `windows-11-arm`, and fails unless each rebuild is the committed
-  file byte for byte. CI runs the test suite on those two machines too, on Windows without three
-  tests that fail there whatever the architecture (#106, #107). Every packed `KiCadSharp` is checked
+  file byte for byte. CI runs the test suite on those two machines too, on Windows without one
+  test that fails there whatever the architecture (#107). Every packed `KiCadSharp` is checked
   for exactly these eight files, each built for its own architecture (`scripts/check-natives.sh`), in
   CI and before a release.
 

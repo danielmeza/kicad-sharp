@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Sockets;
 
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
@@ -114,28 +113,40 @@ public class IpcFailureTests
         await FailsWith<KiCadConnectionException>(async () => await client.Send(new Ping()));
     }
 
-    [Fact]
+    [UnixSocketFact]
     public async Task ASocketThatNeverCompletesTheHandshakeIsAConnectionFailure()
     {
         // A KiCad that has bound its socket and is not serving yet. nng gives up on the dial after
-        // its own 10 s, which is the cost of this test.
-        var path = SocketPaths.New("silent");
-        using var listener = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
-        listener.Bind(new UnixDomainSocketEndPoint(path));
-        listener.Listen(8);
+        // its own 10 s, which is the cost of this test. HeldHandshake is that socket, never
+        // answered. On Windows the test is skipped: nng dials a named pipe there, not the Unix
+        // socket HeldHandshake binds (#106).
+        using var silent = HeldHandshake.Start();
+        using var client = Client(silent.Url);
 
-        try
-        {
-            using var client = Client($"ipc://{path}");
+        var failure = await FailsWith<KiCadConnectionException>(async () => await client.Send(new Ping()));
 
-            var failure = await FailsWith<KiCadConnectionException>(async () => await client.Send(new Ping()));
+        Assert.Contains("Timed out", Assert.IsType<NngException>(failure.InnerException).Message);
+    }
 
-            Assert.Contains("Timed out", Assert.IsType<NngException>(failure.InnerException).Message);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+    [Fact]
+    public async Task APathTooLongForASocketIsAConnectionFailureThatSaysSo()
+    {
+        // nng refuses such a path with NNG_EADDRINVAL, "Address invalid", which reads like a
+        // malformed URL (#108). The client checks the length first and says what is wrong: how long
+        // the path is, and how long the platform allows. Nothing is dialled.
+        var limit = IpcPathLimit.ForThisPlatform;
+        var path = SocketPaths.OfLength(limit + 1);
+        using var client = Client($"ipc://{path}");
+
+        var failure = await FailsWith<KiCadConnectionException>(async () => await client.Send(new Ping()));
+
+        Assert.Contains($"'ipc://{path}'", failure.Message);
+        Assert.Contains($"{limit + 1} bytes long", failure.Message);
+        Assert.Contains($"at most {limit} bytes", failure.Message);
+        Assert.Contains(nameof(KiCadClientSettings.PipeName), failure.Message);
+        Assert.DoesNotContain("Address invalid", failure.Message);
+        Assert.Null(failure.InnerException);
+        Assert.False(client.IsConnected);
     }
 
     // ----------------------------------------------------------------------- a missing or wrong token
