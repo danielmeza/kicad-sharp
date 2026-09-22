@@ -104,23 +104,45 @@ The transport is nng. `KiCadSharp` calls it through a **P/Invoke wrapper of thir
 `nng_msg_*` calls the envelope needs, `nng_close`, `nng_socket_set_ms`, `nng_strerror`,
 `nng_version` — and ships the native library itself, under `runtimes/<rid>/native/`.
 
-That native library is not new. It was always there: `libnng.so` is a native asset of `nng.NET`, so
-publishing a consumer self-contained has always put a **540,512-byte `libnng.so`** beside the
-executable. What is gone is the managed binding on top of it, and the `Rebus` message bus and
-`Newtonsoft.Json` that arrived with it — see [Pending](#pending).
+On six platforms that native library is not new. It was always there: `libnng.so` is a native asset
+of `nng.NET`, so publishing a consumer self-contained has always put a **540,512-byte `libnng.so`**
+beside the executable. What is gone is the managed binding on top of it, and the `Rebus` message bus
+and `Newtonsoft.Json` that arrived with it — see [Pending](#pending).
 
-| Runtime identifier | Shipped | File |
-|---|---|---|
-| `linux-x64`, `linux-arm64`, `linux-arm` | yes | `libnng.so` (nng 1.3.2) |
-| `osx-x64` | yes | `libnng.dylib` (nng 1.3.2) |
-| `win-x64`, `win-x86` | yes | `nng.dll` (nng 1.4.0) |
-| `osx-arm64`, `win-arm64`, `linux-musl-*` | **no** | — |
+| Runtime identifier | Shipped | File | From |
+|---|---|---|---|
+| `linux-x64`, `linux-arm64`, `linux-arm` | yes | `libnng.so` (nng 1.3.2) | `nng.NET` |
+| `osx-x64` | yes | `libnng.dylib` (nng 1.3.2) | `nng.NET` |
+| `osx-arm64` | yes | `libnng.dylib` (nng 1.3.2) | built here |
+| `win-x64`, `win-x86` | yes | `nng.dll` (nng 1.4.0) | `nng.NET` |
+| `win-arm64` | yes | `nng.dll` (nng 1.4.0) | built here |
+| `linux-musl-*`, anything else | **no** | — | |
 
-Those six are exactly what upstream publishes, and exactly what this library carried before, so no
-platform gains or loses support here. On a platform that is not in the list, or in a container that
-does not have libnng's own dependencies, set **`KICADSHARP_NNG_LIBRARY`** to the full path of a
-`libnng` to load instead (`brew install nng`, a distribution package, your own build). Nothing else
-has to be shipped: on the six above the file arrives with the package and is found by the runtime.
+`nng.NET` publishes the first six, and the build copies them out of it unchanged. It publishes
+nothing for Apple silicon or Windows on Arm, so those two are built in this repository by
+`scripts/build-nng.sh` and committed under `native/`:
+
+- **Which nng.** The release the same platform's `nng.NET` binary is, so that every Mac runs one nng
+  and every Windows machine runs one nng: 1.3.2 for `osx-arm64`, 1.4.0 for `win-arm64`.
+  `native/NNG_PIN` pins each tag to its commit and records the SHA-256 of each file.
+- **How.** `nng.NET`'s own CMake flags (a shared library, `Release`, no tests, no tools), the target
+  architecture, a deployment target of macOS 11.0 (the first macOS on Apple silicon), and MSVC's
+  `/Brepro`, which stamps a content hash where the link time would go so that two builds can be
+  compared. `NNG_ELIDE_DEPRECATED` stays off. `nng.NET`'s script asks for it, but its Windows DLLs
+  still export the deprecated functions it removes, and the new DLL should export what they export.
+  The header of `scripts/build-nng.sh` has the details.
+- **Checked.** Each one exports the same nng functions as its x64 counterpart (495 on macOS, 497 on
+  Windows) and links the same system libraries. The `nng` workflow rebuilds both on their own
+  hardware, GitHub's `macos-14` and `windows-11-arm`, and fails unless each rebuild is the committed
+  file byte for byte. CI runs the test suite on those two machines too, on Windows without three
+  tests that fail there whatever the architecture (#106, #107). Every packed `KiCadSharp` is checked
+  for exactly these eight files, each built for its own architecture (`scripts/check-natives.sh`), in
+  CI and before a release.
+
+On a platform that is not in the list, or in a container that does not have libnng's own
+dependencies, set **`KICADSHARP_NNG_LIBRARY`** to the full path of a `libnng` to load instead (a
+distribution package, your own build). Nothing else has to be shipped: on the eight above the file
+arrives with the package and is found by the runtime.
 
 The library that variable names is checked as it loads: it has to export all thirteen functions
 above. One that loads and lacks any of them is refused, and every connection attempt fails with a
@@ -139,8 +161,8 @@ right:
 | | Links | Not guaranteed present |
 |---|---|---|
 | Linux | `librt.so.1`, `libpthread.so.0`, `libnsl.so.1`, `libatomic.so.1`, `libc.so.6` | **`libatomic.so.1`** — a bare `ubuntu:24.04` has none (`apt install libatomic1`). glibc, so **no musl**. |
-| macOS | `/usr/lib/libSystem.B.dylib` | — nothing. |
-| Windows | `WS2_32`, `ADVAPI32`, `KERNEL32`, the UCRT — all in-box since Windows 10 | **`VCRUNTIME140.dll`** — the Visual C++ 2015–2022 Redistributable. Very widely installed, but not part of Windows and not required by .NET. |
+| macOS | `/usr/lib/libSystem.B.dylib` | — nothing. `osx-x64` is built for macOS 10.14 and later, `osx-arm64` for 11.0 and later. |
+| Windows | `WS2_32`, `ADVAPI32`, `KERNEL32`, the UCRT — all in-box since Windows 10 | **`VCRUNTIME140.dll`** — the Visual C++ 2015–2022 Redistributable, for the process's own architecture: `win-arm64` needs the Arm64 one. Very widely installed, but not part of Windows and not required by .NET. |
 
 Two failure modes follow from that, both measured:
 
@@ -149,8 +171,9 @@ Two failure modes follow from that, both measured:
 - **`linux-musl-x64` publishes look fine and are not.** NuGet's RID fallback hands the glibc
   `libnng.so` to a musl publish, so the file is present and unloadable.
 
-All of this is unchanged from when the binding was `Rebus.nng` — it is the same `libnng`, and these
-are the same requirements it always had. What is new is that the exception says which one it is.
+For the six from `nng.NET`, all of this is unchanged from when the binding was `Rebus.nng` — it is
+the same `libnng`, and these are the same requirements it always had. The two built here have the
+same ones. What is new is that the exception says which one it is.
 
 Either way the exception says which of the two it is, names every path that was tried, and names the
 environment variable — rather than the loader's bare `DllNotFoundException`.
