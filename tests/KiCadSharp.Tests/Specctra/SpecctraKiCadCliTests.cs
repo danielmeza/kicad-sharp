@@ -87,7 +87,7 @@ public class SpecctraKiCadCliTests
 
         const string Low = "10000000-0000-4000-8000-000000000001";
         const string High = "f0000000-0000-4000-8000-000000000001";
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         var trackLower = Path.Combine(scratch, "track-lower.kicad_pcb");
         var trackHigher = Path.Combine(scratch, "track-higher.kicad_pcb");
         File.WriteAllText(trackLower, TrackEndingOnNoNetCopper(track: Low, polygon: High));
