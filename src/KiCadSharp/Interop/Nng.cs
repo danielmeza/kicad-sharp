@@ -37,7 +37,8 @@ namespace KiCadSharp.Interop
         /// <summary>
         /// Names a <c>libnng</c> to load instead of the one shipped here: an absolute path, or a
         /// name for the platform loader to resolve. This is the supported way onto a platform
-        /// upstream publishes no binary for -- see <see cref="NngLibraryResolver"/>.
+        /// upstream publishes no binary for -- see <see cref="NngLibraryResolver"/>. When it is set,
+        /// that library is used or the connection fails: the shipped one is never loaded instead.
         /// </summary>
         internal const string LibraryPathVariable = "KICADSHARP_NNG_LIBRARY";
 
@@ -48,9 +49,10 @@ namespace KiCadSharp.Interop
         /// <summary>Do not block; return <see cref="Again"/> when the operation would wait.</summary>
         internal const int FlagNonBlock = 2;
 
-        // The three nng error codes this client reasons about by number. Everything else is turned
+        // The four nng error codes this client reasons about by number. Everything else is turned
         // into text by nng_strerror rather than enumerated here.
-        internal const int Again = 8;       // NNG_EAGAIN     -- nothing to receive yet
+        internal const int TimedOut = 5;    // NNG_ETIMEDOUT  -- a dial, or a blocking call, that ran out of time
+        internal const int Again = 8;       // NNG_EAGAIN     -- nothing to receive yet, or no connection ready to send on
         internal const int Closed = 7;      // NNG_ECLOSED    -- the socket went away underneath us
         internal const int State = 11;      // NNG_ESTATE     -- receive with no request outstanding
 
@@ -91,7 +93,10 @@ namespace KiCadSharp.Interop
         [LibraryImport(Library, StringMarshalling = StringMarshalling.Utf8)]
         internal static partial int nng_dial(NngSocket socket, string url, out NngDialer dialer, int flags);
 
-        /// <summary>Sends a message. On success nng owns it; on failure the caller still does.</summary>
+        /// <summary>
+        /// Sends a message. On success nng owns it; on failure the caller still does. Called with
+        /// <see cref="FlagNonBlock"/>; see <see cref="NngRequestSocket.TrySend"/>.
+        /// </summary>
         [LibraryImport(Library)]
         internal static partial int nng_sendmsg(NngSocket socket, IntPtr message, int flags);
 

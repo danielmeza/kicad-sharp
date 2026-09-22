@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -46,18 +47,20 @@ namespace KiCadSharp.Documents
         /// Creates a library over an existing s-expression.
         /// </summary>
         /// <param name="expression">The <c>kicad_symbol_lib</c> form.</param>
+        /// <exception cref="ArgumentException">The form is not a <c>kicad_symbol_lib</c>.</exception>
         public KiCadSymbolLibrary(SExpression expression)
         {
             ArgumentNullException.ThrowIfNull(expression);
+            KiCadDocumentRoot.RequireArgument(expression, nameof(expression), KiCadTokens.Symbol.LibraryRoot);
             _root = expression;
             _document = new SDocument();
             _document.Add(expression);
         }
 
-        private KiCadSymbolLibrary(SDocument document)
+        private KiCadSymbolLibrary(SDocument document, string? filePath)
         {
             _document = document;
-            _root = document.Root ?? throw new InvalidOperationException("The file holds no s-expression.");
+            _root = KiCadDocumentRoot.Require(document, filePath, "symbol library", KiCadTokens.Symbol.LibraryRoot);
         }
 
         /// <summary>Gets the whole parsed file, including anything outside the root form.</summary>
@@ -70,7 +73,11 @@ namespace KiCadSharp.Documents
         public string Version
         {
             get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.SymbolLibraryVersion;
-            set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+            set
+            {
+                KiCadChildOrder.Place(_root, KiCadTokens.Common.Version);
+                _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>Gets or sets the name of the program that wrote the library.</summary>
@@ -88,26 +95,69 @@ namespace KiCadSharp.Documents
         /// <summary>Loads a library from a file.</summary>
         /// <param name="filePath">Path to the <c>.kicad_sym</c> file.</param>
         /// <returns>The library.</returns>
-        public static KiCadSymbolLibrary Load(string filePath) => new(SDocument.Load(filePath));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a symbol library: its root is not <c>(kicad_symbol_lib …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
+        public static KiCadSymbolLibrary Load(string filePath) => new(SDocument.Load(filePath), filePath);
 
         /// <summary>Loads a library from a file, reading it asynchronously.</summary>
         /// <param name="filePath">Path to the <c>.kicad_sym</c> file.</param>
         /// <param name="cancellationToken">Cancels the read.</param>
         /// <returns>The library.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a symbol library: its root is not <c>(kicad_symbol_lib …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static async Task<KiCadSymbolLibrary> LoadAsync(string filePath, CancellationToken cancellationToken = default) =>
-            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false));
+            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false), filePath);
 
         /// <summary>Parses a library from text.</summary>
         /// <param name="text">The file contents.</param>
         /// <returns>The library.</returns>
-        public static KiCadSymbolLibrary Parse(string text) => new(SDocument.Parse(text));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The text is not a symbol library: its root is not <c>(kicad_symbol_lib …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
+        public static KiCadSymbolLibrary Parse(string text) => new(SDocument.Parse(text), null);
 
-        /// <summary>Appends an existing symbol to the library.</summary>
+        /// <summary>Appends an existing symbol to the library, moving it out of wherever it was.</summary>
         /// <param name="symbol">The symbol to append.</param>
         /// <returns>The symbol, now a child of this library.</returns>
+        /// <remarks>
+        /// <para>
+        /// A symbol taken from another library leaves that library: the node itself moves, bytes and
+        /// all, so the view you passed is the symbol in this one (see <see cref="KiCadNode"/>).
+        /// <c>foreach (var s in source.Symbols) AddSymbol(s)</c> moves every symbol and leaves
+        /// <c>source</c> with none. To keep the source as it was, add
+        /// <c>new KiCadSymbol(s.Node.Clone())</c> instead.
+        /// </para>
+        /// <para>
+        /// <b>The first symbol taken from another library sets this library's <see cref="Version"/>.</b>
+        /// When this library holds no symbols yet and <paramref name="symbol"/> still sits in another
+        /// <c>kicad_symbol_lib</c>, this library takes that one's version. KiCad reads some content
+        /// differently by version, so a symbol is read as it was written only under the stamp it was
+        /// written under. In KiCad 10.0.6, a lone <c>~</c> in a property value, pin name or pin number
+        /// is an empty string before <c>20250318</c>; an arc over 180° is replaced by a shorter arc
+        /// between the same end points up to <c>20230121</c>; and a second body style is inferred from
+        /// the drawings before <c>20250827</c>, but dropped from then on unless the symbol declares
+        /// <c>(body_styles demorgan)</c>.
+        /// </para>
+        /// <para>
+        /// A library that already holds symbols keeps its version, because changing it would change how
+        /// KiCad reads them. Symbols from libraries of different versions therefore cannot all be read
+        /// as written from one file, and this library does not convert between versions. A symbol that
+        /// is in no library leaves the version alone: one built in memory, a clone, or one taken from a
+        /// schematic's <c>lib_symbols</c>, whose version is a schematic format version rather than a
+        /// library one. A copy made with <c>Node.Clone()</c> is in no library either, so when copying,
+        /// set <see cref="Version"/> to the source's. Set it after adding to choose the stamp yourself.
+        /// <c>Symbols.Add</c> moves the node without touching the version.
+        /// </para>
+        /// </remarks>
         public KiCadSymbol AddSymbol(KiCadSymbol symbol)
         {
             ArgumentNullException.ThrowIfNull(symbol);
+            TakeVersionOfSourceLibrary(symbol.Node.Parent);
             _root.AddChild(symbol.Node);
             return symbol;
         }
@@ -116,6 +166,27 @@ namespace KiCadSharp.Documents
         /// <param name="id">The symbol's name.</param>
         /// <returns>The new symbol.</returns>
         public KiCadSymbol AddSymbol(string id) => AddSymbol(new KiCadSymbol(id));
+
+        /// <summary>
+        /// Takes the version of <paramref name="source"/> when it is another symbol library and this
+        /// one holds no symbols yet. See <see cref="AddSymbol(KiCadSymbol)"/>.
+        /// </summary>
+        /// <param name="source">The form the symbol is being taken out of, if any.</param>
+        private void TakeVersionOfSourceLibrary(SExpression? source)
+        {
+            if (source is null
+                || ReferenceEquals(source, _root)
+                || !string.Equals(source.Token, KiCadTokens.Symbol.LibraryRoot, StringComparison.Ordinal)
+                || Symbols.Count > 0
+                || source.GetChildValue(KiCadTokens.Common.Version) is not { } version
+                || !long.TryParse(version, NumberStyles.None, CultureInfo.InvariantCulture, out _)
+                || string.Equals(version, _root.GetChildValue(KiCadTokens.Common.Version), StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Version = version;
+        }
 
         /// <summary>Removes the first symbol with the given name.</summary>
         /// <param name="id">The symbol's name.</param>
@@ -182,10 +253,27 @@ namespace KiCadSharp.Documents
         }
 
         /// <summary>Gets or sets the symbol's name, the first value of the form.</summary>
+        /// <remarks>
+        /// <para>
+        /// Setting it renames everything KiCad derives from the name, because KiCad refuses a library
+        /// in which any of it still carries the old one. KiCad writes each sub-unit as
+        /// <c>"&lt;name&gt;_&lt;unit&gt;_&lt;body style&gt;"</c> and rejects one whose name does not start
+        /// with its symbol's ("Invalid symbol unit name prefix"); a derived symbol names its parent in
+        /// <c>(extends "…")</c>, and a parent that is not there fails the whole library ("No parent for
+        /// extended symbol"). Renaming only the symbol wrote a library KiCad 10 would not load.
+        /// </para>
+        /// <para>
+        /// So the sub-units are renamed with the symbol, and every <c>(extends …)</c> among the forms
+        /// next to it that named the old symbol is pointed at the new one. The name compared is the
+        /// part after a library nickname, as KiCad's <c>LIB_ID</c> reads it: a symbol cached in a
+        /// schematic as <c>"Device:R"</c> owns sub-units <c>"R_1_1"</c>. The <c>lib_id</c> of the
+        /// symbols placed on a sheet is not touched.
+        /// </para>
+        /// </remarks>
         public string Id
         {
             get => Node.GetValue(0) ?? "Unknown";
-            set => WriteValue(0, value, SQuoteStyle.Quoted);
+            set => Rename(value);
         }
 
         /// <summary>Gets the symbol's properties, as a live view.</summary>
@@ -259,12 +347,13 @@ namespace KiCadSharp.Documents
             return property;
         }
 
-        /// <summary>Appends a pin to the symbol form itself.</summary>
+        /// <summary>Appends a pin to the symbol form itself, moving it out of wherever it was.</summary>
         /// <param name="pin">The pin.</param>
         /// <returns>The pin.</returns>
         /// <remarks>
         /// KiCad puts pins in a sub-unit, not on the outer form. Use <c>Units[i].AddPin(pin)</c> to
-        /// match what the editor writes; this overload is for symbols built entirely in memory.
+        /// match what the editor writes; this overload is for symbols built entirely in memory. A pin
+        /// that belongs to another symbol or sub-unit leaves it (see <see cref="KiCadNode"/>).
         /// </remarks>
         public KiCadPin AddPin(KiCadPin pin)
         {
@@ -273,9 +362,10 @@ namespace KiCadSharp.Documents
             return pin;
         }
 
-        /// <summary>Appends a graphical item to the symbol form itself.</summary>
+        /// <summary>Appends a graphical item to the symbol form itself, moving it out of wherever it was.</summary>
         /// <param name="item">The item.</param>
         /// <returns>The item.</returns>
+        /// <remarks>An item that belongs to another symbol or sub-unit leaves it (see <see cref="KiCadNode"/>).</remarks>
         public KiCadGraphicalItem AddGraphicalItem(KiCadGraphicalItem item)
         {
             ArgumentNullException.ThrowIfNull(item);
@@ -301,21 +391,13 @@ namespace KiCadSharp.Documents
         /// <returns>The copy, with no parent.</returns>
         /// <remarks>
         /// The copy keeps its link to the source text, so writing it out unchanged still reproduces
-        /// the original bytes. Sub-unit names carrying the old symbol name are renamed with it.
+        /// the original bytes. Its sub-units are renamed with it, as setting <see cref="Id"/> does;
+        /// the copy has no parent, so no other symbol's <c>(extends …)</c> is touched.
         /// </remarks>
         public KiCadSymbol CloneAs(string newId)
         {
             ArgumentNullException.ThrowIfNull(newId);
-            var oldId = Id;
             var copy = new KiCadSymbol(Node.Clone()) { Id = newId };
-
-            foreach (var unit in copy.Units)
-            {
-                if (unit.Id.StartsWith(oldId + "_", StringComparison.Ordinal))
-                {
-                    unit.Id = newId + unit.Id[oldId.Length..];
-                }
-            }
 
             var value = copy.Properties.FirstOrDefault(p => string.Equals(p.Key, KiCadPropertyNames.Value, StringComparison.Ordinal));
             if (value is not null)
@@ -324,6 +406,59 @@ namespace KiCadSharp.Documents
             }
 
             return copy;
+        }
+
+        /// <summary>
+        /// The part of a symbol's name KiCad keys everything on: what follows the library nickname,
+        /// when there is one. <c>LIB_ID::Parse</c> splits at the first colon.
+        /// </summary>
+        /// <param name="id">A symbol name, <c>"R"</c> or <c>"Device:R"</c>.</param>
+        /// <returns>The item name, <c>"R"</c> for both.</returns>
+        private static string ItemName(string id)
+        {
+            var colon = id.IndexOf(':', StringComparison.Ordinal);
+            return colon < 0 ? id : id[(colon + 1)..];
+        }
+
+        private void Rename(string newId)
+        {
+            ArgumentNullException.ThrowIfNull(newId);
+            var oldId = Node.GetValue(0);
+            WriteValue(0, newId, SQuoteStyle.Quoted);
+
+            // A sub-unit's name is not data of its own: KiCad's writer composes it from the
+            // symbol's item name and the unit and body-style numbers every time it saves. Doing the
+            // same here is what keeps it in step. Written only where it differs, so a rename to the
+            // same name changes no bytes; a name that does not end in two numbers is left alone.
+            var newName = ItemName(newId);
+            foreach (var unit in Units)
+            {
+                if (unit.NameSuffix is { } suffix && !string.Equals(unit.Id, newName + suffix, StringComparison.Ordinal))
+                {
+                    unit.Id = newName + suffix;
+                }
+            }
+
+            if (oldId is null || Node.Parent is not { } owner)
+            {
+                return;
+            }
+
+            // KiCad resolves (extends "…") against the item names of the symbols in the same library.
+            var oldName = ItemName(oldId);
+            if (string.Equals(oldName, newName, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            foreach (var sibling in owner.GetChildren(KiCadTokens.Common.Symbol))
+            {
+                if (sibling.GetChild(KiCadTokens.Symbol.Extends) is { } extends
+                    && string.Equals(extends.GetValue(0), oldName, StringComparison.Ordinal))
+                {
+                    extends.SetValue(0, newName, SQuoteStyle.Quoted);
+                }
+            }
         }
 
         private IReadOnlyList<T> Collect<T>(Func<SExpression, IEnumerable<T>> select)
@@ -388,15 +523,36 @@ namespace KiCadSharp.Documents
         /// </summary>
         public int BodyStyle => NumberAt(0);
 
+        /// <summary>
+        /// Gets the <c>_&lt;unit&gt;_&lt;body style&gt;</c> tail of the name — <c>"_1_1"</c> for
+        /// <c>R_1_1</c> — or <see langword="null"/> when the name does not end in two numbers.
+        /// </summary>
+        internal string? NameSuffix
+        {
+            get
+            {
+                var id = Id;
+                var last = id.LastIndexOf('_');
+                var previous = last > 0 ? id.LastIndexOf('_', last - 1) : -1;
+                return previous >= 0 && IsNumber(id.AsSpan(previous + 1, last - previous - 1)) && IsNumber(id.AsSpan(last + 1))
+                    ? id[previous..]
+                    : null;
+
+                static bool IsNumber(ReadOnlySpan<char> text) =>
+                    int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out _);
+            }
+        }
+
         /// <summary>Gets the pins of this sub-unit, as a live view.</summary>
         public KiCadNodeList<KiCadPin> Pins => new(Node, KiCadTokens.Common.Pin, n => new KiCadPin(n));
 
         /// <summary>Gets the graphical items of this sub-unit.</summary>
         public IReadOnlyList<KiCadGraphicalItem> GraphicalItems => KiCadGraphicalItem.In(Node).ToArray();
 
-        /// <summary>Appends a pin.</summary>
+        /// <summary>Appends a pin, moving it out of wherever it was.</summary>
         /// <param name="pin">The pin.</param>
         /// <returns>The pin.</returns>
+        /// <remarks>A pin that belongs to another sub-unit or symbol leaves it (see <see cref="KiCadNode"/>).</remarks>
         public KiCadPin AddPin(KiCadPin pin)
         {
             ArgumentNullException.ThrowIfNull(pin);
@@ -605,11 +761,15 @@ namespace KiCadSharp.Documents
         /// Gets the fill, or <see langword="null"/> when the form carries no <c>(fill ...)</c>.
         /// Reading it never adds one; use <see cref="RequireFill"/> for that.
         /// </summary>
-        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Schematic) : null;
 
-        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the node has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the schematic's way, <c>(fill (type none))</c>; see
+        /// <see cref="KiCadFillSpelling.Schematic"/>.
+        /// </summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Schematic);
 
         /// <summary>Enumerates the drawing elements directly inside <paramref name="owner"/>.</summary>
         /// <param name="owner">The form to look in.</param>
@@ -796,6 +956,13 @@ namespace KiCadSharp.Documents
     }
 
     /// <summary>Free text inside a symbol: <c>(text "..." (at x y r) (effects ...))</c>.</summary>
+    /// <remarks>
+    /// <b>KiCad writes this angle in tenths of a degree</b>, unlike every other angle in a symbol: a
+    /// vertical text is <c>(at x y 900)</c>. KiCad 10.0.6 reads it with <c>TENTHS_OF_A_DEGREE_T</c>
+    /// (<c>sch_io_kicad_sexpr_parser.cpp</c>, <c>parseSymbolText</c>) and writes it with
+    /// <c>AsTenthsOfADegree()</c> (<c>sch_io_kicad_sexpr_lib_cache.cpp</c>, <c>saveText</c>).
+    /// <see cref="RotationDegrees"/> converts; <see cref="Position"/> carries the number in the file.
+    /// </remarks>
     public class KiCadText : KiCadGraphicalItem
     {
         /// <summary>Creates a view over a <c>(text ...)</c> form.</summary>
@@ -805,11 +972,32 @@ namespace KiCadSharp.Documents
         {
         }
 
-        /// <summary>Creates a text item.</summary>
+        /// <summary>Creates a horizontal text item. Set <see cref="RotationDegrees"/> to turn it.</summary>
         /// <param name="text">The text.</param>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
-        /// <param name="rotation">Rotation, degrees.</param>
+        public KiCadText(string text, double x, double y)
+            : base(new SExpression(KiCadTokens.Common.Text))
+        {
+            Node.AddValue(text, SQuoteStyle.Quoted);
+            Position = new KiCadPosition(x, y);
+        }
+
+        /// <summary>Creates a text item, writing <paramref name="rotation"/> into the file unchanged.</summary>
+        /// <param name="text">The text.</param>
+        /// <param name="x">X, millimetres.</param>
+        /// <param name="y">Y, millimetres.</param>
+        /// <param name="rotation">
+        /// Written unchanged, and KiCad reads it in tenths of a degree: 900 is 90°, and 90 is 9°.
+        /// </param>
+        /// <remarks>
+        /// This parameter used to be documented as degrees while it was written unchanged, so
+        /// <c>90</c> gave a text KiCad reads as 9°. The behaviour is kept so that no caller's
+        /// output changes silently, and the constructor is obsolete so that every caller hears
+        /// about it. Use <see cref="KiCadText(string, double, double)"/> and
+        /// <see cref="RotationDegrees"/> instead.
+        /// </remarks>
+        [Obsolete("KiCad reads a symbol text's angle in tenths of a degree, and this constructor writes 'rotation' unchanged, so 90 gives 9 degrees. Use KiCadText(text, x, y) and set RotationDegrees.")]
         public KiCadText(string text, double x, double y, double rotation = 0)
             : base(new SExpression(KiCadTokens.Common.Text))
         {
@@ -824,12 +1012,33 @@ namespace KiCadSharp.Documents
             set => WriteValue(0, value, SQuoteStyle.Quoted);
         }
 
-        /// <summary>Gets or sets where the text sits.</summary>
+        /// <summary>
+        /// Gets or sets where the text sits, with the angle as the file stores it: tenths of a degree
+        /// inside a symbol, degrees on a sheet (<see cref="Schematics.KiCadSchematicText"/>). Use
+        /// <see cref="RotationDegrees"/> for degrees in both.
+        /// </summary>
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
             set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
         }
+
+        /// <summary>Gets or sets the text's angle in degrees, converting to what the file stores.</summary>
+        /// <remarks>
+        /// Reads 0 when the form has no <c>(at ...)</c>, and does not add one. Setting it keeps the
+        /// position and adds an <c>(at 0 0 r)</c> when there is none.
+        /// </remarks>
+        public double RotationDegrees
+        {
+            get => Position.Rotation / FileUnitsPerDegree;
+            set => Position = Position with { Rotation = value * FileUnitsPerDegree };
+        }
+
+        /// <summary>
+        /// How many units of the file's angle make one degree: 10 inside a symbol, where KiCad stores
+        /// tenths of a degree.
+        /// </summary>
+        private protected virtual double FileUnitsPerDegree => 10;
 
         /// <summary>
         /// Gets the text rendering, or <see langword="null"/> when the form carries no

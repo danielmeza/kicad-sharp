@@ -61,6 +61,9 @@ namespace KiCadSharp
             /// <summary>A polygon inside a footprint.</summary>
             public const string FpPoly = "fp_poly";
 
+            /// <summary>A Bézier curve inside a footprint.</summary>
+            public const string FpCurve = "fp_curve";
+
             // ---------------------------------------------------------------- pad geometry
 
             /// <summary>A round-rectangle pad's corner radius, as a fraction of its smaller side.</summary>

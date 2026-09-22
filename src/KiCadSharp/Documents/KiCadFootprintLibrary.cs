@@ -27,6 +27,13 @@ namespace KiCadSharp.Documents
     /// </remarks>
     public class KiCadFootprintLibrary
     {
+        /// <summary>
+        /// The root tokens a file of footprints may have: KiCad 6+ <c>footprint</c>, KiCad 5
+        /// <c>module</c>, and <c>kicad_pcb</c> for the footprints placed on a board.
+        /// </summary>
+        private static readonly string[] RootTokens =
+            [KiCadTokens.Footprint.Root, KiCadTokens.Footprint.LegacyRoot, KiCadTokens.Board.Root];
+
         private readonly SDocument _document;
         private readonly SExpression _root;
         private readonly bool _rootIsFootprint;
@@ -34,6 +41,11 @@ namespace KiCadSharp.Documents
         /// <summary>Creates a new, empty board-shaped library.</summary>
         /// <param name="generator">The value of the <c>generator</c> token.</param>
         /// <param name="version">The value of the <c>version</c> token.</param>
+        /// <remarks>
+        /// It starts with the layer table of a two-layer board, the one a new <see cref="KiCadBoard"/>
+        /// starts with. KiCad writes a layer table on every board, and refuses one whose table holds no
+        /// copper layers: "0 is not a valid layer count" (#74).
+        /// </remarks>
         public KiCadFootprintLibrary(string? generator = null, string? version = null)
         {
             generator ??= KiCadDefaults.LibraryGenerator;
@@ -44,7 +56,7 @@ namespace KiCadSharp.Documents
             _root.CreateChild(KiCadTokens.Common.Generator).AddValue(generator, SQuoteStyle.Quoted);
             _root.CreateChild(KiCadTokens.Board.General);
             _root.CreateChild(KiCadTokens.Common.Paper).AddValue(KiCadDefaults.Paper, SQuoteStyle.Quoted);
-            _root.CreateChild(KiCadTokens.Common.Layers);
+            KiCadBoard.AddDefaultLayers(_root);
             _document = new SDocument();
             _document.Add(_root);
             _rootIsFootprint = false;
@@ -52,19 +64,21 @@ namespace KiCadSharp.Documents
 
         /// <summary>Creates a library over an existing s-expression.</summary>
         /// <param name="expression">A board form, or a single <c>footprint</c>/<c>module</c> form.</param>
+        /// <exception cref="ArgumentException">The form is not a <c>footprint</c>, <c>module</c> or <c>kicad_pcb</c>.</exception>
         public KiCadFootprintLibrary(SExpression expression)
         {
             ArgumentNullException.ThrowIfNull(expression);
+            KiCadDocumentRoot.RequireArgument(expression, nameof(expression), RootTokens);
             _root = expression;
             _rootIsFootprint = IsFootprintToken(expression.Token);
             _document = new SDocument();
             _document.Add(expression);
         }
 
-        private KiCadFootprintLibrary(SDocument document)
+        private KiCadFootprintLibrary(SDocument document, string? filePath)
         {
             _document = document;
-            _root = document.Root ?? throw new InvalidOperationException("The file holds no s-expression.");
+            _root = KiCadDocumentRoot.Require(document, filePath, "footprint or board", RootTokens);
             _rootIsFootprint = IsFootprintToken(_root.Token);
         }
 
@@ -77,11 +91,32 @@ namespace KiCadSharp.Documents
         /// <summary>True when the file is a single footprint rather than a board.</summary>
         public bool IsSingleFootprint => _rootIsFootprint;
 
-        /// <summary>Gets or sets the file format version.</summary>
-        public string Version
+        /// <summary>
+        /// Gets or sets the file format version the file declares, its root's <c>(version …)</c>, or
+        /// <see langword="null"/> when it declares none. Setting <see langword="null"/> removes it.
+        /// </summary>
+        /// <remarks>
+        /// <see langword="null"/> is not a format this library assumes for the file; KiCad has its own
+        /// answer. It reads a <c>.kicad_mod</c> with no version as format 0, KiCad 5's
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 104), and a board with none as <c>20201115</c>
+        /// (line 1679). For a <c>.kicad_mod</c> this is the footprint's own
+        /// <see cref="KiCadFootprint.Version"/>, and the two always agree (#76). A version set on a
+        /// file that has none goes first, where KiCad reads it.
+        /// </remarks>
+        public string? Version
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.FootprintLibraryVersion;
-            set => _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+            get => _root.GetChildValue(KiCadTokens.Common.Version);
+            set
+            {
+                if (value is null)
+                {
+                    _root.RemoveChild(KiCadTokens.Common.Version);
+                    return;
+                }
+
+                KiCadChildOrder.Place(_root, KiCadTokens.Common.Version);
+                _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>Gets or sets the name of the program that wrote the file.</summary>
@@ -93,16 +128,23 @@ namespace KiCadSharp.Documents
 
         /// <summary>
         /// Gets the footprints in the file. For a <c>.kicad_mod</c> this is the root form itself,
-        /// as one element; for a board it is a live view over its <c>footprint</c> children, with
-        /// KiCad 5's <c>module</c> children included.
+        /// as one element; for a board it is its <c>footprint</c> children, with KiCad 5's
+        /// <c>module</c> children included, as they are at the moment you ask.
         /// </summary>
+        /// <remarks>
+        /// A <c>.kicad_mod</c> whose footprint has been moved into another file through
+        /// <see cref="AddFootprint"/> no longer holds it, and this is then empty: the form belongs to
+        /// the other file now, and a view of it here would edit that file.
+        /// </remarks>
         public IReadOnlyList<KiCadFootprint> Footprints
         {
             get
             {
                 if (_rootIsFootprint)
                 {
-                    return new[] { new KiCadFootprint(_root) };
+                    return ReferenceEquals(_document.Root, _root)
+                        ? new[] { new KiCadFootprint(_root) }
+                        : Array.Empty<KiCadFootprint>();
                 }
 
                 return _root.Children
@@ -115,24 +157,45 @@ namespace KiCadSharp.Documents
         /// <summary>Loads a file.</summary>
         /// <param name="filePath">Path to a <c>.kicad_pcb</c> or <c>.kicad_mod</c>.</param>
         /// <returns>The library.</returns>
-        public static KiCadFootprintLibrary Load(string filePath) => new(SDocument.Load(filePath));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a footprint or a board: its root is not <c>(footprint …)</c>, <c>(module …)</c>
+        /// or <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
+        public static KiCadFootprintLibrary Load(string filePath) => new(SDocument.Load(filePath), filePath);
 
         /// <summary>Loads a file asynchronously.</summary>
         /// <param name="filePath">Path to a <c>.kicad_pcb</c> or <c>.kicad_mod</c>.</param>
         /// <param name="cancellationToken">Cancels the read.</param>
         /// <returns>The library.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a footprint or a board: its root is not <c>(footprint …)</c>, <c>(module …)</c>
+        /// or <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static async Task<KiCadFootprintLibrary> LoadAsync(string filePath, CancellationToken cancellationToken = default) =>
-            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false));
+            new(await SDocument.LoadAsync(filePath, cancellationToken).ConfigureAwait(false), filePath);
 
         /// <summary>Parses a file from text.</summary>
         /// <param name="text">The file contents.</param>
         /// <returns>The library.</returns>
-        public static KiCadFootprintLibrary Parse(string text) => new(SDocument.Parse(text));
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The text is not a footprint or a board: its root is not <c>(footprint …)</c>, <c>(module …)</c>
+        /// or <c>(kicad_pcb …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
+        public static KiCadFootprintLibrary Parse(string text) => new(SDocument.Parse(text), null);
 
-        /// <summary>Appends a footprint.</summary>
+        /// <summary>Appends a footprint, moving it out of wherever it was.</summary>
         /// <param name="footprint">The footprint.</param>
         /// <returns>The footprint, now a child of this file.</returns>
         /// <exception cref="InvalidOperationException">The file is a single footprint and cannot hold another.</exception>
+        /// <remarks>
+        /// A footprint taken from another board leaves that board, and one taken from a
+        /// <c>.kicad_mod</c> leaves that file empty: the node itself moves, bytes and all (see
+        /// <see cref="KiCadNode"/>). To keep the source as it was, add
+        /// <c>new KiCadFootprint(footprint.Node.Clone())</c>, or <see cref="KiCadFootprint.CloneAs"/>.
+        /// </remarks>
         public KiCadFootprint AddFootprint(KiCadFootprint footprint)
         {
             ArgumentNullException.ThrowIfNull(footprint);
@@ -216,16 +279,41 @@ namespace KiCadSharp.Documents
         {
         }
 
-        /// <summary>Creates a new footprint with the reference and value text KiCad expects.</summary>
+        /// <summary>Creates a new footprint with the fields KiCad gives every footprint.</summary>
         /// <param name="id">The footprint's name.</param>
+        /// <remarks>
+        /// <para>
+        /// The footprint starts with the <c>(version …)</c> KiCad 10.0.6 writes,
+        /// <see cref="KiCadDefaults.FootprintVersion"/>, and a <c>(generator …)</c>, in the place
+        /// KiCad writes them; see <see cref="Version"/>.
+        /// </para>
+        /// <para>
+        /// Its reference, value, datasheet and description are the four fields KiCad 10.0.6 gives
+        /// every footprint, on the layers and with the visibility it gives them
+        /// (<c>pcbnew/footprint.cpp</c>, lines 114–117), written as KiCad writes a field:
+        /// <c>(property "Reference" "REF**" (at 0 0 0) (layer "F.SilkS"))</c>, then
+        /// <c>(property "Value" "&lt;id&gt;" (at 0 1.27 0) (layer "F.Fab"))</c>, and the empty
+        /// <c>Datasheet</c> and <c>Description</c> on <c>F.Fab</c> with <c>(hide yes)</c>
+        /// (<c>pcb_io_kicad_sexpr.cpp</c>, lines 1243–1254 and 2303–2313). So
+        /// <see cref="GetPropertyValue"/> finds them on a new footprint as it does on one KiCad wrote,
+        /// and <see cref="TextItems"/> starts empty. The <c>(fp_text reference …)</c> and
+        /// <c>(fp_text value …)</c> this constructor used to write date from before format
+        /// <c>20230620</c>, when fields replaced them (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5149;
+        /// #75). A footprint read from a file keeps whichever form it has.
+        /// </para>
+        /// </remarks>
         public KiCadFootprint(string id)
             : base(new SExpression(KiCadTokens.Footprint.Root))
         {
             ArgumentNullException.ThrowIfNull(id);
             Node.AddValue(id, SQuoteStyle.Quoted);
+            Version = KiCadDefaults.FootprintVersion;
+            WriteChild(KiCadTokens.Common.Generator, KiCadDefaults.LibraryGenerator, SQuoteStyle.Quoted);
             Node.SetChildValue(KiCadTokens.Common.Layer, KiCadLayerNames.FCu, SQuoteStyle.Quoted);
-            AddFpText(KiCadTokens.Footprint.TextTypeReference, "REF**", 0, 0, KiCadLayerNames.FSilkS);
-            AddFpText(KiCadTokens.Footprint.TextTypeValue, id, 0, 1.27, KiCadLayerNames.FFab);
+            AddField(KiCadPropertyNames.Reference, "REF**", new KiCadPosition(0, 0), KiCadLayerNames.FSilkS, hide: false);
+            AddField(KiCadPropertyNames.Value, id, new KiCadPosition(0, 1.27), KiCadLayerNames.FFab, hide: false);
+            AddField(KiCadPropertyNames.Datasheet, string.Empty, new KiCadPosition(0, 0), KiCadLayerNames.FFab, hide: true);
+            AddField(KiCadPropertyNames.Description, string.Empty, new KiCadPosition(0, 0), KiCadLayerNames.FFab, hide: true);
         }
 
         /// <summary>Gets or sets the footprint's name, the first value of the form.</summary>
@@ -233,6 +321,37 @@ namespace KiCadSharp.Documents
         {
             get => Node.GetValue(0) ?? "Unknown";
             set => WriteValue(0, value, SQuoteStyle.Quoted);
+        }
+
+        /// <summary>
+        /// Gets or sets the format the footprint is written in, its own <c>(version …)</c>, or
+        /// <see langword="null"/> when it has none. Setting <see langword="null"/> removes it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// KiCad reads a footprint by the format this names, so a stamp that does not match the
+        /// content changes what KiCad reads. With none, a <c>.kicad_mod</c> is read as format 0,
+        /// KiCad 5's, which refuses a modern arc. A footprint read from a file keeps what it has, and
+        /// a footprint built with <see cref="KiCadFootprint(string)"/> starts with
+        /// <see cref="KiCadDefaults.FootprintVersion"/>, KiCad 10.0.6's. A new version goes first in
+        /// the form, before anything it changes the meaning of.
+        /// </para>
+        /// <para>
+        /// <b>On a board.</b> KiCad writes a footprint inside a board without a version, so the board's
+        /// applies. A footprint that does carry one there makes KiCad 10.0.6 read the rest of the
+        /// board under the greater of the two (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5046), and
+        /// some board content reads differently by version: a via after a new footprint on a
+        /// <c>new KiCadBoard()</c>, stamped <c>20241229</c>, loses its explicit "no" covering,
+        /// plugging, capping and filling. Moving a footprint into a board does not change its version
+        /// (#73). To place a footprint built here on a board stamped with an older format, set this to
+        /// <see langword="null"/> first, as KiCad writes it; its content is then read under the
+        /// board's version.
+        /// </para>
+        /// </remarks>
+        public string? Version
+        {
+            get => ReadChild(KiCadTokens.Common.Version);
+            set => WriteChild(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
         }
 
         /// <summary>Gets or sets the layer the footprint sits on.</summary>
@@ -395,8 +514,8 @@ namespace KiCadSharp.Documents
             {
                 Start = new KiCadPosition(startX, startY),
                 End = new KiCadPosition(endX, endY),
-                Layer = layer,
                 Width = width,
+                Layer = layer,
             };
 
             Node.AddChild(line.Node);
@@ -417,8 +536,8 @@ namespace KiCadSharp.Documents
             {
                 Center = new KiCadPosition(centerX, centerY),
                 End = new KiCadPosition(endX, endY),
-                Layer = layer,
                 Width = width,
+                Layer = layer,
             };
 
             Node.AddChild(circle.Node);
@@ -433,6 +552,19 @@ namespace KiCadSharp.Documents
             var model = new KiCadModel(path);
             Node.AddChild(model.Node);
             return model;
+        }
+
+        /// <summary>Appends a field the way KiCad 10.0.6 writes one on a footprint.</summary>
+        private void AddField(string key, string value, KiCadPosition position, string layer, bool hide)
+        {
+            var field = new KiCadProperty(key, value) { Position = position };
+            field.Node.CreateChild(KiCadTokens.Common.Layer).AddValue(layer, SQuoteStyle.Quoted);
+            if (hide)
+            {
+                field.Node.CreateChild(KiCadTokens.Common.Hide, KiCadTokens.Common.Yes);
+            }
+
+            Node.AddChild(field.Node);
         }
 
         /// <summary>Deep-copies the footprint under a new name.</summary>
@@ -484,6 +616,12 @@ namespace KiCadSharp.Documents
         /// Gets or sets the stroke width. KiCad 7+ writes <c>(stroke (width w) ...)</c>; KiCad 5 and
         /// 6 wrote a bare <c>(width w)</c>, and both are read here.
         /// </summary>
+        /// <remarks>
+        /// Setting it writes into whichever of the two the element has. An element that has neither,
+        /// such as one built here, gets the form KiCad 10.0.6 writes,
+        /// <c>(stroke (width w) (type solid))</c> (<c>common/stroke_params.cpp</c>, line 362), rather
+        /// than the bare <c>(width w)</c> of older files (#75).
+        /// </remarks>
         public double Width
         {
             get
@@ -505,7 +643,15 @@ namespace KiCadSharp.Documents
                     return;
                 }
 
-                WriteChildDouble(KiCadTokens.Common.Width, value);
+                if (Node.GetChild(KiCadTokens.Common.Width) is not null)
+                {
+                    WriteChildDouble(KiCadTokens.Common.Width, value);
+                    return;
+                }
+
+                var created = RequireStroke();
+                created.Width = value;
+                created.Type = KiCadTokens.Common.Solid;
             }
         }
 
@@ -578,12 +724,16 @@ namespace KiCadSharp.Documents
             set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
-        /// <summary>Gets the fill, creating a <c>(fill ...)</c> child if there is none.</summary>
-        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node) : null;
+        /// <summary>Gets the fill, or <see langword="null"/> when the rectangle has no <c>(fill ...)</c>.</summary>
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Board) : null;
 
-        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the node has none.</summary>
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the node has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the board's way, <c>(fill no)</c>, which is how
+        /// KiCad spells it in a footprint too; see <see cref="KiCadFillSpelling.Board"/>.
+        /// </summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
     }
 
     /// <summary>A circle: <c>(fp_circle (center x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
@@ -615,6 +765,17 @@ namespace KiCadSharp.Documents
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
             set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
+
+        /// <summary>Gets the fill, or <see langword="null"/> when the circle has no <c>(fill ...)</c>.</summary>
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Board) : null;
+
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the node has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the board's way, <c>(fill no)</c>, which is how
+        /// KiCad spells it in a footprint too; see <see cref="KiCadFillSpelling.Board"/>.
+        /// </summary>
+        /// <returns>The view.</returns>
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
     }
 
     /// <summary>An arc: <c>(fp_arc (start x y) (mid x y) (end x y) (stroke ...) (layer "..."))</c>.</summary>
@@ -689,9 +850,19 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
+
+        /// <summary>Gets the fill, or <see langword="null"/> when the polygon has no <c>(fill ...)</c>.</summary>
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Board) : null;
+
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the node has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the board's way, <c>(fill no)</c>, which is how
+        /// KiCad spells it in a footprint too; see <see cref="KiCadFillSpelling.Board"/>.
+        /// </summary>
+        /// <returns>The view.</returns>
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
     }
 
     /// <summary>Footprint text: <c>(fp_text reference "REF**" (at ...) (layer "...") (effects ...))</c>.</summary>

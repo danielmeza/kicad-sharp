@@ -95,10 +95,10 @@ internal sealed partial class NngTestPeer : IDisposable
 
     private static NngTestPeer Start(TimeSpan delay, bool answer, Func<ApiRequest, ApiResponse> respond)
     {
-        var path = Path.Combine(Path.GetTempPath(), $"kicadsharp-test-{Guid.NewGuid():N}.sock");
+        var url = SocketPaths.NewUrl("peer");
         Check("nng_rep0_open", nng_rep0_open(out var socket));
-        Check("nng_listen", nng_listen(socket, $"ipc://{path}", out _, 0));
-        return new NngTestPeer(socket, $"ipc://{path}", delay, answer, respond);
+        Check("nng_listen", nng_listen(socket, url, out _, 0));
+        return new NngTestPeer(socket, url, delay, answer, respond);
     }
 
     /// <summary>An OK reply carrying <paramref name="message"/>.</summary>

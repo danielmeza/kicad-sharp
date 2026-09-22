@@ -209,7 +209,10 @@ namespace KiCadSharp.Schematics
         /// <summary>Loads a schematic from a file.</summary>
         /// <param name="filePath">Path to the <c>.kicad_sch</c>.</param>
         /// <returns>The schematic.</returns>
-        /// <exception cref="InvalidOperationException">The file is not a schematic.</exception>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a schematic: its root is not <c>(kicad_sch …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static KiCadSchematic Load(string filePath)
         {
             ArgumentNullException.ThrowIfNull(filePath);
@@ -221,6 +224,10 @@ namespace KiCadSharp.Schematics
         /// <param name="filePath">Path to the <c>.kicad_sch</c>.</param>
         /// <param name="cancellationToken">Cancels the read.</param>
         /// <returns>The schematic.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The file is not a schematic: its root is not <c>(kicad_sch …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The file is not well-formed s-expression text.</exception>
         public static async Task<KiCadSchematic> LoadAsync(string filePath, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(filePath);
@@ -231,6 +238,10 @@ namespace KiCadSharp.Schematics
         /// <summary>Parses a schematic from text.</summary>
         /// <param name="text">The file contents.</param>
         /// <returns>The schematic.</returns>
+        /// <exception cref="KiCadDocumentTypeException">
+        /// The text is not a schematic: its root is not <c>(kicad_sch …)</c>, or it holds no form at all.
+        /// </exception>
+        /// <exception cref="SExpressionFormatException">The text is not well-formed s-expression text.</exception>
         public static KiCadSchematic Parse(string text) => From(SDocument.Parse(text), null);
 
         /// <summary>Writes the schematic back out.</summary>
@@ -247,19 +258,8 @@ namespace KiCadSharp.Schematics
         /// <returns>The file contents.</returns>
         public string ToText() => _document.ToText();
 
-        private static KiCadSchematic From(SDocument document, string? filePath)
-        {
-            var root = document.Root
-                ?? throw new InvalidOperationException($"'{filePath ?? "<text>"}' holds no s-expression.");
-
-            if (!string.Equals(root.Token, KiCadTokens.Schematic.Root, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException(
-                    $"Expected a ({KiCadTokens.Schematic.Root} ...) file but the root form is ({root.Token} ...).");
-            }
-
-            return new KiCadSchematic(document, root, filePath);
-        }
+        private static KiCadSchematic From(SDocument document, string? filePath) =>
+            new(document, KiCadDocumentRoot.Require(document, filePath, "schematic", KiCadTokens.Schematic.Root), filePath);
     }
 
     /// <summary>
@@ -299,11 +299,20 @@ namespace KiCadSharp.Schematics
         public KiCadStroke RequireStroke() => new(Require(KiCadTokens.Common.Stroke));
 
         /// <summary>Gets the box's fill, or <see langword="null"/> when it carries no <c>(fill ...)</c>.</summary>
-        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Schematic) : null;
 
-        /// <summary>Gets the <c>(fill ...)</c> form, adding an empty one when the sheet has none.</summary>
+        /// <summary>
+        /// Gets the <c>(fill ...)</c> form, adding an empty one when the sheet has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the schematic's way, <c>(fill (type none))</c>; see
+        /// <see cref="KiCadFillSpelling.Schematic"/>.
+        /// </summary>
+        /// <remarks>
+        /// KiCad 10 writes a sheet's fill as a colour alone, <c>(fill (color r g b a))</c>, and reads
+        /// only the colour back: <c>parseSheet</c> takes a <c>(type …)</c> but ignores it
+        /// (<c>sch_io_kicad_sexpr_parser.cpp</c>, lines 3775–3777).
+        /// </remarks>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Schematic);
 
         /// <summary>Gets or sets whether the sheet's contents are excluded from the simulator.</summary>
         public bool ExcludeFromSim

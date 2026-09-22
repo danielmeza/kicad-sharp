@@ -430,6 +430,34 @@ namespace KiCadSharp.Documents
     /// </remarks>
     public sealed class KiCadZone : KiCadNode
     {
+        /// <summary>
+        /// The outline hatch style KiCad 10.0.6 reads for a zone with no <c>(hatch …)</c>:
+        /// <c>parseZONE</c> starts from <c>NO_HATCH</c> (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 7868)
+        /// and applies it once the outline is read (8459–8468).
+        /// </summary>
+        private const string NoHatch = "none";
+
+        /// <summary>
+        /// The outline hatch pitch KiCad 10.0.6 reads for a zone with no <c>(hatch …)</c>, in
+        /// millimetres: <c>parseZONE</c> starts from <c>ZONE::GetDefaultHatchPitch()</c>
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 7870; <c>pcbnew/zone.cpp</c>, lines 1397–1400),
+        /// which is <c>ZONE_BORDER_HATCH_DIST_MM</c> (<c>pcbnew/zones.h</c>, line 38).
+        /// </summary>
+        private const double DefaultHatchPitch = 0.5;
+
+        /// <summary>
+        /// The words KiCad 10.0.6 reads as a <c>(hatch …)</c> style
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 7936–7948).
+        /// </summary>
+        private static readonly HashSet<string> HatchStyles = new(StringComparer.Ordinal) { NoHatch, "edge", "full" };
+
+        /// <summary>
+        /// The words KiCad 10.0.6 reads in a <c>(connect_pads …)</c> (<c>pcb_io_kicad_sexpr_parser.cpp</c>,
+        /// lines 7959–7989): <c>yes</c> is <c>FULL</c>, <c>no</c> is <c>NONE</c> and
+        /// <c>thru_hole_only</c> is <c>THT_THERMAL</c> (<c>pcbnew/zones.h</c>, lines 45–52).
+        /// </summary>
+        private static readonly HashSet<string> PadConnections = new(StringComparer.Ordinal) { "yes", "no", "thru_hole_only" };
+
         /// <summary>Creates a view over a <c>(zone …)</c> form.</summary>
         /// <param name="node">The form.</param>
         public KiCadZone(SExpression node)
@@ -535,22 +563,58 @@ namespace KiCadSharp.Documents
             set => Node.SetChildValue(KiCadTokens.Board.Priority, value.ToString(CultureInfo.InvariantCulture), SQuoteStyle.Bare);
         }
 
-        /// <summary>Gets or sets how the zone outline is drawn on screen: <c>none</c>, <c>edge</c> or <c>full</c>.</summary>
+        /// <summary>
+        /// Gets or sets how the zone outline is drawn on screen: <c>none</c>, <c>edge</c> or
+        /// <c>full</c>. A zone with no <c>(hatch …)</c> reads <c>none</c>, as KiCad reads it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// KiCad 10.0.6 writes <c>(hatch none|edge|full pitch)</c>, both values always
+        /// (<c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.cpp</c>, lines 2898–2910). Its parser takes
+        /// only those three words, then requires the pitch, and refuses the whole board otherwise
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 7936–7952).
+        /// </para>
+        /// <para>
+        /// So a set takes <c>none</c>, <c>edge</c> and <c>full</c>, and anything else throws and
+        /// writes nothing. On a zone with no <c>(hatch …)</c>, a set creates a whole one, with the
+        /// pitch KiCad would have read, <see cref="HatchPitch"/>'s 0.5 mm. Writing back the value just
+        /// read changes nothing.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">KiCad 10 reads no such hatch style.</exception>
         public string HatchStyle
         {
-            get => Node.GetChild(KiCadTokens.Board.Hatch)?.GetValue(0) ?? "none";
+            get => Node.GetChild(KiCadTokens.Board.Hatch)?.GetValue(0) ?? NoHatch;
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                Require(KiCadTokens.Board.Hatch).SetValue(0, value, SQuoteStyle.Bare);
+                if (!HatchStyles.Contains(value))
+                {
+                    throw new ArgumentException(
+                        $"KiCad reads no zone hatch style \"{value}\". Use none, edge or full.",
+                        nameof(value));
+                }
+
+                RequireHatch().SetValue(0, value, SQuoteStyle.Bare);
             }
         }
 
-        /// <summary>Gets or sets the spacing of the outline hatching, in millimetres.</summary>
+        /// <summary>
+        /// Gets or sets the spacing of the outline hatching, in millimetres. A zone with no
+        /// <c>(hatch …)</c> reads 0.5, the pitch KiCad reads for it.
+        /// </summary>
+        /// <remarks>
+        /// On a zone with no <c>(hatch …)</c>, a set creates a whole one, with the style KiCad would
+        /// have read, <see cref="HatchStyle"/>'s <c>none</c>: the parser needs both values
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 7936–7952). KiCad keeps a pitch between 0.1
+        /// and 2 mm, and moves one outside that range to the nearer end when it loads the board
+        /// (<c>pcbnew/zone.cpp</c>, lines 1341–1342; <c>pcbnew/zones.h</c>, lines 39–40).
+        /// </remarks>
         public double HatchPitch
         {
-            get => Node.GetChild(KiCadTokens.Board.Hatch)?.GetValueAsDouble(1) ?? 0;
-            set => Require(KiCadTokens.Board.Hatch).SetValue(1, Numbers.Format(value), SQuoteStyle.Bare);
+            get => Node.GetChild(KiCadTokens.Board.Hatch) is { } hatch && hatch.TryGetValue<double>(1, out var pitch) ? pitch : DefaultHatchPitch;
+            set => RequireHatch().SetValue(1, Numbers.Format(value), SQuoteStyle.Bare);
         }
 
         /// <summary>
@@ -558,12 +622,49 @@ namespace KiCadSharp.Documents
         /// <c>thru_hole_only</c>, or the empty string for KiCad's default of thermal reliefs, which
         /// it writes as a bare <c>(connect_pads (clearance …))</c> with no mode at all.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// KiCad 10.0.6 writes <c>thru_hole_only</c>, <c>yes</c>, <c>no</c>, or no word for thermal
+        /// reliefs, before the clearance (<c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.cpp</c>, lines
+        /// 2925–2949). Its parser takes those three words and <c>(clearance …)</c>, and refuses the
+        /// whole board over anything else (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 7959–7989). A
+        /// zone whose <c>(connect_pads …)</c> has no word, or that has none, gets thermal reliefs, the
+        /// default (<c>pcbnew/zone_settings.cpp</c>, line 74).
+        /// </para>
+        /// <para>
+        /// So a set takes <c>yes</c>, <c>no</c> and <c>thru_hole_only</c>, and <c>""</c>, which removes
+        /// the word and leaves the clearance. Anything else throws and writes nothing, <c>thermal</c>
+        /// included. Writing back the value just read changes nothing.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">KiCad 10 reads no such pad connection.</exception>
         public string ConnectPadsMode
         {
             get => Node.GetChild(KiCadTokens.Board.ConnectPads)?.GetValue(0) ?? string.Empty;
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
+                if (value.Length == 0)
+                {
+                    if (Node.GetChild(KiCadTokens.Board.ConnectPads) is { } pads)
+                    {
+                        while (pads.Values.Count > 0)
+                        {
+                            pads.Values.RemoveAt(0);
+                        }
+                    }
+
+                    return;
+                }
+
+                if (!PadConnections.Contains(value))
+                {
+                    throw new ArgumentException(
+                        $"KiCad reads no zone pad connection \"{value}\". Use yes, no, thru_hole_only, or \"\" for thermal reliefs.",
+                        nameof(value));
+                }
+
                 Require(KiCadTokens.Board.ConnectPads).SetValue(0, value, SQuoteStyle.Bare);
             }
         }
@@ -631,8 +732,28 @@ namespace KiCadSharp.Documents
         public void AddPoint(double x, double y)
         {
             var polygon = Node.GetChild(KiCadTokens.Board.Polygon) ?? Node.CreateChild(KiCadTokens.Board.Polygon);
-            var points = polygon.GetChild(KiCadTokens.Common.Pts) ?? polygon.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            KiCadChildOrder.Require(polygon, KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+        }
+
+        /// <summary>
+        /// Gets the <c>(hatch style pitch)</c> form, creating it when there is none, and filling in
+        /// either value it lacks with what KiCad reads in its absence. KiCad refuses a
+        /// <c>(hatch …)</c> without both (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 7936–7952).
+        /// </summary>
+        private SExpression RequireHatch()
+        {
+            var hatch = Require(KiCadTokens.Board.Hatch);
+            if (hatch.GetValue(0) is null)
+            {
+                hatch.SetValue(0, NoHatch, SQuoteStyle.Bare);
+            }
+
+            if (hatch.GetValue(1) is null)
+            {
+                hatch.SetValue(1, Numbers.Format(DefaultHatchPitch), SQuoteStyle.Bare);
+            }
+
+            return hatch;
         }
 
         internal static IReadOnlyList<KiCadPosition> ReadPoints(SExpression? owner) =>
@@ -644,8 +765,24 @@ namespace KiCadSharp.Documents
     /// <summary>
     /// A zone's fill settings: <c>(fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5))</c>.
     /// </summary>
+    /// <remarks>
+    /// This is not the <c>(fill …)</c> of a board shape, <see cref="KiCadFill"/>. KiCad reads a zone's
+    /// with its own loop and its own words (<c>parseZONE</c>,
+    /// <c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr_parser.cpp</c>, lines 8008–8161, KiCad 10.0.6),
+    /// and a word from one is refused in the other.
+    /// </remarks>
     public sealed class KiCadZoneFill : KiCadNode
     {
+        /// <summary>The fill mode of a zone with no <c>(mode …)</c>, which is how KiCad writes a solid zone.</summary>
+        private const string Solid = "solid";
+
+        /// <summary>
+        /// The words KiCad 10.0.6's parser reads in a zone's <c>(mode …)</c>
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 8020–8035). It reads <c>polygon</c> and the
+        /// deprecated <c>segment</c> as a solid fill, and <c>hatch</c> as a hatched one.
+        /// </summary>
+        private static readonly HashSet<string> ModeWords = new(StringComparer.Ordinal) { "hatch", "polygon", "segment" };
+
         /// <summary>Creates a view over a zone's <c>(fill …)</c> form.</summary>
         /// <param name="node">The form.</param>
         public KiCadZoneFill(SExpression node)
@@ -679,11 +816,68 @@ namespace KiCadSharp.Documents
             }
         }
 
-        /// <summary>Gets or sets the fill pattern: <c>solid</c> when the token is absent, or <c>hatch</c>.</summary>
+        /// <summary>
+        /// Gets or sets the fill pattern: <c>solid</c> when the form has no <c>(mode …)</c>, which is how
+        /// KiCad writes a solid zone, and otherwise the word the file has: <c>hatch</c>, or
+        /// <c>polygon</c> or <c>segment</c>, which KiCad reads as solid.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// KiCad 10 fills a zone one of two ways, solid or hatched (<c>ZONE_FILL_MODE</c>,
+        /// <c>pcbnew/zone_settings.h</c>, line 44). It writes <c>(mode hatch)</c> for a hatched zone and
+        /// nothing for a solid one (<c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.cpp</c>, lines
+        /// 2993–2995), and a zone it reads with no <c>(mode …)</c> is solid (<c>pcbnew/zone.cpp</c>,
+        /// lines 72 and 89; <c>pcbnew/zone_settings.cpp</c>, line 47). Its parser takes <c>hatch</c>,
+        /// <c>polygon</c> and <c>segment</c>, and refuses the whole board over any other word,
+        /// <c>solid</c> included (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 8020–8035).
+        /// </para>
+        /// <para>
+        /// So a set takes those three words, and <c>solid</c>. <c>"solid"</c> removes the
+        /// <c>(mode …)</c>, as KiCad does. The other three are written as they are, and a new
+        /// <c>(mode …)</c> goes first in the form, where KiCad writes it. Any other word throws, and
+        /// writes nothing: <c>hatched</c>, a different case, <c>""</c>. Writing back the value just
+        /// read changes nothing, and turns a <c>(mode solid)</c> that some other writer left into the
+        /// form KiCad reads.
+        /// </para>
+        /// <para>
+        /// A set leaves the hatch settings (<c>hatch_thickness</c>, <c>hatch_gap</c> and the rest)
+        /// alone. KiCad reads them whatever the mode (lines 8042–8083) and writes them only for a
+        /// hatched zone (<c>pcb_io_kicad_sexpr.cpp</c>, lines 3034–3051). A hatched zone without them
+        /// gets its board's defaults, 1 mm lines 1.5 mm apart unless the board sets others
+        /// (<c>zone_settings.cpp</c>, lines 53–54). Nor does a set re-fill the zone:
+        /// <see cref="KiCadZone.FilledPolygons"/> keeps the old copper until KiCad fills it again.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">KiCad 10 reads no such zone fill mode.</exception>
         public string Mode
         {
-            get => ReadChild(KiCadTokens.Board.Mode) ?? "solid";
-            set => WriteChild(KiCadTokens.Board.Mode, value, SQuoteStyle.Bare);
+            get => ReadChild(KiCadTokens.Board.Mode) ?? Solid;
+
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                if (string.Equals(value, Solid, StringComparison.Ordinal))
+                {
+                    Node.RemoveChildren(KiCadTokens.Board.Mode);
+                    return;
+                }
+
+                if (!ModeWords.Contains(value))
+                {
+                    throw new ArgumentException(
+                        $"KiCad reads no zone fill mode \"{value}\". Use solid, hatch, polygon or segment.",
+                        nameof(value));
+                }
+
+                if (Node.GetChild(KiCadTokens.Board.Mode) is null)
+                {
+                    // KiCad reads (mode …) anywhere in the form, but writes it first.
+                    Node.Children.Insert(0, new SExpression(KiCadTokens.Board.Mode));
+                }
+
+                Node.SetChildValue(KiCadTokens.Board.Mode, value, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>Gets or sets the gap a thermal relief leaves around a pad, in millimetres.</summary>
@@ -809,11 +1003,15 @@ namespace KiCadSharp.Documents
 
         /// <summary>Gets the fill, or <see langword="null"/> when the shape has no <c>fill</c> form.</summary>
         /// <remarks>An open shape — a line, an arc, a curve — has none, and reading this does not give it one.</remarks>
-        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } fill ? new KiCadFill(fill) : null;
+        public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } fill ? new KiCadFill(fill, KiCadFillSpelling.Board) : null;
 
-        /// <summary>Gets the fill, adding a <c>(fill …)</c> form when the shape has none.</summary>
+        /// <summary>
+        /// Gets the fill, adding a <c>(fill …)</c> form when the shape has none. Its
+        /// <see cref="KiCadFill.Type"/> is written the board's way, <c>(fill no)</c>; see
+        /// <see cref="KiCadFillSpelling.Board"/>.
+        /// </summary>
         /// <returns>The view.</returns>
-        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill));
+        public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
     }
 
     /// <summary>A board line: <c>(gr_line (start x y) (end x y) (stroke …) (layer "Edge.Cuts"))</c>.</summary>
@@ -996,8 +1194,7 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
@@ -1026,8 +1223,7 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 
@@ -1182,8 +1378,7 @@ namespace KiCadSharp.Documents
         /// <param name="y">Y, millimetres.</param>
         public void AddPoint(double x, double y)
         {
-            var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
         }
     }
 

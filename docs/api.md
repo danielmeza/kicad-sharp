@@ -11,21 +11,75 @@ Every type and member. The short version is in the [README](../README.md).
 | `KiCadIPCClient : IDisposable` | The transport. `Connect(ct)`, `Send<TResult>(IMessage, ct)`, `Send(IMessage, ct)`, `Disconnect()`, `IsConnected`. |
 | `KiCadClientSettings` | `PipeName`, `Token`, `ClientName`, `RequestTimeout`, `DefaultClientName = "kicad.client"`. |
 | `KiCadIPCProxy` | Abstract base for `KiCad` / `Board` / `Project`; wraps `Send`. |
-| `KiCadEnvironment` | Static reader for `KICAD_API_SOCKET`, `KICAD_API_TOKEN`, `KIPRJMOD`, `KICAD_USER_TEMPLATE_DIR`, `KICAD9_3DMODEL_DIR`, `KICAD9_FOOTPRINT_DIR`, `KICAD9_SYMBOL_DIR`, `KICAD9_DESIGN_BLOCK_DIR`, `VIRTUAL_ENV`; plus `GetDefaultSocketPath()`, `GenerateRandomClientName()`, `IsRunningOnKiCad()`. |
+| `KiCadEnvironment` | Static reader for `KICAD_API_SOCKET`, `KICAD_API_TOKEN`, `KIPRJMOD`, `KICAD_USER_TEMPLATE_DIR`, `VIRTUAL_ENV`, and KiCad's versioned library paths: `GetModelsDirectory()` (`KICAD<n>_3DMODEL_DIR`), `GetFootprintDirectory()` (`KICAD<n>_FOOTPRINT_DIR`), `GetSymbolDirectory()` (`KICAD<n>_SYMBOL_DIR`), `GetDesignBlockDirectory()` (`KICAD<n>_DESIGN_BLOCK_DIR`), `GetTemplateDirectory()` (`KICAD<n>_TEMPLATE_DIR`), `GetThirdPartyDirectory()` (`KICAD<n>_3RD_PARTY`). Each reads the newest version `<n>` that is set, so KiCad 10's `KICAD10_*` wins over a leftover `KICAD9_*`. `GetVersionedVariable(baseName)` does the same for any name, and `GetVersionedVariable(baseName, majorVersion)` tries a known version first. See [what KiCad puts in a plugin's environment](ipc.md#what-kicad-puts-in-a-plugins-environment). `GetDefaultSocketPath()` is `KICAD_API_SOCKET` when it is set, and otherwise the address KiCad 10 listens on, worked out by KiCad's own rule: `<temp>/kicad/api.sock`, where `<temp>` is `/tmp` on macOS and elsewhere the first of `TMPDIR`, `TMP` and `TEMP` that names a directory, then `/tmp` or, on Windows, the system temp path. See [where KiCad listens](ipc.md#where-kicad-listens-for-a-client-it-did-not-launch). Plus `GenerateRandomClientName()`, `IsRunningOnKiCad()`. |
 | `KiCadServicesExtensions.AddKiCad(...)` | DI registration: a keyed `KiCadIPCClient`, a keyed `KiCad`, and `IKiCadFactory`. |
 | `IKiCadFactory` | `KiCad Create(string? clientName = null)`. |
-| `KiCadConnectionException` | Dial/send/receive failures. |
+| `KiCadIpcException` | Abstract base of the two below: the one type to catch for any IPC failure. |
+| `KiCadConnectionException : KiCadIpcException` | KiCad could not be reached: no socket path, nothing listening, no native nng, a send or receive nng refused, a reply that is not an `ApiResponse`, or `RequestTimeout` running out. |
+| `ApiException : KiCadIpcException` | KiCad answered and the answer was not the result. `StatusCode` (`ApiStatusCode?`) is the status it sent, `ErrorMessage` its text. |
 
 Requests are framed as an `ApiRequest` envelope with the command packed into `Any` and a header
 carrying the KiCad token; the reply is an `ApiResponse` unpacked back to `TResult`. If no token was
 configured, the client adopts the one KiCad returns on the first successful round trip.
 
+**When a call fails** it throws a `KiCadIpcException`, with the underlying failure as its
+`InnerException` when there is one, and a cancellation throws `OperationCanceledException` as itself:
+
+| What happened | Thrown | Inside |
+|---|---|---|
+| No socket path, or nothing listening at it | `KiCadConnectionException` | nng's error (connection refused) |
+| A socket that never completes nng's handshake (a KiCad still starting) | `KiCadConnectionException`, after nng's own 10 s | nng's error (timed out) |
+| No native nng for this platform | `KiCadConnectionException` | the loader's `DllNotFoundException` or `BadImageFormatException` |
+| `KICADSHARP_NNG_LIBRARY` names something that does not load: no file at that path, or one the platform loader refuses | `KiCadConnectionException`, naming the variable and the path; the shipped nng is not loaded instead | the loader's `DllNotFoundException` or `BadImageFormatException` |
+| `KICADSHARP_NNG_LIBRARY` names a library that loads and is not nng: it lacks one of the thirteen functions this client calls | `KiCadConnectionException`, naming the variable, the path and the missing functions | `EntryPointNotFoundException` for the first one missing |
+| `RequestTimeout` ran out, waiting for the reply or to send | `KiCadConnectionException` | `TimeoutException` |
+| Bytes back that are not an `ApiResponse` | `KiCadConnectionException` | `InvalidProtocolBufferException` |
+| KiCad answered a status other than `AS_OK` — `AS_UNHANDLED`, `AS_BAD_REQUEST`, `AS_NOT_READY`, `AS_BUSY`, `AS_TOKEN_MISMATCH`, … | `ApiException`, `StatusCode` = that status | — |
+| A reply with no status | `ApiException`, `StatusCode` = `AS_UNKNOWN` | — |
+| `AS_OK` with no payload, the wrong type, or one that does not parse | `ApiException`, `StatusCode` = `AS_OK` | `InvalidProtocolBufferException` for the last |
+| `GetBoard()` with no board open | `ApiException`, `StatusCode` = `null` | — |
+| The caller's token was cancelled: before the request went out, while the send waits for a KiCad to take it, or while the reply is awaited | `OperationCanceledException`, whose `CancellationToken` is the caller's | — |
+| `Disconnect()` cut the request off | `OperationCanceledException` | — |
+| `Dispose()` while the call was under way: connecting, waiting behind another call on the same client, waiting to send, or waiting for the reply | `OperationCanceledException`, the same at every one of those points | the dial's failure, for a dial that failed after `Dispose()` |
+| A call made after `Dispose()` | `ObjectDisposedException` | — |
+
+`AS_UNHANDLED` is how KiCad says it has no handler for a command, so it is how a caller finds out a
+command is not there:
+
+```csharp
+try
+{
+    await kicad.Ping();
+}
+catch (ApiException e) when (e.StatusCode == ApiStatusCode.AsUnhandled)
+{
+    // this editor does not handle Ping -- eeschema on KiCad 10.0.6, for one
+}
+catch (KiCadIpcException e)
+{
+    // KiCad is not there, or it refused
+}
+```
+
+A token that was empty is not a failure: KiCad answers it with its own, which the client adopts. A
+token from another KiCad instance is `AS_TOKEN_MISMATCH`.
+
 `RequestTimeout` defaults to `Timeout.InfiniteTimeSpan`, which is nng's own default and what this
-client has always done. Waiting is not the same as hanging, though: the reply is polled for rather
-than blocked on, so a `CancellationToken` is observed **while the request is on the wire** and not
-only before it goes out. Pass one with a deadline for a per-call bound, or set `RequestTimeout` for
-a client-wide one. There is no useful single default — `Ping` returns in under a millisecond and
-`RefillZones` on a large board does not.
+client has always done. Waiting is not the same as hanging, though: neither the send nor the reply
+is blocked on in nng, both are polled for, so a `CancellationToken` is observed **while the request
+is on the wire** and not only before it goes out. That includes a KiCad that went away after the
+dial: the send then has nobody to hand the request to, and it waits for somebody without holding a
+thread, until the token or `RequestTimeout` ends the wait. Pass a token with a deadline for a
+per-call bound, or set `RequestTimeout` for a client-wide one. There is no useful single default —
+`Ping` returns in under a millisecond and `RefillZones` on a large board does not.
+
+`Dispose()` ends every call under way as a cancellation, as `HttpClient` does its pending requests:
+the call did not fail, it was stopped. It is safe to call more than once, and from any thread while
+calls, `Disconnect()` or another `Dispose()` run. It does not wait for the calls it ends. The one call
+it cannot end at once is one that is dialing, because nng's dial cannot be interrupted. That call ends
+with the same `OperationCanceledException` when the dial returns, and the socket the dial opened is
+closed. The dial returns at once against a path with nothing at it, and after nng's own 10 s at most
+against a socket that never completes the handshake.
 
 ### `KiCad` — the connection handle
 
@@ -112,12 +166,13 @@ against the reference implementation's vectors in the tests.
 | Type | File | What it actually does |
 |---|---|---|
 | `KiCadNode` | — | Base of every typed view: `Node` (the live s-expression), `ToSExpression()`. Everything below reads and writes through it. |
-| `KiCadNodeList<T>` | — | A live view over a node's children with one token: `Count`, indexer, `Add`, `Remove`, `Insert`. |
+| `KiCadNodeList<T>` | — | A live view over a node's children with one token: `Count`, indexer, `Add`, `Remove`, `Insert`. A `foreach` walks the children that were there when it started, so the loop may move, remove or append. |
 | `KiCadSymbolLibrary` | `.kicad_sym` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddSymbol`, `RemoveSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`, `Document`, `Node`. |
-| `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. |
+| `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. Setting `Id` renames the sub-units with it (`R_1_1` → `UL_R_1_1`) and re-points every `(extends …)` in the same library that named the old symbol; KiCad refuses a library in which either still carries the old name. |
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
-| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). |
-| `KiCadFootprint` | — | `Id`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
+| `KiCadText` | — | Text inside a symbol: `Text`, `Position`, `RotationDegrees`, `FontEffects`. KiCad stores this angle in **tenths of a degree**, so a vertical text is `(at x y 900)` and `Position.Rotation` reads 900. `RotationDegrees` converts. The four-argument constructor writes its angle unchanged and is obsolete. `KiCadSchematicText`, which is text on a sheet, stores degrees, so there `RotationDegrees` is the number in the file. |
+| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`, `Version`, `Generator`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). `Version` is the version the file declares, or `null` when it declares none. |
+| `KiCadFootprint` | — | `Id`, `Version`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
 | `KiCadSchematic` | `.kicad_sch` | `Load`/`LoadAsync`/`Parse`, `Save`, `ToText`, `Uuid`, `Symbols`, `Sheets`, `FilePath`, `IsModified`. |
 | `KiCadSchematicSymbol` | — | `Uuid`, `LibId`, `Unit`, `Properties`, `ReferenceProperty`, `IsPowerSymbol`, `GetInstanceReference`, `SetInstanceReference`, `PruneInstances`. |
 | `KiCadSheet` | — | `Uuid`, `SheetName`, `SheetFile`, `Properties`. |
@@ -126,6 +181,7 @@ against the reference implementation's vectors in the tests.
 | `KiCadUtils` | `.kicad_sym` | `ParseSymbolLibrary`, `ExportSymbolToLibrary`, `ValidateSymbolLibrary`, `CloneSymbol`, `GetLibraryName`. |
 | `KiCadFileExtensions` | — | `.kicad_pro`, `.kicad_sch`, `.kicad_pcb`, `.kicad_sym`, `.kicad_mod`, `.kicad_dru`, `.kicad_wks`, `.kicad_prl`. |
 | `KiCadSharp.Settings.IWritableOptions<T>` / `WritableOptions<T>` | JSON | A writable `IOptions<T>` that patches one section of a JSON file and reloads configuration. `System.Text.Json`; every other section of the file is carried across untouched. Unrelated to KiCad IPC. |
+| `KiCadDocumentTypeException` | — | Thrown by every `Load`/`LoadAsync`/`Parse` above when the file is not the kind of document asked for. `FilePath`, `ExpectedRootTokens`, `ActualRootToken`. Derives from `InvalidOperationException`. |
 
 ### Typed vs. generic, by file type
 
@@ -143,9 +199,125 @@ re-serialised, so a token this library has never heard of survives the round tri
 save that changed one property differs from the input in exactly that property's bytes. Reach
 anything not modelled through `Node`.
 
+**A new child goes where KiCad reads it.** A property set for the first time adds its child at the
+end of the form, except in the few forms KiCad 10 reads partly by position, where a child anywhere
+else makes it refuse the whole file (#59). There the child goes in KiCad's place, whatever order
+the properties are set in:
+
+| Form | What comes first, in this order |
+|---|---|
+| `fp_poly`, `gr_poly`, `fp_curve`, `gr_curve` | `pts` |
+| `fp_line`, `gr_line`, `fp_rect`, `gr_rect` | `start`, `end` |
+| `fp_circle`, `gr_circle` | `center`, `end` |
+| `fp_arc`, `gr_arc` | `start`, `mid`, `end`, or KiCad 5's `start`, `end`, `angle` |
+| `dimension` | `type` |
+| a zone's `polygon` | `pts`, and nothing else |
+| a zone's `filled_polygon` | `layer`, `island`, then `pts` last |
+| `kicad_pcb`, `kicad_sch`, `kicad_symbol_lib`, `footprint` | `version` |
+
+Nothing that is already in a form moves, so a loaded file still saves byte for byte. The schematic
+and symbol-library grammar has no such form: a `polyline`'s, `bezier`'s or `wire`'s `pts` may go
+anywhere. `src/KiCadSharp/Documents/KiCadChildOrder.cs` cites KiCad 10.0.6's parser line for each
+rule.
+
+**A fill is spelled the way its file's parser reads it.** KiCad 10 spells `(fill …)` two ways, and
+each parser refuses the whole file when it meets the other's (#64). `RequireFill()` adds an empty
+`(fill)`, which both read, and the first `Type` set writes the owner's spelling:
+
+| Owner | `RequireFill().Type = "no"` writes | Words `Type` takes |
+|---|---|---|
+| a board's `gr_*` shapes; a footprint's `fp_rect`, `fp_circle`, `fp_poly` | `(fill no)` | `yes`, `no`, `solid`, `none`, `hatch`, `reverse_hatch`, `cross_hatch` |
+| a symbol's or a schematic's shapes, text boxes and sheets | `(fill (type none))` | `none`, `outline`, `background`, `color`, `hatch`, `reverse_hatch`, `cross_hatch` |
+
+A word from the other row that means the same fill in KiCad's own model is written as this row's
+word: `no` becomes `none` in a symbol, `yes` and `solid` become `outline`, and `outline` becomes
+`yes` on a board. Any other word throws `ArgumentException`, and so do `background` and `color` on a
+board, which has neither fill. A fill loaded from a file keeps the spelling it has. A zone's fill,
+`(fill yes (thermal_gap …) …)`, is a third form, `KiCadZoneFill`. `KiCadFillSpelling` cites KiCad
+10.0.6's parser and writer lines for each spelling.
+
+**A zone is filled solid or hatched, and `solid` is not a word in the file.** KiCad writes
+`(mode hatch)` for a hatched zone and no `(mode …)` for a solid one. Its parser takes `hatch`,
+`polygon` and `segment`, the last two meaning solid, and refuses the whole board over `(mode solid)`
+(#72). `KiCadZoneFill.Mode` reads `solid` when there is no `(mode …)`. Setting it to `"solid"` removes
+the `(mode …)`, and `hatch`, `polygon` and `segment` are written as they are. Any other word throws
+`ArgumentException` and writes nothing. Writing back the value just read leaves the file as it was.
+A new mode does not refill the zone: its `filled_polygon`s keep the old copper until KiCad fills it
+again. `Mode` cites KiCad 10.0.6's parser and writer lines.
+
+**A zone's pad connection and outline hatch also take only KiCad's words.** `KiCadZone.ConnectPadsMode`
+reads `""` for thermal reliefs, which KiCad writes as `(connect_pads (clearance …))` with no word.
+Setting `""` removes the word, and `yes`, `no` and `thru_hole_only` go before the clearance, where
+KiCad writes them (#89). `HatchStyle` takes `none`, `edge` and `full` (#90). KiCad needs both values
+of `(hatch style pitch)`, so setting either one on a zone that has no `(hatch …)` writes both. The
+other value is the one KiCad reads for a zone without a `(hatch …)`: `none`, or 0.5 mm, which is also
+what `HatchPitch` reads there. Any other word throws `ArgumentException` and writes nothing, and
+writing back the values just read leaves the file as it was.
+
+**Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
+`KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of
+wherever it was, another file included. The view you hold is then the element in the destination,
+bytes and all. To leave the source as it was, add a copy: `new KiCadSymbol(symbol.Node.Clone())`.
+
+```csharp
+foreach (var symbol in source.Symbols)      // walks the 35 that were there when it started
+    destination.AddSymbol(symbol);          // all 35 move; source.Symbols is now empty
+```
+
+`Count` and the indexer stay live, so a forward `for` loop over a list you are moving out of steps
+over every other element. Use `foreach`, walk backwards, or take `[0]` until `Count` is 0.
+
 Anything in the "No" rows is still fully readable and *losslessly writable* through
 [`SExpressions`](https://github.com/danielmeza/sexpressions), which is a dependency of this package —
 you just write the accessors yourself.
+
+**Every loader checks the root form.** `KiCadSymbolLibrary` takes `(kicad_symbol_lib …)`,
+`KiCadFootprintLibrary` takes `(footprint …)`, KiCad 5's `(module …)` and `(kicad_pcb …)`,
+`KiCadBoard` takes `(kicad_pcb …)` and `KiCadSchematic` takes `(kicad_sch …)`. Any other file,
+including an empty one, JSON or prose, throws `KiCadDocumentTypeException`. It is never loaded as an
+empty document that a later `Save` would write over the original. Text that is not s-expressions at
+all throws the parser's `SExpressionFormatException`, with a line and column. The constructors that
+wrap an existing `SExpression` make the same check and throw `ArgumentException`. KiCad's own
+footprint-library reader accepts only `footprint` and `module` in a `.kicad_mod`, so check
+`IsSingleFootprint` when a board in that place would be a mistake.
+
+**A symbol library's `version` changes how KiCad reads its symbols.** In KiCad 10.0.6, a lone `~`
+is an empty value, pin name or pin number before `20250318`. An arc over 180° is redrawn as a
+shorter one up to `20230121`. A second body style is inferred before `20250827` and dropped after it
+unless the symbol declares one. So a library that holds no symbols yet takes the version of the
+library its first `AddSymbol` comes from. A library that already holds symbols keeps its version,
+because changing it would change how those symbols read. A symbol built in memory, a copy (`CloneAs`
+or the `Node.Clone()` above) and one from a schematic leave the version alone, so when you copy, set
+`Version` to the source's. Nothing converts symbols between versions, so symbols from libraries
+of different versions cannot all be read as written from one file.
+
+**A footprint built in memory carries KiCad 10's format stamp.** `new KiCadFootprint(id)` starts with
+`(version 20260206)` and `(generator "KiCad Library Importer")`, where KiCad 10.0.6 writes them in a
+footprint library (#63). Without a version, KiCad reads a `.kicad_mod` as format 0, which is KiCad 5's:
+it refuses an arc drawn by `start`, `mid` and `end`, and it makes a footprint with no `attr` a
+through-hole one. A footprint read from a file keeps the version it has, or none, and so does a copy
+of one. A KiCad 5 module's `start`/`end`/`angle` arcs depend on having none. `KiCadFootprint.Version`
+reads it and sets it, and `null` removes it. KiCad writes a footprint inside a board without a
+version. A footprint that has one there makes KiCad read the rest of the board under the greater of
+the two versions. For example, a via after a new footprint on a `new KiCadBoard()` (`20241229`) loses
+its explicit "no" covering and plugging. To place a new footprint on a board stamped with an older
+format, set its `Version` to `null` first (#73).
+
+**A footprint built in memory is written in KiCad 10's forms.** `new KiCadFootprint(id)` starts with
+the four fields KiCad gives every footprint, written as `(property …)`: `Reference` (`REF**`, on
+`F.SilkS`), `Value` (the name, on `F.Fab`), and an empty `Datasheet` and `Description`, hidden, on
+`F.Fab`. So `GetPropertyValue("Reference")` answers on a new footprint as it does on one KiCad wrote,
+and `TextItems` starts empty (#75). The `(fp_text reference …)` and `(fp_text value …)` it wrote
+before date from before format `20230620`, when fields replaced them. A width set on a new `fp_*`
+shape is written as `(stroke (width w) (type solid))`, not as the bare `(width w)` of older files. kicad-cli 10.0.6 reads the old
+and new spellings the same way. A footprint read from a file keeps its forms: its text items stay
+text items, and a bare `width` stays bare when written to.
+
+**A new board-shaped `KiCadFootprintLibrary` starts with a layer table**, the same one a new
+`KiCadBoard` has. It used to write an empty `(layers)`, which KiCad refuses as "0 is not a valid layer
+count" (#74). `KiCadFootprintLibrary.Version` reports only what the file declares: `null` for a file
+with no version, which KiCad reads as format 0 (a `.kicad_mod`) or `20201115` (a board). It used to
+report `20211014` there (#76).
 
 ### Copper geometry — `KiCadSharp.Geometry`
 
@@ -262,6 +434,73 @@ with, it is what the editor draws, and a symbol on a sheet used twice has no sin
 for it. Instance entries filed under a *different* project name, which is what lets a shared sheet
 still open on its own. And every byte outside the `(instances …)` blocks — the test asserts that
 stripping those blocks from the file before and after leaves two identical texts.
+
+## `KiCadSharp.Fluent`
+
+```
+dotnet add package KiCadSharp.Fluent
+```
+
+A second way to build the same documents. `using KiCadSharp.Fluent;` brings in a `With*` extension
+for every public `Add*` on the document types (`KiCadSharp.Documents` and `KiCadSharp.Schematics`).
+The core `Add*` API is unchanged. The fluent layer adds no behaviour of its own. Each call follows
+one rule:
+
+> `parent.WithX(args, configure)` is `configure?.Invoke(parent.AddX(args))`, then `return parent`.
+
+- **It returns the parent**, the object it was called on, so calls chain.
+- **It takes a callback exactly when the `Add*` returns a child.** The callback receives that child
+  after it has been appended. `AddPoint` and `AddMember` return nothing, so their `With*` take no
+  callback.
+- **Same arguments, same names, same exceptions.** When the caller passes the child in (a symbol,
+  a pin, a graphical item), the method is generic in its type, so the callback sees what was passed:
+  `symbol.WithGraphicalItem(new KiCadPolyline(), p => p.WithPoint(0, 0))` needs no cast.
+- **A `With*` that takes an existing view moves it, as its `Add*` does.** A node has one parent,
+  so a symbol, footprint, pin, item or list element that belonged somewhere else leaves it. That
+  includes another file. `foreach (var s in source.Symbols) destination.WithSymbol(s)` moves every
+  symbol. To leave the original where it is, pass a copy: `new KiCadSymbol(s.Node.Clone())`.
+- **An optional `width` is an overload, not a default.** `AddLine` and `AddCircle` default `width`.
+  Leave it out of `WithLine`/`WithCircle` and they call the `Add*` without one, so the default stays
+  the core's.
+
+`tests/KiCadSharp.Fluent.Tests/MirrorTests` checks the mirror by reflection in both directions.
+Every `Add*` must have its `With*`, and every `With*` must match an `Add*`. A new `Add*` in the
+core fails that test until it is mirrored.
+
+| Receiver | `Add*` in `KiCadSharp` | `With*` in `KiCadSharp.Fluent` | Callback gets |
+|---|---|---|---|
+| `KiCadFootprintLibrary` | `AddFootprint(footprint)` | `WithFootprint(footprint, configure?)` | the footprint |
+| `KiCadFootprint` | `AddFpText(type, text, x, y, layer)` | `WithFpText(…, configure?)` | `KiCadFpText` |
+| `KiCadFootprint` | `AddPad(number, type, shape, x, y, width, height, layers)` | `WithPad(…, configure?)` | `KiCadPad` |
+| `KiCadFootprint` | `AddLine(startX, startY, endX, endY, layer, width = 0.12)` | `WithLine(…, layer, configure?)`, `WithLine(…, layer, width, configure?)` | `KiCadFpLine` |
+| `KiCadFootprint` | `AddCircle(centerX, centerY, endX, endY, layer, width = 0.12)` | `WithCircle(…, layer, configure?)`, `WithCircle(…, layer, width, configure?)` | `KiCadFpCircle` |
+| `KiCadFootprint` | `AddModel(path)` | `WithModel(path, configure?)` | `KiCadModel` |
+| `KiCadFpPoly` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadSymbolLibrary` | `AddSymbol(symbol)` | `WithSymbol(symbol, configure?)` | the symbol |
+| `KiCadSymbolLibrary` | `AddSymbol(id)` | `WithSymbol(id, configure?)` | `KiCadSymbol` |
+| `KiCadSymbol` | `AddProperty(key, value)` | `WithProperty(key, value, configure?)` | `KiCadProperty`, new or updated |
+| `KiCadSymbol` | `AddPin(pin)` | `WithPin(pin, configure?)` | the pin |
+| `KiCadSymbol` | `AddGraphicalItem(item)` | `WithGraphicalItem(item, configure?)` | the item, as its own type |
+| `KiCadSymbol` | `AddUnit(name)` | `WithUnit(name, configure?)` | `KiCadSymbolUnit` |
+| `KiCadSymbolUnit` | `AddPin(pin)` | `WithPin(pin, configure?)` | the pin |
+| `KiCadPolyline` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadBoard` | `AddNet(code, name)` | `WithNet(code, name, configure?)` | `KiCadNet` |
+| `KiCadZone` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadGrPoly` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadGrCurve` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadDimension` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadGroup` | `AddMember(uuid)` | `WithMember(uuid)` | — |
+| `KiCadNodeList<T>` | `Add()` | `With(configure?)` | the new `T` |
+| `KiCadNodeList<T>` | `Add(item)` | `With(item, configure?)` | the item |
+| `KiCadSchematicLine` (`KiCadWire`, `KiCadBus`) | `AddPoint(x, y)` | `WithPoint(x, y)`, returning the wire or bus as its own type | — |
+| `KiCadBusAlias` | `AddMember(net)` | `WithMember(net)` | — |
+
+**What is not mirrored:** `SpecctraNode.Add` already returns the form it was called on, so it
+chains as it is. `AddKiCad` registers services in DI and does not build a document.
+
+**The `KiCadNodeList<T>` rows matter more than they look.** Most board and schematic items (zones,
+tracks, drawings, wires, labels) have no `Add*` of their own. They are appended through a live list,
+`board.Zones.Add()`. `With` returns the list, not the board, so it starts its own statement.
 
 ## `KiCadSharp.Protos`
 

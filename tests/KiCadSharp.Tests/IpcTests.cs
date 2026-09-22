@@ -1,4 +1,7 @@
+using Google.Protobuf.WellKnownTypes;
+
 using Kiapi.Board.Types;
+using Kiapi.Common;
 using Kiapi.Common.Types;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -72,10 +75,49 @@ public class IpcTests
         // "Pipename not provided". KiCadEnvironment.GetDefaultSocketPath() existed for this and was
         // never called.
         Assert.Equal(KiCadEnvironment.GetDefaultSocketPath(), settings.PipeName);
-        Assert.Equal("ipc:///tmp/kicad/api.sock", OperatingSystem.IsWindows() ? "ipc:///tmp/kicad/api.sock" : settings.PipeName);
+
+        // Which directory depends on TMPDIR and the platform, as it does for KiCad (#97);
+        // DefaultSocketPathTests pins that. This used to assert /tmp, which a TMPDIR broke.
+        Assert.EndsWith(OperatingSystem.IsWindows() ? @"\kicad\api.sock" : "/kicad/api.sock", settings.PipeName);
 
         // And the name passed to AddKiCad is the client name, which is what goes in the envelope.
         Assert.Equal("my-plugin", settings.ClientName);
+    }
+
+    [Fact]
+    public async Task AddKiCad_SendsItsClientName_InEveryRequestHeader()
+    {
+        // Against the in-process peer rather than a KiCad, so it runs everywhere, and reading the
+        // header off the wire rather than off the settings: what KiCad sees is what counts.
+        var namesSeen = new List<string>();
+        using var peer = NngTestPeer.StartRaw(bytes =>
+        {
+            lock (namesSeen)
+            {
+                namesSeen.Add(ApiRequest.Parser.ParseFrom(bytes).Header.ClientName);
+            }
+
+            return NngTestPeer.Answer(ApiStatusCode.AsOk, payload: new Empty());
+        });
+
+        // Two named clients and the default one, all dialling the same socket. The header used to be
+        // filled from PipeName, which all three share, so only the names can tell them apart.
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
+        services.AddKiCad("my-plugin", settings => settings.PipeName = peer.Url);
+        services.AddKiCad("another-plugin", settings => settings.PipeName = peer.Url);
+        services.AddKiCad(settings => settings.PipeName = peer.Url);
+        using var provider = services.BuildServiceProvider();
+        var factory = provider.GetRequiredService<IKiCadFactory>();
+
+        await factory.Create("my-plugin").Ping();
+        await factory.Create("another-plugin").Ping();
+        await factory.Create().Ping();
+        await factory.Create("my-plugin").Ping();
+
+        Assert.Equal(
+            new[] { "my-plugin", "another-plugin", KiCadClientSettings.DefaultClientName, "my-plugin" },
+            namesSeen);
     }
 
     [Fact]

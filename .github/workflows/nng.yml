@@ -1,0 +1,58 @@
+name: nng
+
+# Rebuilds the two libnng binaries this repository commits, native/osx-arm64/libnng.dylib and
+# native/win-arm64/nng.dll, from the nng source native/NNG_PIN pins, and fails unless each rebuild is
+# byte for byte the committed file. That is what makes the committed binaries reproducible rather
+# than taken on trust. Each build is uploaded, which is also where a new pin's binary comes from.
+#
+# It runs when anything that decides those bytes changes, not on every pull request. A runner image
+# that moves to a newer Xcode or MSVC can change the bytes without anyone touching the pin, and that
+# should not turn every unrelated change red. Run it by hand (workflow_dispatch) to see whether the
+# current images still reproduce the files.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - native/**
+      - scripts/build-nng.sh
+      - scripts/check-natives.sh
+      - .github/workflows/nng.yml
+  pull_request:
+    paths:
+      - native/**
+      - scripts/build-nng.sh
+      - scripts/check-natives.sh
+      - .github/workflows/nng.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: libnng ${{ matrix.rid }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Built on its own architecture, not cross-compiled: macos-14 is Apple silicon and
+          # windows-11-arm is Windows on Arm.
+          - rid: osx-arm64
+            os: macos-14
+          - rid: win-arm64
+            os: windows-11-arm
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build nng from the pin, and compare it with the committed file
+        shell: bash
+        run: scripts/build-nng.sh ${{ matrix.rid }} --check
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: libnng-${{ matrix.rid }}
+          path: artifacts/nng/${{ matrix.rid }}/out/
+          if-no-files-found: error

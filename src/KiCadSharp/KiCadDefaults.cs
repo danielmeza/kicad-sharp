@@ -39,21 +39,54 @@ namespace KiCadSharp
         public const string BoardVersion = "20241229";
 
         /// <summary>
-        /// The format stamp <see cref="Documents.KiCadFootprintLibrary"/> writes, and the fallback
-        /// for a <c>.kicad_mod</c> parsed without a <c>version</c> token.
+        /// The format stamp a new, board-shaped <see cref="Documents.KiCadFootprintLibrary"/> writes.
         /// </summary>
         /// <remarks>
+        /// <para>
+        /// It is not a fallback for a file with no <c>version</c> token: KiCad reads such a
+        /// <c>.kicad_mod</c> as format 0 and such a board as <c>20201115</c>, so
+        /// <see cref="Documents.KiCadFootprintLibrary.Version"/> reports <see langword="null"/> there
+        /// rather than this (#76).
+        /// </para>
+        /// <para>
         /// <b>Not a <c>.kicad_mod</c> stamp on the write path.</b> That type builds a
         /// <c>kicad_pcb</c> root — its own summary says "board-shaped" — so what it stamps is a
         /// board, and an OLDER format than <see cref="BoardVersion"/>: KiCad 6 against KiCad 9.
         /// Two stamps three lines apart for the same root token is a real divergence, and
         /// collecting the literals is what made it visible. It is reproduced here rather than
         /// reconciled: raising it changes what the type writes, and that is a decision for
-        /// whoever knows which readers depend on the old value.
+        /// whoever knows which readers depend on the old value. A footprint built in memory is
+        /// stamped with <see cref="FootprintVersion"/> instead.
+        /// </para>
         /// </remarks>
         public const string FootprintLibraryVersion = "20211014";
 
-        /// <summary>The format stamp <see cref="Documents.KiCadSymbolLibrary"/> writes.</summary>
+        /// <summary>
+        /// The format stamp a footprint built in memory, <c>new KiCadFootprint(id)</c>, starts with:
+        /// KiCad 10.0.6's.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// KiCad reads a footprint by the format its <c>version</c> names, and by format 0 when it has
+        /// none. Format 0 is KiCad 5's: it refuses an arc drawn by <c>start</c>/<c>mid</c>/<c>end</c>,
+        /// and it makes a footprint with no <c>attr</c> a through-hole one (#63). A new footprint
+        /// therefore carries the stamp KiCad 10.0.6 writes for a footprint in a library:
+        /// <c>SEXPR_BOARD_FILE_VERSION</c>, <c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.h</c>
+        /// line 203, at the tag <c>protos/KICAD_PIN</c> pins.
+        /// </para>
+        /// <para>
+        /// A footprint read from a file keeps whatever version it has, or none. See
+        /// <see cref="Documents.KiCadFootprint.Version"/> for a footprint placed on a board.
+        /// </para>
+        /// </remarks>
+        public const string FootprintVersion = "20260206";
+
+        /// <summary>The format stamp a new <see cref="Documents.KiCadSymbolLibrary"/> starts with.</summary>
+        /// <remarks>
+        /// It describes symbols built in memory. The first symbol a new library takes from another
+        /// library replaces it with that library's stamp, because KiCad reads some content differently
+        /// by version; see <see cref="Documents.KiCadSymbolLibrary.AddSymbol(Documents.KiCadSymbol)"/>.
+        /// </remarks>
         public const string SymbolLibraryVersion = "20211014";
 
         /// <summary>The board thickness a new board is created with, in millimetres.</summary>
@@ -67,7 +100,9 @@ namespace KiCadSharp
         /// <summary>The generator name <see cref="Documents.KiCadBoard"/> writes.</summary>
         public const string BoardGenerator = "KiCadSharp";
 
-        /// <summary>The generator name both library document types write.</summary>
+        /// <summary>
+        /// The generator name both library document types, and a footprint built in memory, write.
+        /// </summary>
         public const string LibraryGenerator = "KiCad Library Importer";
 
         /// <summary>

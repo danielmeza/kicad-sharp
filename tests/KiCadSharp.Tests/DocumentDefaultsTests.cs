@@ -45,6 +45,10 @@ public class DocumentDefaultsTests
         Assert.Equal("20211014", new KiCadSymbolLibrary().Version);
 
     [Fact]
+    public void TheFootprintStampIsTheKiCad10Format() =>
+        Assert.Equal("20260206", new KiCadFootprint("F").Version);
+
+    [Fact]
     public void ANewDocumentIsA4AndOnePointSixMillimetresThick()
     {
         var board = new KiCadBoard();
@@ -59,6 +63,7 @@ public class DocumentDefaultsTests
         Assert.Equal("KiCadSharp", new KiCadBoard().Generator);
         Assert.Equal("KiCad Library Importer", new KiCadFootprintLibrary().Generator);
         Assert.Equal("KiCad Library Importer", new KiCadSymbolLibrary().Generator);
+        Assert.Equal("KiCad Library Importer", new KiCadFootprint("F").Node.GetChildValue(KiCadTokens.Common.Generator));
     }
 
     // ── The wiring: both halves route through the constant ───────────────────
@@ -93,12 +98,27 @@ public class DocumentDefaultsTests
     }
 
     [Fact]
-    public void ALibraryWithNoVersionTokenReportsItsOwnStamp()
+    public void ANewFootprintCarriesTheFootprintStampAndTheLibraryGenerator()
+    {
+        var footprint = new KiCadFootprint("F");
+
+        Assert.Equal(KiCadDefaults.FootprintVersion, footprint.Version);
+        Assert.Equal(KiCadDefaults.LibraryGenerator, footprint.Node.GetChildValue(KiCadTokens.Common.Generator));
+    }
+
+    /// <summary>
+    /// The one document type whose getter no longer falls back to its constructor's stamp (#76).
+    /// KiCad reads a board-shaped file with no version as <c>20201115</c> and a <c>.kicad_mod</c>
+    /// with none as format 0, so reporting <see cref="KiCadDefaults.FootprintLibraryVersion"/> there
+    /// named a format neither the file nor KiCad uses.
+    /// </summary>
+    [Fact]
+    public void ALibraryWithNoVersionTokenReportsNone()
     {
         var footprints = new KiCadFootprintLibrary();
         footprints.Node.RemoveChild(KiCadTokens.Common.Version);
 
-        Assert.Equal(KiCadDefaults.FootprintLibraryVersion, footprints.Version);
+        Assert.Null(footprints.Version);
         Assert.Equal(KiCadDefaults.Paper, footprints.Node.GetChildValue(KiCadTokens.Common.Paper));
     }
 

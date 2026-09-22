@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>KiCadSharp.Fluent</PackageId>
+    <Description>A fluent style for building KiCadSharp documents. Every Add* on the document types has a
+With* extension here that returns the parent, so calls chain, and hands the child it created to an
+optional callback, so chaining never costs access to it. KiCadSharp's own Add* API is unchanged: this
+is one more way to build the same documents, not a replacement.</Description>
+    <PackageTags>kicad;eda;pcb;schematic;footprint;symbol;fluent;builder</PackageTags>
+  </PropertyGroup>
+
+  <!-- A project reference, so the packed nuspec declares a dependency on KiCadSharp at this
+       package's own version: release.yml packs the whole solution with one -p:Version, and the two
+       always ship together at the same number. -->
+  <ItemGroup>
+    <ProjectReference Include="../KiCadSharp/KiCadSharp.csproj" />
+  </ItemGroup>
+
+</Project>
