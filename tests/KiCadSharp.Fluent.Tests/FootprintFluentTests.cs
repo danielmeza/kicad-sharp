@@ -245,6 +245,24 @@ public class FootprintFluentTests
     }
 
     [Fact]
+    public void WithPoint_OnACurve_ReturnsTheCurve_AndAppendsTheControlPointInOrder()
+    {
+        var curve = new KiCadFpCurve();
+
+        var returned = curve.WithPoint(0, 0).WithPoint(1, 2).WithPoint(3, 2).WithPoint(4, 0);
+
+        Assert.Same(curve, returned);
+        Assert.Equal([new KiCadPosition(0, 0), new KiCadPosition(1, 2), new KiCadPosition(3, 2), new KiCadPosition(4, 0)], curve.Points);
+
+        var expected = new KiCadFpCurve();
+        expected.AddPoint(0, 0);
+        expected.AddPoint(1, 2);
+        expected.AddPoint(3, 2);
+        expected.AddPoint(4, 0);
+        SameText(expected, curve);
+    }
+
+    [Fact]
     public void AnUnconfiguredWith_IsTheAddAndNothingElse()
     {
         // configure is optional everywhere; leaving it out must not change what is written.

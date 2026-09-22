@@ -58,6 +58,15 @@ public class ChildOrderTests
             (Pts, c => AddPoints(c.AddPoint, 4)));
 
     [Fact]
+    public void FpCurve_PointsGoFirst_WhateverOrderThePropertiesAreSetIn() =>
+        AssertEveryOrder(
+            () => new KiCadFpCurve(),
+            [Pts],
+            ("layer", c => c.Layer = KiCadLayerNames.FSilkS),
+            ("stroke", c => c.Width = 0.12),
+            (Pts, c => AddPoints(c.AddPoint, 4)));
+
+    [Fact]
     public void FpLine_StartThenEndGoFirst_WhateverOrderThePropertiesAreSetIn() =>
         AssertEveryOrder(
             () => new KiCadFpLine(),
@@ -353,7 +362,8 @@ public class ChildOrderTests
 
         Assert.True(written > 0, $"{path} has none of the forms this test is about");
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), Path.GetFileName(path));
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, Path.GetFileName(path));
         board.Save(output);
 
         Assert.Equal(File.ReadAllBytes(path), File.ReadAllBytes(output));
@@ -406,7 +416,7 @@ public class ChildOrderTests
         }
 
         var version = KiCadBoard.Load(TestData.Kicad10Board).Version;
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
 
         // ── a footprint ──────────────────────────────────────────────────────────────────────
         var footprint = new KiCadFootprint("WrongOrder");

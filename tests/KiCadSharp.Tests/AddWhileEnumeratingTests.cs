@@ -53,7 +53,8 @@ public class AddWhileEnumeratingTests
         // Moved, not rebuilt: every symbol is still the bytes KiCad wrote.
         Assert.Equal(expected.Select(e => e.Text), destination.Symbols.Select(s => s.Node.ToText()));
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "moved.kicad_sym");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "moved.kicad_sym");
         destination.Save(output);
         var reloaded = KiCadSymbolLibrary.Load(output);
         Assert.Equal(OrbionSymbols, reloaded.Symbols.Count);
@@ -76,7 +77,8 @@ public class AddWhileEnumeratingTests
         Assert.Empty(source.Symbols);
         Assert.All(destination.Symbols, s => Assert.Same(destination.Node, s.Node.Parent));
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "emptied.kicad_sym");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "emptied.kicad_sym");
         source.Save(output);
         var reloaded = KiCadSymbolLibrary.Load(output);
         Assert.Empty(reloaded.Symbols);
@@ -444,7 +446,7 @@ public class AddWhileEnumeratingTests
         // An export writes a file; it does not take the symbol out of the library it came from.
         var library = KiCadSymbolLibrary.Load(TestData.SymbolLibrary);
         var before = library.ToText();
-        var directory = TestData.NewScratchDirectory();
+        using var directory = TestData.NewScratchDirectory();
 
         foreach (var symbol in library.Symbols)
         {

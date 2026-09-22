@@ -48,7 +48,11 @@ namespace KiCadSharp.Schematics
                 return points.Count == 0 ? default : points[0];
             }
 
-            set => WriteXy(PointAt(0), value);
+            set
+            {
+                value.Check();
+                WriteXy(PointAt(0), value);
+            }
         }
 
         /// <summary>
@@ -65,6 +69,7 @@ namespace KiCadSharp.Schematics
 
             set
             {
+                value.Check();
                 var vertices = Vertices();
                 WriteXy(vertices.Count >= 2 ? vertices[^1] : PointAt(1), value);
             }
@@ -90,8 +95,13 @@ namespace KiCadSharp.Schematics
         /// <summary>Appends a vertex to the segment.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
-        public void AddPoint(double x, double y) =>
-            PointsNode.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads (#101).</exception>
+        public void AddPoint(double x, double y)
+        {
+            var xText = Numbers.Format(x);
+            var yText = Numbers.Format(y);
+            PointsNode.CreateChild(KiCadTokens.Common.Xy, xText, yText);
+        }
 
         private SExpression PointsNode => Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
 
@@ -111,8 +121,10 @@ namespace KiCadSharp.Schematics
 
         private static void WriteXy(SExpression xy, KiCadPosition point)
         {
-            xy.SetValue(0, Numbers.Format(point.X), SQuoteStyle.Bare);
-            xy.SetValue(1, Numbers.Format(point.Y), SQuoteStyle.Bare);
+            var x = Numbers.Format(point.X);
+            var y = Numbers.Format(point.Y);
+            xy.SetValue(0, x, SQuoteStyle.Bare);
+            xy.SetValue(1, y, SQuoteStyle.Bare);
         }
     }
 
@@ -161,14 +173,14 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: false);
         }
 
         /// <summary>Gets or sets how far the entry runs from <see cref="Position"/>.</summary>
         public KiCadSize Size
         {
             get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Size));
-            set => value.Write(Require(KiCadTokens.Common.Size));
+            set => value.Write(this, KiCadTokens.Common.Size);
         }
 
         /// <summary>
@@ -209,7 +221,7 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: false);
         }
 
         /// <summary>Gets or sets the dot's diameter in millimetres; 0 defers to the theme.</summary>
@@ -257,7 +269,7 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: false);
         }
 
         /// <summary>Gets or sets the marker's UUID.</summary>
@@ -298,7 +310,7 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>
@@ -486,14 +498,14 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>Gets or sets the box's extent, in millimetres.</summary>
         public KiCadSize Size
         {
             get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Size));
-            set => value.Write(Require(KiCadTokens.Common.Size));
+            set => value.Write(this, KiCadTokens.Common.Size);
         }
 
         /// <summary>
@@ -567,7 +579,7 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: false);
         }
 
         /// <summary>Gets or sets the scale factor; 1 draws the bitmap at its native size.</summary>

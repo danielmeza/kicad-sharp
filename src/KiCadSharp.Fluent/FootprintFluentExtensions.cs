@@ -7,7 +7,7 @@ namespace KiCadSharp.Fluent
 {
     /// <summary>
     /// The fluent mirror of every <c>Add*</c> on <see cref="KiCadFootprintLibrary"/>,
-    /// <see cref="KiCadFootprint"/> and <see cref="KiCadFpPoly"/>.
+    /// <see cref="KiCadFootprint"/>, <see cref="KiCadFpPoly"/> and <see cref="KiCadFpCurve"/>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -17,8 +17,8 @@ namespace KiCadSharp.Fluent
     /// builds exactly the document the equivalent run of <c>Add*</c> statements builds.
     /// </para>
     /// <para>
-    /// <see cref="KiCadFpPoly.AddPoint"/> returns nothing, so <see cref="WithPoint"/> has no callback:
-    /// there is no child view to hand over.
+    /// <see cref="KiCadFpPoly.AddPoint"/> and <see cref="KiCadFpCurve.AddPoint"/> return nothing, so
+    /// <c>WithPoint</c> has no callback: there is no child view to hand over.
     /// </para>
     /// </remarks>
     public static class FootprintFluentExtensions
@@ -189,6 +189,20 @@ namespace KiCadSharp.Fluent
             ArgumentNullException.ThrowIfNull(polygon);
             polygon.AddPoint(x, y);
             return polygon;
+        }
+
+        /// <summary>
+        /// Appends a control point, as <see cref="KiCadFpCurve.AddPoint"/> does, and returns the curve.
+        /// </summary>
+        /// <param name="curve">The curve to append to.</param>
+        /// <param name="x">X, millimetres.</param>
+        /// <param name="y">Y, millimetres.</param>
+        /// <returns><paramref name="curve"/>.</returns>
+        public static KiCadFpCurve WithPoint(this KiCadFpCurve curve, double x, double y)
+        {
+            ArgumentNullException.ThrowIfNull(curve);
+            curve.AddPoint(x, y);
+            return curve;
         }
     }
 }

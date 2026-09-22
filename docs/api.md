@@ -38,9 +38,9 @@ configured, the client adopts the one KiCad returns on the first successful roun
 | A reply with no status | `ApiException`, `StatusCode` = `AS_UNKNOWN` | — |
 | `AS_OK` with no payload, the wrong type, or one that does not parse | `ApiException`, `StatusCode` = `AS_OK` | `InvalidProtocolBufferException` for the last |
 | `GetBoard()` with no board open | `ApiException`, `StatusCode` = `null` | — |
-| The caller's token was cancelled: before the request went out, while the send waits for a KiCad to take it, or while the reply is awaited | `OperationCanceledException`, whose `CancellationToken` is the caller's | — |
+| The caller's token was cancelled: while the client dialed KiCad, before the request went out, while the send waits for a KiCad to take it, or while the reply is awaited | `OperationCanceledException`, whose `CancellationToken` is the caller's | nng's `NNG_ECLOSED` from the dial, when the dial is what it ended |
 | `Disconnect()` cut the request off | `OperationCanceledException` | — |
-| `Dispose()` while the call was under way: connecting, waiting behind another call on the same client, waiting to send, or waiting for the reply | `OperationCanceledException`, the same at every one of those points | the dial's failure, for a dial that failed after `Dispose()` |
+| `Dispose()` while the call was under way: dialing, waiting behind another call on the same client, waiting to send, or waiting for the reply | `OperationCanceledException`, the same at every one of those points | nng's `NNG_ECLOSED` from the dial, for a call that was dialing |
 | A call made after `Dispose()` | `ObjectDisposedException` | — |
 
 `AS_UNHANDLED` is how KiCad says it has no handler for a command, so it is how a caller finds out a
@@ -73,34 +73,101 @@ thread, until the token or `RequestTimeout` ends the wait. Pass a token with a d
 per-call bound, or set `RequestTimeout` for a client-wide one. There is no useful single default —
 `Ping` returns in under a millisecond and `RefillZones` on a large board does not.
 
+`Connect()`, and a `Send` that has to connect first, do not hold the calling thread for the dial.
+nng's dial is blocking, and against a socket that is bound but never completes nng's handshake, a
+KiCad that has opened its API socket and is not serving yet, it takes nng's own 10 s to give up. So
+the dial runs on a thread of its own, and the caller's task completes when it returns. The caller's
+token ends the dial: the call then fails with an `OperationCanceledException` carrying that token, and
+the socket the dial opened is closed. Against a path with nothing at it the dial still fails at once,
+with connection refused, and nothing retries it. Measured on nng 1.3.2 and 1.4.0, the two this
+package ships: closing the socket under a dial makes `nng_dial` return `NNG_ECLOSED` within 0.1 ms,
+whether the listener never accepted or accepted and held the handshake.
+
 `Dispose()` ends every call under way as a cancellation, as `HttpClient` does its pending requests:
 the call did not fail, it was stopped. It is safe to call more than once, and from any thread while
-calls, `Disconnect()` or another `Dispose()` run. It does not wait for the calls it ends. The one call
-it cannot end at once is one that is dialing, because nng's dial cannot be interrupted. That call ends
-with the same `OperationCanceledException` when the dial returns, and the socket the dial opened is
-closed. The dial returns at once against a path with nothing at it, and after nng's own 10 s at most
-against a socket that never completes the handshake.
+calls, `Disconnect()` or another `Dispose()` run. It does not wait for the calls it ends. A call that
+is dialing is ended the same way, by closing the socket under its dial. `Disconnect()` closes the
+connection only: a dial under way is not on it yet, and goes on.
 
 ### `KiCad` — the connection handle
 
 `Ping()`, `GetVersion()`, `GetKiCadBinaryPath(name)`, `GetPluginSettingsPath(id)`,
-`GetOpenDocuments(DocumentType)`, `GetBoard()`, `GetProject()` / `GetProject(DocumentSpecifier)`,
-`RunAction(name)`, `RefreshEditor(FrameType)`, `GetTextVariables()`.
+`GetOpenDocuments(DocumentType)`, `GetBoard()`, `GetSchematic()` / `GetSchematic(DocumentSpecifier)`,
+`GetProject()` / `GetProject(DocumentSpecifier)`, `RunAction(name)`, `RefreshEditor(FrameType)`,
+`GetTextVariables()`.
+
+Added with the master pin (KiCad 10.99, the 11.0 line; see [docs/ipc.md](ipc.md) for which of
+these KiCad actually handles): `GetPaths()`; `OpenDocument(type, path)`, `CreateDocument(type, path)`,
+`CloseDocument(document)`, `CloseAllDocuments(force)`, `OpenLibraryItem(type, libraryId)`; the
+library commands `GetLibraryTable(type, scope, substituted)`, `AddLibraryTableEntry(entry, scope)`,
+`UpdateLibraryTableEntry(...)`, `DeleteLibraryTableEntry(type, nickname, scope)`,
+`ImportLibrary(path, nickname, type, scope, description)`, `GetLibraryStatuses(scope, ct, params types)`,
+`ReloadLibrary(type, scope, ct, params nicknames)`, `LoadAllLibraries(params types)`,
+`GetLibraryItems(type, params nicknames)`, `GetItemsFromLibrary(type, document, ct, params ids)`,
+`SearchLibraries(type, query)`; and cross-probe: `SyncSelection(...)`, `HighlightNets(params nets)`,
+`FocusOnItem(spec)`, `CrossProbeAnnounce(...)`.
+
+`KiCadVersion`, what `GetVersion()` returns, gained `IsAtLeast(major, minor, patch)`,
+`IsDevelopmentBuild` (master reports `10.99.0`) and the capability flags `SupportsEmbeddedFiles`,
+`SupportsVariants` (10.0.7+), `SupportsSchematic`, `SupportsLibraryCommands`, `SupportsJobs`
+(10.99+), so a caller can fall back on an older KiCad instead of sending a command it will answer
+with `AS_UNHANDLED`.
+
+### `KiCadDocument` — what a board and a schematic share
+
+The base of `Board` and `Schematic`; every command here goes out with the proxy's `Document`.
+`Save()`, `SaveAs(filename, overwrite, includeProject)`, `Revert()`, `GetAsString()`,
+`GetModifiedState()`; `BeginCommit()` / `PushCommit(commit, message)` / `DropCommit(commit)` — the
+commit messages now carry the document, which KiCad 10.0.7 introduced and says it will require;
+`GetItems(params KiCadObjectType[])`, `GetSelection(...)`, `ClearSelection()`,
+`CreateItems(params IMessage[])`, `UpdateItems(...)`, `DeleteItems(params KIID[])`,
+`FocusOnItems(ids, margin)`; `ExpandTextVariables(text, expandEnvironmentVariables)` and the
+`string[]` form, resolved by the editor against the document (and the project's variables through
+it); `GetPageSettings()` / `SetPageSettings(settings)`; the design variants
+`GetVariants()`, `AddVariant(name, description)`, `DeleteVariant(name)`, `RenameVariant(old, new)`,
+`SetVariantDescription(name, description)`, `CopyVariant(old, new, description)`,
+`SetCurrentVariant(name)` / `GetCurrentVariant()`; and `RunJob(job, outputPath)`, which takes any of
+the 22 `Run*Job*` messages from `board_jobs.proto` and `schematic_jobs.proto`, fills in its
+`job_settings` with the document and the output path, and returns the `RunJobResponse`.
 
 ### `Board` — the PCB, over IPC
 
-`Save()`, `SaveAs(filename, overwrite, includeProject)`, `Revert()`,
-`BeginCommit()` / `PushCommit(commit, message)` / `DropCommit(commit)`,
-`GetItems(params KiCadObjectType[])`, `GetSelection(...)`, `ClearSelection()`,
-`GetActiveLayer()` / `SetActiveLayer(BoardLayer)`, `GetAsString()`, `RefillZones()`,
-`CreateItems(params IMessage[])`, `UpdateItems(...)`, `DeleteItems(params KIID[])`,
-plus `Document` and `Name`.
+Everything on `KiCadDocument`, plus `GetActiveLayer()` / `SetActiveLayer(BoardLayer)`,
+`RefillZones()`, `Name`, `GetProject()`. Added with the master pin: `GetEmbeddedFiles()`,
+`AddEmbeddedFiles(params files)`, `AddEmbeddedFile(name, bytes, type)`, `SetEmbeddedFiles(params files)`
+(10.0.7+); `GetDesignRules()` / `SetDesignRules(rules)`, `GetCustomDesignRules()` /
+`SetCustomDesignRules(params rules)`, `ImportNetlist(path, dryRun, matchMode, ...)`,
+`GetPlotSettings()` / `SetPlotSettings(settings)`,
+`PlaceFootprintFromLibrary(libraryId, position, orientation, layer)` (10.99+).
+
+### `Schematic` — the schematic, over IPC (KiCad 10.99+)
+
+Everything on `KiCadDocument`, plus `GetHierarchy()`, `GetNetlist(params KiCadObjectType[])`,
+`PlaceSymbolFromLibrary(libraryId, position, orientation, unit, reference)`, `Name`, `GetProject()`.
+On KiCad 10.0.x eeschema does not answer the API at all; see [docs/ipc.md](ipc.md).
 
 ### `Project` — settings, over IPC
 
-`GetNetClasses()` / `SetNetClasses(netClasses, mergeMode)`, `ExpandTextVariables(string)` and
-`ExpandTextVariables(string[])`, `GetTextVariables()` / `SetTextVariables(vars, mergeMode)`, plus
-`Document`, `Name`, `Path`. Every command in `project_commands.proto` is wrapped.
+`GetNetClasses()` / `SetNetClasses(netClasses, mergeMode)` — both now name the project, which
+KiCad 11 says it will require; `GetNetClassAssignments()` /
+`SetNetClassAssignments(assignments, patterns, mergeMode)` (10.99+);
+`ExpandTextVariables(string, expandEnvironmentVariables)` and `ExpandTextVariables(string[], ...)`
+— the flag also expands `${KIPRJMOD}`-style environment variables (10.0.7+);
+`GetTextVariables()` / `SetTextVariables(vars, mergeMode)`; plus `Document`, `Name`, `Path`. Every
+command in `project_commands.proto` is wrapped; the document open/close ones live on `KiCad`.
+`Project` builds its own specifier — type `DOCTYPE_PROJECT` and the project, with the path ending
+in a separator the way KiCad's own validation compares it — and no longer changes the specifier
+of the `Board` that created it.
+
+### `EmbeddedFileCodec` — bytes in, `EmbeddedFile` out
+
+KiCad's `EmbeddedFile` message does not carry the file. Its `data` is the zstd frame of the content,
+base64-encoded, as ASCII bytes; its `data_hash` is MurmurHash3 x64-128 of the raw content with seed
+`0xABBA2345`, as two uppercase 16-digit hex words. KiCad checks the hash when it unpacks the
+message and rejects the request on a mismatch. `Pack(name, bytes, type)` builds a message that
+passes; `Unpack(file)` decodes one and verifies the hash (also accepting the SHA-256 that files
+from older KiCad versions carry); `ComputeHash(bytes)` is the hash alone. The hash is checked
+against the reference implementation's vectors in the tests.
 
 ### On-disk documents
 
@@ -108,12 +175,12 @@ plus `Document` and `Name`.
 |---|---|---|
 | `KiCadNode` | — | Base of every typed view: `Node` (the live s-expression), `ToSExpression()`. Everything below reads and writes through it. |
 | `KiCadNodeList<T>` | — | A live view over a node's children with one token: `Count`, indexer, `Add`, `Remove`, `Insert`. A `foreach` walks the children that were there when it started, so the loop may move, remove or append. |
-| `KiCadSymbolLibrary` | `.kicad_sym` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddSymbol`, `RemoveSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`, `Document`, `Node`. |
+| `KiCadSymbolLibrary` | `.kicad_sym` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddSymbol`, `RemoveSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`, `Document`, `Node`. `Version` and `Generator` are what the file declares, or `null` when it declares none. |
 | `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. Setting `Id` renames the sub-units with it (`R_1_1` → `UL_R_1_1`) and re-points every `(extends …)` in the same library that named the old symbol; KiCad refuses a library in which either still carries the old name. |
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
 | `KiCadText` | — | Text inside a symbol: `Text`, `Position`, `RotationDegrees`, `FontEffects`. KiCad stores this angle in **tenths of a degree**, so a vertical text is `(at x y 900)` and `Position.Rotation` reads 900. `RotationDegrees` converts. The four-argument constructor writes its angle unchanged and is obsolete. `KiCadSchematicText`, which is text on a sheet, stores degrees, so there `RotationDegrees` is the number in the file. |
-| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`, `Version`, `Generator`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). `Version` is the version the file declares, or `null` when it declares none. |
-| `KiCadFootprint` | — | `Id`, `Version`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
+| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`, `Version`, `Generator`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). `Version` and `Generator` are what the file declares, or `null` when it declares none. `SaveFootprint` copies the footprint's own bytes and ends the file with the line ending they use, so a CRLF footprint saves as a CRLF file rather than one with mixed endings (#107). |
+| `KiCadFootprint` | — | `Id`, `Version`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `Curves`, `GetPropertyValue`, `Add*`, `CloneAs`. A rectangle's `CornerRadius` is KiCad 10's `(radius r)`, 0 when it has none. |
 | `KiCadBoard` | `.kicad_pcb` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `Version`, `Generator`, `GeneratorVersion`, `Paper`, `EmbeddedFonts`, `General`, `TitleBlock`, `Setup` (and its `Stackup`), `Layers`, `GetLayer`, `Nets`, `GetNet` (by code or by name), `AddNet`, `Footprints`, `Segments`, `TrackArcs`, `Vias`, `Zones`, `GraphicLines`, `GraphicRectangles`, `GraphicCircles`, `GraphicArcs`, `GraphicPolygons`, `GraphicCurves`, `Texts`, `Dimensions`, `Groups`, `RequireGeneral`/`RequireTitleBlock`/`RequireSetup`, `Document`, `Node`. What it has no view for yet is listed in [status.md](status.md). |
 | `KiCadSchematic` | `.kicad_sch` | `Load`/`LoadAsync`/`Parse`, `Save`, `ToText`, `Uuid`, `Version`, `Generator`, `GeneratorVersion`, `Paper`, `EmbeddedFonts`, `TitleBlock`, `Symbols`, `Sheets`, `Wires`, `Buses`, `BusEntries`, `BusAliases`, `Junctions`, `NoConnects`, `Labels`, `GlobalLabels`, `HierarchicalLabels`, `NetClassFlags`, `TextItems`, `TextBoxes`, `Polylines`, `Rectangles`, `Circles`, `Arcs`, `Beziers`, `Images`, `LibrarySymbols`, `SheetInstances`, `RequireTitleBlock`/`RequireLibrarySymbols`/`RequireSheetInstances`, `FilePath`, `IsModified`, `Document`. What it has no view for yet is listed in [status.md](status.md). |
 | `KiCadSchematicSymbol` | — | `Uuid`, `LibId`, `Unit`, `Properties`, `ReferenceProperty`, `IsPowerSymbol`, `GetInstanceReference`, `SetInstanceReference`, `PruneInstances`. |
@@ -196,6 +263,27 @@ other value is the one KiCad reads for a zone without a `(hatch …)`: `none`, o
 what `HatchPitch` reads there. Any other word throws `ArgumentException` and writes nothing, and
 writing back the values just read leaves the file as it was.
 
+**A zone with no clearance reads 0.5 mm, the clearance KiCad reads for it.** KiCad writes
+`(connect_pads (clearance …))` on every zone, so only a zone built in memory, or edited by hand, has
+none. `KiCadZone.ConnectPadsClearance` used to read 0 there, a clearance KiCad never uses; it now
+reads `KiCadDefaults.ZoneClearanceMm`, 0.5, which is what kicad-cli 10.0.6's `pcb upgrade` writes
+back for such a zone (#102). The one board where the two disagree carries a legacy
+`(setup (zone_clearance …))`, which KiCad reads as that board's default instead; a zone view does not
+know its board, so it reads 0.5 there too. Setting the clearance on a zone without one writes a whole
+`(connect_pads (clearance …))`, with no word, which is thermal reliefs.
+
+**A number KiCad cannot read is refused before it is written.** `double.NaN`,
+`double.PositiveInfinity` and `double.NegativeInfinity` format as `NaN`, `Infinity` and `-Infinity`,
+and kicad-cli 10.0.6 refuses the whole file over any of them: "need a number for 'hatch pitch'", for
+'zone clearance', for 'X coordinate', whichever token the value is in, because the check is the
+lexer's. Every setter that writes a `double`, a `KiCadPosition`, a `KiCadSize` or a `KiCadXyz`, and
+every `AddPoint`, throws `ArgumentOutOfRangeException` for such a value and writes nothing (#101):
+not the value, and not the form a set would have created on the way to it — the `(at …)` of a new
+footprint, the `(hatch style pitch)` a pitch lives in, the `(polygon (pts …))` a vertex does. A
+`KiCadPosition` built with `NaN` is still a value: it holds it and describes it; only writing it is
+refused. A range is not checked: KiCad clamps some values when it loads a board rather than refusing
+it, and which values, to what, is per token.
+
 **Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
 `KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of
 wherever it was, another file included. The view you hold is then the element in the destination,
@@ -251,15 +339,25 @@ the four fields KiCad gives every footprint, written as `(property …)`: `Refer
 `F.Fab`. So `GetPropertyValue("Reference")` answers on a new footprint as it does on one KiCad wrote,
 and `TextItems` starts empty (#75). The `(fp_text reference …)` and `(fp_text value …)` it wrote
 before date from before format `20230620`, when fields replaced them. A width set on a new `fp_*`
-shape is written as `(stroke (width w) (type solid))`, not as the bare `(width w)` of older files. kicad-cli 10.0.6 reads the old
-and new spellings the same way. A footprint read from a file keeps its forms: its text items stay
+shape, or on a new board drawing (`gr_line`, `gr_rect`, `gr_circle`, `gr_arc`, `gr_poly`, `gr_curve`;
+#96), is written as `(stroke (width w) (type solid))`, not as the bare `(width w)` of older files.
+kicad-cli 10.0.6 reads the old and new spellings the same way, and re-saves the old as the new. A footprint read from a file keeps its forms: its text items stay
 text items, and a bare `width` stays bare when written to.
 
 **A new board-shaped `KiCadFootprintLibrary` starts with a layer table**, the same one a new
 `KiCadBoard` has. It used to write an empty `(layers)`, which KiCad refuses as "0 is not a valid layer
-count" (#74). `KiCadFootprintLibrary.Version` reports only what the file declares: `null` for a file
-with no version, which KiCad reads as format 0 (a `.kicad_mod`) or `20201115` (a board). It used to
-report `20211014` there (#76).
+count" (#74).
+
+**`Version` and `Generator` report only what the file declares.** On `KiCadBoard`,
+`KiCadFootprintLibrary` and `KiCadSymbolLibrary` they are `null` for a file that declares none. They
+used to report the stamp and name a new document is written with, `20241229`, `20211014` and
+`KiCadSharp` or `KiCad Library Importer`, which neither the file nor KiCad uses (#76, #95). KiCad reads
+a `.kicad_mod` with no version as format 0. A board or symbol library with no version is not one it
+reads as written at all: KiCad 10.0.6 takes the version only as the first child, and when that child
+is something else it assumes one (`20201115` for a board, the current `20251024` for a library) and
+loses that child. A `(generator …)` there makes it refuse the file, and an empty form ends the file
+early. So `KiCadBoard.Version` and `KiCadSymbolLibrary.Version` cannot be set to `null`, and a version
+set on a file that has none goes first. `KiCadSchematic` still reports `""` for both.
 
 ### Copper geometry — `KiCadSharp.Geometry`
 
@@ -272,7 +370,7 @@ clearance rule asks — answered from the file, with no KiCad running.
 | `RoundedShape` | A point, segment or polygon swept by a radius — which is every piece of copper, EXACTLY: a via, a track, an oval, a round rectangle (the rectangle shrunk by the corner radius, swept by it). `DistanceTo` is the core distance less both radii. |
 | `CopperShape` | One or more of those: a custom pad, an arc's covering capsules. `DistanceTo`, `Clears(other, clearance)`, `Contains`, `Bounds`. |
 | `CopperGeometry` | `Pad(footprint, pad)`, `Hole`, `Segment`, `Arc`, `Via`, `Fill(filledPolygon)`, `PadPosition`, `ArcPoints`, `IsChamfered`, `CopperLayers(board)` in physical order, `CopperLayersOf(declared, layers)` for `*.Cu` and `F&B.Cu`. |
-| `BoardOutline` | `Of(board)`: the closed shapes on `Edge.Cuts` (footprint graphics included) as `Outers` and `Holes`, every edge as `Edges`, `DistanceToEdge(copper)`, `Contains(point)`, and `OpenChains` for an outline drawn with a gap. |
+| `BoardOutline` | `Of(board)`: the closed shapes on `Edge.Cuts` (footprint graphics included; lines, arcs and Bézier curves chained end to end, circles, rectangles with their corner radius, and polygons whole, an `(arc …)` among their points drawn) as `Outers` and `Holes`, every edge as `Edges`, `DistanceToEdge(copper)`, `Contains(point)`, and `OpenChains` for an outline drawn with a gap. |
 
 **Judged against KiCad.** `tests/…/Geometry/CopperGeometryOracleTests` compares `DistanceTo` with
 pcbnew 10.0.6's own `GetEffectiveShape().Collide()` on 5,738 pairs across three boards — every pad
@@ -418,6 +516,7 @@ core fails that test until it is mirrored.
 | `KiCadFootprint` | `AddCircle(centerX, centerY, endX, endY, layer, width = 0.12)` | `WithCircle(…, layer, configure?)`, `WithCircle(…, layer, width, configure?)` | `KiCadFpCircle` |
 | `KiCadFootprint` | `AddModel(path)` | `WithModel(path, configure?)` | `KiCadModel` |
 | `KiCadFpPoly` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadFpCurve` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
 | `KiCadSymbolLibrary` | `AddSymbol(symbol)` | `WithSymbol(symbol, configure?)` | the symbol |
 | `KiCadSymbolLibrary` | `AddSymbol(id)` | `WithSymbol(id, configure?)` | `KiCadSymbol` |
 | `KiCadSymbol` | `AddProperty(key, value)` | `WithProperty(key, value, configure?)` | `KiCadProperty`, new or updated |
@@ -446,12 +545,19 @@ tracks, drawings, wires, labels) have no `Add*` of their own. They are appended 
 
 ## `KiCadSharp.Protos`
 
-12 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by
-[`protos/KICAD_PIN`](protos/KICAD_PIN) to a KiCad **release tag** — never a branch, because the
-generated client speaks one KiCad version's wire format and a moving branch would desynchronise it
-silently.
+24 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by
+[`protos/KICAD_PIN`](protos/KICAD_PIN) to one KiCad **commit**, recorded together with the tag or
+branch it was taken from. The commit is what the sync script fetches and what CI compares against,
+so a branch pin cannot float: the generated client speaks one KiCad version's wire format, and the
+vendored files change only when someone edits the pin on purpose.
 
-Currently pinned to **KiCad 10.0.6** (`caf7377e9cb6fa1535ec3596dcb8c99bf44a996e`).
+A release tag is the preferred ref, because it is the only ref a user's KiCad build can be matched
+against. Currently pinned to **KiCad `master`** at `965fb68075b53cd4eaf2244954c9ef54ae0b433c`
+(2026-09-21), which builds as `10.99.0-unknown` and is the 11.0 line. It carries what no tag has
+yet: the library-table commands, embedded files, design variants, jobs, rules, cross-probe and
+wizard messages, PCB tables, reference points, teardrops, and the document header on `BeginCommit`
+/ `EndCommit`. The `10.99.0` tag dates from March 2026 and predates all of it. The pin moves to the
+11.0 tag once KiCad cuts it ([#47](https://github.com/danielmeza/kicad-sharp/issues/47)).
 
 They used to arrive through a `submodules/kicad` git submodule pointed at the full KiCad source
 tree. Measured, at the same tag:
@@ -460,20 +566,25 @@ tree. Measured, at the same tag:
 |---|---|
 | Submodule, `git clone --depth 1 --branch 10.0.6` | **1.4 GB** on disk (248 MB `.git` + 1.1 GB working tree), 18,347 files, 18.7 s |
 | Sparse checkout of `api/proto` only | 3.5 MB, 2.2 s — but `actions/checkout` does a plain clone for submodules, so CI pays the full 1.4 GB anyway |
-| **Vendored (this repo)** | **128 KB**, 12 files, already present — no fetch, builds offline |
+| **Vendored (this repo)** | **~198 KB**, 24 files, already present — no fetch, builds offline |
 
 Vendoring wins on the numbers and loses nothing, because the pin is enforced rather than trusted:
 
 ```
-scripts/sync-protos.sh            # re-fetch protos/ from the pinned tag
+scripts/sync-protos.sh            # re-fetch protos/ from the pinned commit
 scripts/sync-protos.sh --check    # fail if protos/ has drifted from the pin  (runs in CI)
 ```
 
-`--check` also fails if the upstream tag itself has been moved to a different commit. Both use a
-blobless sparse clone, so the check costs about 3 MB, not 1.4 GB.
+`--check` also fails if the pinned ref is a tag that has been moved to a different commit, or no
+longer exists; a branch that has moved past the pinned commit is only reported. Both modes fetch the
+one commit as a blobless sparse checkout, so the check costs about 3 MB, not 1.4 GB.
 
 To move to a newer KiCad: edit both lines of `protos/KICAD_PIN`, run `scripts/sync-protos.sh`, and
-commit the result.
+commit the result. To follow the pinned branch to its current tip, `scripts/sync-protos.sh --bump`
+edits `KICAD_COMMIT` and re-syncs in one step. The `kicad-master` workflow does that weekly: it
+bumps the pin, rebuilds and republishes the dev image, runs the whole suite live against the new
+nightly, and opens a pull request with the result, so a KiCad master change reaches this repository
+as a reviewable diff rather than as silence.
 
 ## `KiCadSharp.Cli`
 

@@ -101,7 +101,8 @@ public class SchematicViewTests
         // Reading is not writing: nothing above touched a setter, so nothing is marked modified.
         Assert.False(schematic.IsModified);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), name);
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, name);
         schematic.Save(output);
 
         Assert.Equal(length, new FileInfo(output).Length);
@@ -119,7 +120,8 @@ public class SchematicViewTests
         var schematic = KiCadSchematic.Load(TestData.Rs485Bridge);
         schematic.TitleBlock!.Title = "Orbion RS485 field bus node, rev B";
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion-rs485-bridge.kicad_sch");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "orbion-rs485-bridge.kicad_sch");
         schematic.Save(output);
         var after = File.ReadAllText(output);
 
@@ -143,7 +145,8 @@ public class SchematicViewTests
 
         wire.Start = new KiCadPosition(45.72, 43.19);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion-rs485-bridge.kicad_sch");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "orbion-rs485-bridge.kicad_sch");
         schematic.Save(output);
 
         // "43.18" became "43.19": one digit, so the file is the same length.
@@ -303,7 +306,8 @@ public class SchematicViewTests
 
         schematic.Symbols[0].Position = new KiCadPosition(40.64, 43.19, 0);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion-rs485-bridge.kicad_sch");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "orbion-rs485-bridge.kicad_sch");
         schematic.Save(output);
 
         // "43.18" became "43.19": one digit, so the file is the same length.
@@ -364,7 +368,8 @@ public class SchematicViewTests
         schematic.SheetInstances[0].Page = "7";
         schematic.Symbols[0].ReferenceProperty = "J91";
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion-rs485-bridge.kicad_sch");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "orbion-rs485-bridge.kicad_sch");
         schematic.Save(output);
 
         var reloaded = KiCadSchematic.Load(output);

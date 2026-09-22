@@ -17,6 +17,12 @@ namespace KiCadSharp
     /// disagreement no test could see, because both halves were spelled correctly.
     /// </para>
     /// <para>
+    /// The getters no longer fall back at all. A stamp reported for a file that declares none named
+    /// a format neither the file nor KiCad uses, so <c>Version</c> and <c>Generator</c> on the board,
+    /// the footprint library and the symbol library now report <see langword="null"/> there (#76,
+    /// #95). These values are what a new document is written with, and nothing else.
+    /// </para>
+    /// <para>
     /// They are also not values to keep current for their own sake. A stamp says what format the
     /// document is written in; raising it claims a format the writer does not produce, and KiCad
     /// upgrades a file it opens rather than rejecting the claim.
@@ -36,6 +42,10 @@ namespace KiCadSharp
         public const string Paper = "A4";
 
         /// <summary>The format stamp of a <c>.kicad_pcb</c> this library writes.</summary>
+        /// <remarks>
+        /// It is not a fallback for a board with no <c>version</c> token.
+        /// <see cref="Documents.KiCadBoard.Version"/> reports <see langword="null"/> there (#95).
+        /// </remarks>
         public const string BoardVersion = "20241229";
 
         /// <summary>
@@ -86,6 +96,8 @@ namespace KiCadSharp
         /// It describes symbols built in memory. The first symbol a new library takes from another
         /// library replaces it with that library's stamp, because KiCad reads some content differently
         /// by version; see <see cref="Documents.KiCadSymbolLibrary.AddSymbol(Documents.KiCadSymbol)"/>.
+        /// It is not a fallback for a library with no <c>version</c> token.
+        /// <see cref="Documents.KiCadSymbolLibrary.Version"/> reports <see langword="null"/> there (#95).
         /// </remarks>
         public const string SymbolLibraryVersion = "20211014";
 
@@ -97,11 +109,43 @@ namespace KiCadSharp
         /// </remarks>
         public const double BoardThicknessMm = 1.6;
 
-        /// <summary>The generator name <see cref="Documents.KiCadBoard"/> writes.</summary>
+        /// <summary>
+        /// The clearance KiCad 10.0.6 reads between a zone and the pads it connects to when the zone
+        /// has no <c>(connect_pads (clearance …))</c>, in millimetres.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>parseZONE</c> starts from the board's default zone settings (<c>pcbnew/zone.cpp</c>,
+        /// line 89), whose clearance is <c>ZONE_CLEARANCE_MM</c> (<c>pcbnew/zone_settings.cpp</c>,
+        /// line 49; <c>pcbnew/zones.h</c>, line 36), and a <c>(clearance …)</c> inside
+        /// <c>(connect_pads …)</c> overrides it (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 7979–7982).
+        /// MEASURED against kicad-cli 10.0.6: <c>pcb upgrade</c> re-saves a zone that has no
+        /// <c>(connect_pads …)</c> with <c>(connect_pads (clearance 0.5))</c>.
+        /// </para>
+        /// <para>
+        /// It has one half only, the getter's, <c>KiCadZone.ConnectPadsClearance</c>: KiCad writes
+        /// a clearance on every zone, so no constructor here writes one. The other constant of its
+        /// kind, <see cref="BoardThicknessMm"/>, has both halves.
+        /// </para>
+        /// <para>
+        /// <b>A legacy board can change it.</b> A <c>(setup (zone_clearance …))</c>, which KiCad 5
+        /// wrote and KiCad 10 still reads (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 2550–2554),
+        /// replaces the default for every zone on that board that has no clearance of its own;
+        /// MEASURED: <c>pcb upgrade</c> re-saves such a zone with the setup's 0.3 rather than 0.5. A
+        /// zone view does not know its board, so it reports this constant there too (#102).
+        /// </para>
+        /// </remarks>
+        public const double ZoneClearanceMm = 0.5;
+
+        /// <summary>
+        /// The generator name a new <see cref="Documents.KiCadBoard"/> writes. A board that names none
+        /// reports <see langword="null"/>, not this (#95).
+        /// </summary>
         public const string BoardGenerator = "KiCadSharp";
 
         /// <summary>
-        /// The generator name both library document types, and a footprint built in memory, write.
+        /// The generator name both library document types, and a footprint built in memory, write. A
+        /// library that names none reports <see langword="null"/>, not this (#95).
         /// </summary>
         public const string LibraryGenerator = "KiCad Library Importer";
 

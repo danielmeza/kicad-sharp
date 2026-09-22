@@ -21,7 +21,8 @@ public class AnnotationTests
     [Fact]
     public void Hierarchy_SeesTwoInstancesOfOneFile()
     {
-        var root = TestData.CopyDuplicateRefs(out _);
+        using var scratch = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(scratch);
         var hierarchy = SchematicHierarchy.Load(root);
 
         Assert.Equal("duplicate-refs", hierarchy.ProjectName);
@@ -47,7 +48,8 @@ public class AnnotationTests
     [Fact]
     public void BeforeAnnotation_SevenDesignatorsAreUsedInTwoSheets()
     {
-        var root = TestData.CopyDuplicateRefs(out _);
+        using var scratch = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(scratch);
         var hierarchy = SchematicHierarchy.Load(root);
 
         var duplicates = SchematicAnnotator.FindDuplicateReferences(hierarchy);
@@ -66,7 +68,8 @@ public class AnnotationTests
     [Fact]
     public void Annotate_GivesEveryPlacementItsOwnDesignator()
     {
-        var root = TestData.CopyDuplicateRefs(out _);
+        using var scratch = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(scratch);
         var hierarchy = SchematicHierarchy.Load(root);
 
         var result = SchematicAnnotator.Annotate(hierarchy);
@@ -84,7 +87,8 @@ public class AnnotationTests
     [Fact]
     public void Annotate_KeepsThePrefixAndOnlyRenumbers()
     {
-        var root = TestData.CopyDuplicateRefs(out _);
+        using var scratch = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(scratch);
         var hierarchy = SchematicHierarchy.Load(root);
 
         var result = SchematicAnnotator.Annotate(hierarchy);
@@ -111,7 +115,8 @@ public class AnnotationTests
     [Fact]
     public void Annotate_LeavesTheFirstInstanceAlone()
     {
-        var root = TestData.CopyDuplicateRefs(out _);
+        using var scratch = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(scratch);
         var hierarchy = SchematicHierarchy.Load(root);
 
         SchematicAnnotator.Annotate(hierarchy);
@@ -129,7 +134,8 @@ public class AnnotationTests
     [Fact]
     public void Annotate_DoesNotTouchTheReferenceProperty()
     {
-        var root = TestData.CopyDuplicateRefs(out _);
+        using var scratch = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(scratch);
         var hierarchy = SchematicHierarchy.Load(root);
 
         SchematicAnnotator.Annotate(hierarchy);
@@ -145,7 +151,8 @@ public class AnnotationTests
     [Fact]
     public void Annotate_LeavesTheAuthoringProjectsInstancesAlone()
     {
-        var root = TestData.CopyDuplicateRefs(out _);
+        using var scratch = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(scratch);
         var hierarchy = SchematicHierarchy.Load(root);
 
         SchematicAnnotator.Annotate(hierarchy);
@@ -163,7 +170,8 @@ public class AnnotationTests
     [Fact]
     public void Annotate_Twice_ChangesNothingTheSecondTime()
     {
-        var root = TestData.CopyDuplicateRefs(out var directory);
+        using var directory = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(directory);
 
         var first = SchematicAnnotator.AnnotateFile(root);
         Assert.Equal(14, first.Changes.Count);
@@ -188,7 +196,8 @@ public class AnnotationTests
     [Fact]
     public void Annotate_OnlyRewritesTheFilesItChanged()
     {
-        var root = TestData.CopyDuplicateRefs(out _);
+        using var scratch = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(scratch);
         var hierarchy = SchematicHierarchy.Load(root);
 
         var rootBefore = File.ReadAllBytes(root);
@@ -204,7 +213,8 @@ public class AnnotationTests
     [Fact]
     public void Annotate_ChangesOnlyTheInstanceBlocks()
     {
-        var root = TestData.CopyDuplicateRefs(out var directory);
+        using var directory = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(directory);
         var child = Path.Combine(directory, "power-input.kicad_sch");
 
         var before = File.ReadAllText(child);
@@ -228,7 +238,8 @@ public class AnnotationTests
             return; // Opt in with KICADSHARP_KICAD_CLI; CI has no KiCad.
         }
 
-        var root = TestData.CopyDuplicateRefs(out var directory);
+        using var directory = TestData.NewScratchDirectory();
+        var root = TestData.CopyDuplicateRefs(directory);
 
         var (beforeOut, beforeErr) = Netlist(cli, root, Path.Combine(directory, "before.net"));
         Assert.Contains("annotation errors", beforeOut + beforeErr);

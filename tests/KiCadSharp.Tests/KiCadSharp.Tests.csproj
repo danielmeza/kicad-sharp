@@ -31,6 +31,13 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="KiCadSharp.Testing" />
+  </ItemGroup>
+
+  <!-- The scratch directory both test projects hand their tests, deleted when a test disposes it
+       (#79). One file linked into each project, since neither project references the other. -->
+  <ItemGroup>
+    <Compile Include="../Shared/ScratchDirectory.cs" Link="ScratchDirectory.cs" />
   </ItemGroup>
 
   <!-- The fixtures are real KiCad 10 files, copied verbatim from the orbion-kicad repository. They

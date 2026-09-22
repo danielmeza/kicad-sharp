@@ -20,8 +20,8 @@ namespace KiCadSharp.Geometry
     /// <para>
     /// And the distance between two of them is the distance between their cores less both radii,
     /// so the question every clearance check asks has an exact answer with no polygonisation of
-    /// either side. Only a track ARC is approximated, and <see cref="CopperGeometry"/> says by how
-    /// much.
+    /// either side. Only what runs along a curve — a track ARC, a Bézier — is approximated, and
+    /// <see cref="CopperGeometry"/> says by how much.
     /// </para>
     /// </remarks>
     public sealed class RoundedShape
