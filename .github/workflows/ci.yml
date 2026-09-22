@@ -65,10 +65,6 @@ jobs:
             os: macos-14
           - rid: win-arm64
             os: windows-11-arm
-            # One test fails on Windows for a reason of its own, whatever the architecture: #107,
-            # a CRLF checkout that SaveFootprint does not write back byte for byte.
-            known_failures: >-
-              FullyQualifiedName!=KiCadSharp.Tests.FootprintVersionTests.ALoadedFootprint_KeepsItsOwnVersion_AndSavesByteForByte
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
