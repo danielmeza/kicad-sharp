@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 using KiCadSharp.Documents;
 
 namespace KiCadSharp.Fluent.Tests;
@@ -15,13 +17,13 @@ internal static class TestSupport
     public static void SameText(KiCadNode expected, KiCadNode actual) =>
         Assert.Equal(expected.Node.ToText(), actual.Node.ToText());
 
-    /// <summary>Creates an empty directory under the system temp path, unique to this call.</summary>
-    public static string NewScratchDirectory()
-    {
-        var path = Path.Combine(Path.GetTempPath(), "kicadsharp-fluent-tests", Guid.NewGuid().ToString("n"));
-        Directory.CreateDirectory(path);
-        return path;
-    }
+    /// <summary>
+    /// Creates an empty directory under <c>&lt;temp&gt;/kicadsharp-fluent-tests</c>, unique to this
+    /// call and named after the test that asked for it. Take it with <c>using</c> so it is deleted
+    /// when the test ends; see <see cref="ScratchDirectory"/>.
+    /// </summary>
+    public static ScratchDirectory NewScratchDirectory([CallerMemberName] string owner = "") =>
+        ScratchDirectory.Create("kicadsharp-fluent-tests", owner);
 
     /// <summary>
     /// A <c>kicad-cli</c> to shell out to, or <see langword="null"/>. Opt in with

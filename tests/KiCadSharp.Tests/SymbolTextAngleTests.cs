@@ -131,7 +131,7 @@ public class SymbolTextAngleTests
             return;
         }
 
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         var library = new KiCadSymbolLibrary();
         var text = new KiCadText("HHHHHHHHHH", 0, 0) { RotationDegrees = 90 };
         text.RequireFontEffects().Size = new KiCadSize(1.27, 1.27);

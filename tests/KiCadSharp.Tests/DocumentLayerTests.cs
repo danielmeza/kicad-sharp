@@ -79,7 +79,8 @@ public class DocumentLayerTests
     public void SymbolLibrary_Save_WithoutChanges_IsByteIdentical()
     {
         var library = KiCadSymbolLibrary.Load(TestData.SymbolLibrary);
-        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion.kicad_sym");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "orbion.kicad_sym");
 
         library.Save(output);
 
@@ -96,7 +97,8 @@ public class DocumentLayerTests
         var connector = library.GetSymbol("Conn_01x02")!;
         connector.AddProperty("Reference", "P");
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion.kicad_sym");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "orbion.kicad_sym");
         library.Save(output);
 
         var before = File.ReadAllText(TestData.SymbolLibrary);
@@ -174,7 +176,8 @@ public class DocumentLayerTests
     public void Footprint_Save_KeepsEveryTokenTheModelDoesNotName()
     {
         var library = KiCadFootprintLibrary.Load(TestData.Footprint);
-        var output = Path.Combine(TestData.NewScratchDirectory(), "LED_0603_1608Metric.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "LED_0603_1608Metric.kicad_mod");
 
         library.Save(output);
 
@@ -197,7 +200,8 @@ public class DocumentLayerTests
         var library = KiCadFootprintLibrary.Load(TestData.Footprint);
         library.Footprints[0].Tags = "LED SMD";
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "LED_0603_1608Metric.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "LED_0603_1608Metric.kicad_mod");
         library.Save(output);
 
         // 2,437 bytes plus the four characters the tag grew by.
@@ -216,7 +220,8 @@ public class DocumentLayerTests
     public void SaveFootprint_WritesOneFootprintOutOfABoard()
     {
         var footprint = KiCadFootprintLibrary.Load(TestData.Footprint).Footprints[0];
-        var output = Path.Combine(TestData.NewScratchDirectory(), "extracted.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "extracted.kicad_mod");
 
         KiCadFootprintLibrary.SaveFootprint(footprint, output);
 
@@ -267,7 +272,8 @@ public class DocumentLayerTests
         Assert.Equal(34, library.Symbols.Count);
         Assert.Null(library.GetSymbol("Conn_01x02"));
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion.kicad_sym");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "orbion.kicad_sym");
         library.Save(output);
         Assert.Equal(34, KiCadSymbolLibrary.Load(output).Symbols.Count);
     }
@@ -281,7 +287,8 @@ public class DocumentLayerTests
         unit.AddPin(new KiCadPin("passive", "line", new KiCadPosition(0, 2.54, 270), 1.27, "~", "1"));
         unit.AddPin(new KiCadPin("passive", "line", new KiCadPosition(0, -2.54, 90), 1.27, "~", "2"));
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "built.kicad_sym");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "built.kicad_sym");
         library.Save(output);
 
         var reloaded = KiCadSymbolLibrary.Load(output);

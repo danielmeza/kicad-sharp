@@ -120,7 +120,8 @@ public class BoardFormatTests
         var board = KiCadBoard.Load(TestData.Kicad10Board);
         BoardDocumentTests.ReadEverythingOn(board);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "kicad10-pcbnew.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "kicad10-pcbnew.kicad_pcb");
         board.Save(output);
 
         Assert.Equal(5_986, new FileInfo(output).Length);
@@ -135,7 +136,8 @@ public class BoardFormatTests
         // 0.25 -> 0.35 on the first segment: same digits, one of them different.
         board.Segments[0].Width = 0.35;
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "kicad10-pcbnew.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "kicad10-pcbnew.kicad_pcb");
         board.Save(output);
 
         var before = File.ReadAllText(TestData.Kicad10Board);
@@ -195,7 +197,8 @@ public class BoardFormatTests
         Assert.Equal("F.Silkscreen", board.GetLayer("F.SilkS")!.UserName);
 
         // It survives its own round trip, table and all.
-        var output = Path.Combine(TestData.NewScratchDirectory(), "built.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "built.kicad_pcb");
         board.Save(output);
         Assert.Equal(16, KiCadBoard.Load(output).Layers.Count);
     }
