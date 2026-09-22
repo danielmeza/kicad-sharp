@@ -956,6 +956,17 @@ namespace KiCadSharp.Documents
         /// Gets or sets the stroke width. KiCad 7+ writes <c>(stroke (width w) (type t))</c>; KiCad 5
         /// and 6 wrote a bare <c>(width w)</c>, and both are read here.
         /// </summary>
+        /// <remarks>
+        /// Setting it writes into whichever of the two the drawing has, so a loaded file changes only
+        /// the number. A drawing that has neither, such as one built here, gets the form KiCad 10.0.6
+        /// writes on a board, <c>(stroke (width w) (type solid))</c>, rather than the bare
+        /// <c>(width w)</c> of older files (#96). The board writer formats every shape's stroke through
+        /// <c>STROKE_PARAMS::Format</c> (<c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.cpp</c>, line
+        /// 1069; <c>common/stroke_params.cpp</c>, line 362). Its parser starts a shape's stroke as solid
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 3241) and reads a bare <c>width</c> into it
+        /// (line 3549), so the two spellings are the same drawing, and KiCad re-saves the old one as
+        /// the new. Footprint shapes do the same; see <see cref="KiCadFpItem.Width"/>.
+        /// </remarks>
         public double Width
         {
             get
@@ -976,7 +987,15 @@ namespace KiCadSharp.Documents
                     return;
                 }
 
-                WriteChildDouble(KiCadTokens.Common.Width, value);
+                if (Node.GetChild(KiCadTokens.Common.Width) is not null)
+                {
+                    WriteChildDouble(KiCadTokens.Common.Width, value);
+                    return;
+                }
+
+                var created = RequireStroke();
+                created.Width = value;
+                created.Type = KiCadTokens.Common.Solid;
             }
         }
 

@@ -65,11 +65,6 @@ jobs:
             os: macos-14
           - rid: win-arm64
             os: windows-11-arm
-            # Two tests fail on Windows for a reason of their own, whatever the architecture: #106,
-            # they bind a Unix socket where nng's ipc:// is a named pipe.
-            known_failures: >-
-              FullyQualifiedName!=KiCadSharp.Tests.NngInteropTests.DialingASocketThatIsBoundButSilentIsBoundedByNng&
-              FullyQualifiedName!=KiCadSharp.Tests.IpcFailureTests.ASocketThatNeverCompletesTheHandshakeIsAConnectionFailure
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -105,3 +100,53 @@ jobs:
           filter=()
           if [[ -n "$KNOWN_FAILURES" ]]; then filter=(--filter "$(tr -d ' \n' <<<"$KNOWN_FAILURES")"); fi
           dotnet test KiCadSharp.slnx -c Release --no-build --logger "console;verbosity=normal" "${filter[@]}"
+
+  # The live IPC tests, against KiCad master. The build job above runs the same test assemblies
+  # with no KiCad, where every live test returns early; this job starts pcbnew and eeschema from
+  # the dev image (KiCad 10.0.6 plus the master nightly, published by scripts/kicad-dev-image.sh)
+  # and runs only the live suites. A separate job so a KiCad-side change shows up as this failing,
+  # not as the library failing to build.
+  ipc-nightly:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      packages: read
+    env:
+      KICADSHARP_KICAD_FLAVOR: nightly
+      KICADSHARP_CONTAINER_RUNTIME: docker
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build
+        run: dotnet build KiCadSharp.slnx -c Release
+
+      # The harness prints `export NAME=value` lines; GITHUB_ENV takes NAME=value.
+      - name: Start KiCad master, pcbnew and eeschema
+        run: |
+          scripts/kicad-ipc-container.sh start tests/KiCadSharp.Tests/data/kicad10-pcbnew.kicad_pcb | sed 's/^export //' >> "$GITHUB_ENV"
+          scripts/kicad-ipc-container.sh start tests/KiCadSharp.Tests/data/duplicate-refs/duplicate-refs.kicad_sch | sed 's/^export //' >> "$GITHUB_ENV"
+
+      - name: Live tests
+        run: >
+          dotnet test KiCadSharp.slnx -c Release --no-build
+          --filter "FullyQualifiedName~IpcTests|FullyQualifiedName~IpcMasterTests|FullyQualifiedName~IpcSchematicTests"
+          --logger "console;verbosity=normal"
+
+      - name: KiCad logs
+        if: failure()
+        run: |
+          docker logs kicad-sharp-ipc-pcb 2>&1 | tail -50 || true
+          docker logs kicad-sharp-ipc-sch 2>&1 | tail -50 || true
+
+      - name: Stop KiCad
+        if: always()
+        run: scripts/kicad-ipc-container.sh stop
+

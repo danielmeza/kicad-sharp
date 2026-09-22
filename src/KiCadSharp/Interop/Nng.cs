@@ -81,14 +81,21 @@ namespace KiCadSharp.Interop
         [LibraryImport(Library)]
         internal static partial int nng_req0_open(out NngSocket socket);
 
-        /// <summary>Closes the socket, cancelling anything outstanding on it.</summary>
+        /// <summary>
+        /// Closes the socket, cancelling anything outstanding on it. Measured on 1.3.2 and 1.4.0: it
+        /// returns in under 0.1 ms with an <see cref="nng_dial"/> blocked on another thread, and that
+        /// dial returns <see cref="Closed"/> at the same moment. A second close answers
+        /// <see cref="Closed"/> too.
+        /// </summary>
         [LibraryImport(Library)]
         internal static partial int nng_close(NngSocket socket);
 
         /// <summary>
         /// Connects the socket to <paramref name="url"/> (<c>ipc://…</c> here) and blocks until the
-        /// transport handshake completes. Measured: about 10 s against a socket that is bound but
-        /// not answering, immediate <c>NNG_ECONNREFUSED</c> against a path that is not there.
+        /// transport handshake completes, nng gives up, or the socket is closed under it. Measured:
+        /// about 10 s against a socket that is bound but not answering, immediate
+        /// <c>NNG_ECONNREFUSED</c> against a path that is not there, and <see cref="Closed"/> at once
+        /// when <see cref="nng_close"/> runs on another thread meanwhile.
         /// </summary>
         [LibraryImport(Library, StringMarshalling = StringMarshalling.Utf8)]
         internal static partial int nng_dial(NngSocket socket, string url, out NngDialer dialer, int flags);

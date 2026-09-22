@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
 using KiCadSharp.Interop;
@@ -121,32 +120,47 @@ public class NngInteropTests
         Assert.True(elapsed.Elapsed < Immediately, $"took {elapsed.Elapsed}");
     }
 
-    [Fact]
+    [UnixSocketFact]
     public void DialingASocketThatIsBoundButSilentIsBoundedByNng()
     {
         // The trap this pins: a socket that exists and never completes nng's handshake -- a KiCad
         // that has opened its API socket and is not serving yet -- is not refused and is not
         // accepted. It costs nng's own dial timeout, measured at 10.0 s, every attempt. Anything
         // waiting for KiCad to come up has to count seconds rather than attempts, or three
-        // "retries" become half a minute of apparent hang.
-        var path = SocketPaths.New("silent");
-        using var listener = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
-        listener.Bind(new UnixDomainSocketEndPoint(path));
-        listener.Listen(8);
+        // "retries" become half a minute of apparent hang. HeldHandshake is that socket, never
+        // answered. On Windows the test is skipped: nng dials a named pipe there, not the Unix
+        // socket HeldHandshake binds (#106).
+        using var silent = HeldHandshake.Start();
+        using var socket = NngRequestSocket.Open();
+        var elapsed = Stopwatch.StartNew();
 
-        try
+        var failure = Assert.Throws<NngException>(() => socket.Dial(silent.Url));
+
+        Assert.Contains("Timed out", failure.Message);
+        Assert.InRange(elapsed.Elapsed, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public void APathOneByteOverThePlatformsLimitIsAddressInvalidToNng()
+    {
+        // The measurement IpcPathLimit rests on, taken against the libnng this package ships for the
+        // platform running the test. A path of exactly the limit is dialled: nothing listens there,
+        // so it is refused, which is the same answer a path of any length gets. One byte more is not
+        // dialled at all: "Address invalid", from sun_path on Linux and macOS and from NNG_MAXADDRLEN
+        // on Windows, with no word about length. MEASURED 2026-09-22 on linux-x64, nng 1.3.2:
+        // 107 bytes "Connection refused", 108 bytes "Address invalid".
+        var limit = IpcPathLimit.ForThisPlatform;
+
+        using (var fits = NngRequestSocket.Open())
         {
-            using var socket = NngRequestSocket.Open();
-            var elapsed = Stopwatch.StartNew();
-
-            var failure = Assert.Throws<NngException>(() => socket.Dial($"ipc://{path}"));
-
-            Assert.Contains("Timed out", failure.Message);
-            Assert.InRange(elapsed.Elapsed, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
+            var refused = Assert.Throws<NngException>(() => fits.Dial("ipc://" + SocketPaths.OfLength(limit)));
+            Assert.Contains("Connection refused", refused.Message);
         }
-        finally
+
+        using (var over = NngRequestSocket.Open())
         {
-            File.Delete(path);
+            var invalid = Assert.Throws<NngException>(() => over.Dial("ipc://" + SocketPaths.OfLength(limit + 1)));
+            Assert.Contains("Address invalid", invalid.Message);
         }
     }
 

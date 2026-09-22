@@ -20,8 +20,11 @@ can be regenerated and a changed number traced to a changed KiCad.
 | `pad-shapes.kicad_pcb` | `pcbnew.NewBoard`, then 36 footprints of one pad each — trapezoid, chamfered, chamfered with rounding, custom (a filled polygon and a stroked one), oval and rectangle offset from their holes — at 0°, 30° and 90°, on both sides, each ringed by eight 0.2 mm tracks and a via | — |
 | `pad-shapes.dsn` | `ExportSpecctraDSN` of the board above | — |
 | `*.distances.json` | for every pair of copper items on a shared copper layer whose boxes come within 1 mm: `a.GetEffectiveShape(layer).Collide(b.GetEffectiveShape(layer), clearance)` bisected on `clearance` to 0.1 µm. Up to 2,000 / 3,000 / 5,000 pairs, shuffled with seed 7 | `SNEdge`, `bitaxeGamma`, `pad-shapes` |
+| `custom-primitives.kicad_pcb` | in `ghcr.io/danielmeza/orbion-kicad-release:10.0.6`, same host version: `pcbnew.CreateEmptyBoard`, then `pcbnew.FootprintLoad` of twelve hand-written footprints of one custom pad each, whose primitives are the forms 10.0.6 writes — four Béziers (an arch, an S, a loop, a hairpin), a rounded rectangle filled, filled with a pen, stroked, with a radius past half its shorter side, and stroked into a circle, an arc, filled and stroked circles, a stroked rectangle and a line — at 0°, 30° and 90° on both sides (`Rotate`, then `Flip` left-right), each ringed by 0.2 mm vias and 0.1 mm tracks placed 0.02 to 0.18 mm off a primitive's edge along its normal, on both sides of a stroke; `SaveBoard` | — |
+| `custom-primitives.dsn` | `ExportSpecctraDSN` of the board above | — |
+| `custom-primitives.distances.json` | every custom pad against every via and track whose box comes within 1 mm of it: the same `Collide`, bisected to 1 nm. 1,830 pairs | `custom-primitives` |
 
-Two things KiCad itself does that the tests had to learn, both measured on these files:
+What KiCad itself does that the tests had to learn, all measured on these files:
 
 - **KiCad reads an arc, and a chamfered pad's rounded corner, up to 5 µm too far away.** Its
   effective shape for both is a polygon at `ARC_HIGH_DEF` / the pad's `GetMaxError()` of 5 µm with
@@ -32,3 +35,25 @@ Two things KiCad itself does that the tests had to learn, both measured on these
 - **`Padstack().AddPrimitive(PCB_SHAPE, layer)` segfaults `SaveBoard` in 10.0.6.** The stroked
   primitive on the custom pads was added with `AddPrimitivePoly(layer, polygon, width, filled=False)`
   instead.
+- **KiCad cuts a Bézier into chords within its max error**, 5 µm by default (`BEZIER_POLY::GetPoly`),
+  for DRC as for plotting. The chords cut the inside of each bend, so KiCad reads a neighbour inside a
+  bend up to 5 µm too close and one outside it up to 5 µm too far. `CopperGeometryOracleTests` says
+  how that was established.
+- **KiCad writes a custom pad to a design as a convex hull**, of the polygon
+  `PAD::MergePrimitivesAsPolygon` draws (`EXPORT_CUSTOM_PADS_CONVEX_HULL`, `specctra_export.cpp`).
+  All 3 custom padstacks in `pad-shapes.dsn` and all 35 in `custom-primitives.dsn` are convex, to
+  within 4 nm.
+- **KiCad 10.0.6 collides a track with a full circle as if the circle had no pen.** A stroked
+  `gr_circle`, a filled one with a pen, and a rounded rectangle that is a circle all become a
+  360° `SHAPE_ARC`, and `SHAPE_ARC::Collide(const SEG&)` takes a full-circle branch that never adds
+  the arc's width (`shape_arc.cpp` L301-313). Measured: tracks read 50 or 75 µm too far — half the
+  pen — and a track inside a ring was not seen at all, while vias read right. So the pads in
+  `custom-primitives.kicad_pcb` that hold a full circle are ringed by vias only.
+- **KiCad 10.0.6 draws a stroked rectangle whose corner radius makes it a circle as a dot** the width
+  of the pen. `ROUNDRECT::TransformToPolygon` makes its outline one 360° arc, and
+  `TransformArcToPolygon` finds no chord between its equal ends (`ARC_CHORD_PARAMS::Compute`) and
+  draws a pen stroke from the start to the start. `MergePrimitivesAsPolygon` returns that dot, the
+  design's hull is of it, and a Gerber of `F.Cu` plotted by `kicad-cli` 10.0.6 flashes it; its DRC
+  shape is the whole ring.
+- **KiCad clamps a rectangle's corner radius to half its shorter side** as it loads it
+  (`EDA_SHAPE::SetCornerRadius`), and writes the clamped value back.
