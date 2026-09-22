@@ -37,6 +37,9 @@ namespace KiCadSharp.Tests;
 /// it is a <see cref="NamedPipeServerStream"/> on a bare name, <c>kicadsharp-held-</c> and eight
 /// random characters. .NET opens that under the same prefix, unchanged
 /// (<c>PipeStream.GetPipePath</c>), and nothing appears on disk, so the name needs no directory.
+/// MEASURED 2026-09-22 on GitHub's <c>windows-11-arm</c> runner, nng 1.4.0: the silent dial fails
+/// "Timed out" after 9-10 s, as on Linux and macOS; a dial caught mid-handshake returns when the
+/// pipe completes or refuses the handshake, and a client that closes the pipe is read as 0 bytes.
 /// </description></item>
 /// </list>
 /// <para>

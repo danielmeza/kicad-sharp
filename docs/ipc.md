@@ -133,7 +133,9 @@ another.
 The tests that need a peer which takes nng's connection and never completes its handshake, or holds
 it, follow the same rule (`HeldHandshake`): a Unix domain socket on Linux and macOS, and on Windows a
 `NamedPipeServerStream`, because a Unix socket bound at the path is never looked at there and the
-dial fails at once with "Connection refused" (#106, #122).
+dial fails at once with "Connection refused" (#106, #122). MEASURED 2026-09-22 on GitHub's
+`windows-11-arm` runner, nng 1.4.0: against the named pipe, the silent dial fails "Timed out" after
+nng's 10 s, as on Linux, and a dial caught mid-handshake returns when the pipe answers it.
 
 Measured on Linux, in `ghcr.io/danielmeza/orbion-kicad-release:10.0.6` with no network and a fresh
 `HOME`. Each row started pcbnew with only the variables shown. Three things were read for each:
@@ -187,10 +189,11 @@ most 107 bytes (sun_path is 108 bytes, with its NUL)". The limits, in `IpcPathLi
 | macOS | 103 bytes | `sun_path`, 104 bytes with its NUL; the same code |
 | Windows | 127 bytes | `NNG_MAXADDRLEN`, 128: nng 1.4.0 `win_ipcdial.c:230-235`, when the dialer is created |
 
-MEASURED 2026-09-22 on `linux-x64` against the shipped nng 1.3.2, from `NngRequestSocket.Dial`: a
-107-byte path with nothing listening fails with "Connection refused", a 108-byte one with "Address
-invalid". macOS and Windows are from nng's source and headers; CI's `test (osx-arm64)` and
-`test (win-arm64)` jobs run the same test at each platform's limit and one byte over.
+MEASURED 2026-09-22, from `NngRequestSocket.Dial` against the nng this package ships for each
+platform (`NngInteropTests.APathOneByteOverThePlatformsLimitIsAddressInvalidToNng`): a path of the
+limit with nothing listening fails with "Connection refused", one byte more with "Address invalid".
+On `linux-x64` (107 and 108), on GitHub's `macos-14` runner (`osx-arm64`, 103 and 104) and on its
+`windows-11-arm` runner (`win-arm64`, 127 and 128).
 
 Two more cases have no default address that could be right:
 

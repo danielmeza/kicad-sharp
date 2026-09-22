@@ -26,13 +26,16 @@ namespace KiCadSharp.Interop
     /// listening dials and fails with "Connection refused", a 108-byte one with "Address invalid".
     /// </description></item>
     /// <item><description>
-    /// <b>macOS, 103.</b> The same copy, into a <c>sun_path</c> of 104 bytes. From the headers;
-    /// not measured.
+    /// <b>macOS, 103.</b> The same copy, into a <c>sun_path</c> of 104 bytes. MEASURED 2026-09-22
+    /// on GitHub's <c>macos-14</c> runner (<c>osx-arm64</c>, nng 1.3.2), by the same test: 103
+    /// "Connection refused", 104 "Address invalid".
     /// </description></item>
     /// <item><description>
     /// <b>Windows, 127.</b> <c>ipc://</c> is a named pipe there, <c>\\.\pipe\</c> followed by the
     /// path, and nng 1.4.0 refuses a path of <c>NNG_MAXADDRLEN</c> (128) characters or more when
-    /// the dialer is created (<c>win_ipcdial.c</c>, lines 230-235). From the source; not measured.
+    /// the dialer is created (<c>win_ipcdial.c</c>, lines 230-235). MEASURED 2026-09-22 on GitHub's
+    /// <c>windows-11-arm</c> runner (<c>win-arm64</c>, nng 1.4.0), by the same test: 127
+    /// "Connection refused", 128 "Address invalid".
     /// </description></item>
     /// </list>
     /// <para>
