@@ -339,7 +339,7 @@ public class ZonePadsAndHatchTests
             return;
         }
 
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         var bare = Board(string.Empty);
         var legacy = KiCadBoard.Parse(bare.ToText().Replace("\t(setup\n", "\t(setup\n\t\t(zone_clearance 0.3)\n", StringComparison.Ordinal));
         Assert.Contains("(zone_clearance 0.3)", legacy.ToText(), StringComparison.Ordinal);
