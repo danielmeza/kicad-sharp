@@ -170,12 +170,81 @@ nowhere, because nothing listens anywhere. The dial fails at once, as a `KiCadCo
 On Windows, nng refuses a path of 128 characters or more when the listener is created
 (`win_ipclisten.c:321-328`). That case was not measured.
 
-Two more cases have no default address that could be right:
+One more case has no default address that could be right: **a second KiCad**, started while the
+first one holds `api.sock`, listens on `api-<pid>.sock` in the same directory
+(`api_server.cpp:115-125`). The default reaches the first.
 
-- **A second KiCad**, started while the first one holds `api.sock`, listens on
-  `api-<pid>.sock` in the same directory (`api_server.cpp:115-125`). The default reaches the first.
-- **KiCad from Flathub, seen from outside its sandbox.** It runs with `TMPDIR=/var/tmp`, which
-  is `~/.var/app/org.kicad.KiCad/cache/tmp` on the host. That is #110.
+### KiCad from Flathub, for a client outside its sandbox
+
+A KiCad installed from Flathub (`org.kicad.KiCad`) runs in a Flatpak sandbox, and from the host the
+rule above gives an address where nothing listens (#110). So on Linux `GetDefaultSocketPath()` has
+one more step: when no socket exists at the address the rule gives, and one exists at
+`~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock`, it returns that one. Existence is
+`File.Exists`, which is true for a socket.
+
+Why that path, from the sources:
+
+- **The Flathub manifest starts KiCad with `TMPDIR=/var/tmp`** (`flathub/org.kicad.KiCad`,
+  `org.kicad.KiCad.yml`, `finish-args`, at `279821a`). Commit `761588f` (2025-02-19) first shared the
+  host's `/tmp` into the sandbox, "Required for default path of KiCad's IPC API"; `8d96620`
+  (2025-02-21, "Change temp directory to /var/tmp, disable access to host /tmp") replaced that with
+  the variable.
+- **Flatpak binds the sandbox's `/var/tmp` to `<app data>/cache/tmp`**, and the app data directory
+  is `g_get_home_dir()/.var/app/<app id>` (flatpak 1.14.6, `common/flatpak-run.c`, lines 3617 and
+  2096). `g_get_home_dir()` is `$HOME`, then the passwd entry, which is also how .NET's
+  `Environment.GetFolderPath(UserProfile)` finds the home directory on Unix.
+- So `KICAD_API_SERVER::Start` puts the socket at `/var/tmp/kicad/api.sock` inside the sandbox,
+  which is `~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock` outside it.
+
+kipy tries the same path (`_default_socket_path` in `kipy/kicad.py`, at `3dcb6c9`), with one
+difference: kipy looks in the Flathub directory first, whenever that file exists. Here KiCad's own
+rule comes first, so a native KiCad that is listening is never passed over for a socket file the
+Flatpak left behind.
+
+Measured on Linux, flatpak 1.14.6, with org.kicad.KiCad 10.0.6 from Flathub installed for the user
+(`flatpak install --user --no-related`), pcbnew started with `flatpak run --command=pcbnew` on a
+board, and no `TMPDIR` set on the host:
+
+| | Inside the sandbox | On the host |
+|---|---|---|
+| `TMPDIR` in pcbnew's environment (`/proc/<pid>/environ`) | `/var/tmp` | not set |
+| `/var/tmp` | a bind mount of `~/.var/app/org.kicad.KiCad/cache/tmp` (ext4) | that directory |
+| `/tmp` | a private tmpfs, `/.flatpak/org.kicad.KiCad/tmp` | the host's, which the sandbox never sees |
+| `$XDG_RUNTIME_DIR` (`/run/user/1000`) | a private tmpfs, `/.flatpak/org.kicad.KiCad/xdg-run` | the host's |
+| pcbnew listening (`ss -xlp`) | `/var/tmp/kicad/api.sock` | `~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock`, a socket; `File.Exists` is true |
+| a raw `connect()` from a host process | | succeeds |
+| `GetDefaultSocketPath()` before #110 | | `ipc:///tmp/kicad/api.sock`; the dial failed, "Connection refused (nng error 6)" |
+| `GetDefaultSocketPath()` now | | `ipc://~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock`; `GetVersion()` answered 10.0.6 and `GetBoard()` named the open board |
+| the same, with a socket bound at `/tmp/kicad/api.sock` as well | | `ipc:///tmp/kicad/api.sock`: KiCad's own address wins |
+
+**No `flatpak override` is needed.** The socket is an ordinary inode on the host's file system, and
+the manifest already put it there. A plugin that the Flatpak KiCad launches is not affected either
+way: it runs inside the sandbox and gets `KICAD_API_SOCKET`.
+
+The mechanism is not KiCad's: any Flatpak started with `--env=TMPDIR=/var/tmp` puts a socket bound
+under `$TMPDIR` at `~/.var/app/<app id>/cache/tmp` on the host, where a host process connects to it.
+Measured with a shell in `org.freecad.FreeCAD`'s sandbox and a socket bound from Python, before the
+KiCad Flatpak was installed.
+
+**Stale socket files count.** pcbnew sent `SIGTERM` was gone within a second and left `api.sock`
+behind; `GetDefaultSocketPath()` then still returned the Flathub address, and the dial failed with
+"Connection refused (nng error 6)", as it does for a native KiCad's stale socket. KiCad removes such
+a file the next time it starts: it takes `flock` on `api.lock` in the same directory, and holding it
+proves the old socket is orphaned (`api_server.cpp:96-112`). Measured: a stale `api.sock` from an
+earlier session was gone once pcbnew had started, and an `api-2.sock` from a second instance of that
+session, which nothing cleans up, was still there. A clean exit closes the nng listener, which
+unlinks the path (nng 1.10.1, `posix_ipclisten.c:59-62`); that was not measured.
+
+What is left out:
+
+- A Flatpak KiCad started while another holds `api.sock` listens on `api-<pid>.sock` there, as a
+  native one would; no default can know the pid.
+- A Flatpak with another app id, or one whose `TMPDIR` the user overrode
+  (`flatpak override --user --env=TMPDIR=… org.kicad.KiCad`), listens somewhere else. Set
+  `KICAD_API_SOCKET` to the socket as the host sees it.
+- A client that is itself inside a Flatpak sandbox sees its own private `/tmp`, and whether it sees
+  another app's `~/.var/app` directory depends on its own permissions. Not measured.
+- Nothing changes on macOS or Windows: Flatpak is Linux only, and no file is looked at there.
 
 ### nng, and which platforms it reaches
 

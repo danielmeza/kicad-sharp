@@ -25,7 +25,9 @@ namespace KiCadSharp
                      // GetDefaultSocketPath, not GetApiSocket: the environment variable is only set
                      // for a plugin KiCad launched itself. Everything else -- a test, a CLI, a
                      // service talking to a KiCad someone started by hand -- has to fall back to the
-                     // platform default, which is where KiCad actually puts the socket.
+                     // platform default, which is where KiCad actually puts the socket: KiCad's own
+                     // rule (#97), or on Linux the Flathub sandbox's socket when only that one
+                     // exists (#110).
                      settings.PipeName = KiCadEnvironment.GetDefaultSocketPath();
                      settings.Token = KiCadEnvironment.GetApiToken();
                  });
