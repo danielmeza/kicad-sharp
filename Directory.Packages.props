@@ -26,7 +26,7 @@
 
   <ItemGroup>
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.11" />
     <!-- Consumed for its native libnng only, and never declared to consumers; see the comment on the
          PackageReference in src/KiCadSharp/KiCadSharp.csproj. -->
