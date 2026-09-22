@@ -209,10 +209,20 @@ namespace KiCadSharp.Documents
         /// <returns>The footprint, now a child of this file.</returns>
         /// <exception cref="InvalidOperationException">The file is a single footprint and cannot hold another.</exception>
         /// <remarks>
+        /// <para>
         /// A footprint taken from another board leaves that board, and one taken from a
         /// <c>.kicad_mod</c> leaves that file empty: the node itself moves, bytes and all (see
         /// <see cref="KiCadNode"/>). To keep the source as it was, add
         /// <c>new KiCadFootprint(footprint.Node.Clone())</c>, or <see cref="KiCadFootprint.CloneAs"/>.
+        /// </para>
+        /// <para>
+        /// The file this adds to is a <c>kicad_pcb</c>, and KiCad reads it as a board. On its way in,
+        /// the footprint loses the <c>version</c>, <c>generator</c> and <c>generator_version</c> it
+        /// carried as a file of its own, as pcbnew writes a footprint inside a board; its
+        /// <see cref="KiCadFootprint.Version"/> then reads <see langword="null"/>, and the file's
+        /// <see cref="Version"/> is the one KiCad reads it under (#73). A footprint with none, which
+        /// is every footprint on a board KiCad wrote, moves untouched.
+        /// </para>
         /// </remarks>
         public KiCadFootprint AddFootprint(KiCadFootprint footprint)
         {
@@ -223,6 +233,7 @@ namespace KiCadSharp.Documents
             }
 
             _root.AddChild(footprint.Node);
+            KiCadFootprint.PlaceOnBoard(footprint.Node);
             return footprint;
         }
 
@@ -378,20 +389,46 @@ namespace KiCadSharp.Documents
         /// </para>
         /// <para>
         /// <b>On a board.</b> KiCad writes a footprint inside a board without a version, so the board's
-        /// applies. A footprint that does carry one there makes KiCad 10.0.6 read the rest of the
-        /// board under the greater of the two (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5046), and
-        /// some board content reads differently by version: a via after a new footprint on a
-        /// <c>new KiCadBoard()</c>, stamped <c>20241229</c>, loses its explicit "no" covering,
-        /// plugging, capping and filling. Moving a footprint into a board does not change its version
-        /// (#73). To place a footprint built here on a board stamped with an older format, set this to
-        /// <see langword="null"/> first, as KiCad writes it; its content is then read under the
-        /// board's version.
+        /// applies (<c>CTL_FOR_BOARD</c> carries <c>CTL_OMIT_FOOTPRINT_VERSION</c>,
+        /// <c>pcb_io_kicad_sexpr.h</c> line 223). A footprint that does carry one there makes KiCad
+        /// 10.0.6 read the rest of the board under the greater of the two
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5046), and some board content reads differently
+        /// by version. MEASURED against kicad-cli 10.0.6: a via after a footprint stamped
+        /// <c>20260206</c> on a <c>new KiCadBoard()</c>, stamped <c>20241229</c>, lost its explicit
+        /// "no" covering, plugging, capping and filling (line 7422). So placing a footprint on a board,
+        /// through <see cref="KiCadBoard.Footprints"/> or <see cref="KiCadFootprintLibrary.AddFootprint"/>,
+        /// removes its version, generator and generator_version, as pcbnew does, and this then reads
+        /// <see langword="null"/> (#73). The footprint is read under the board's version, and nothing
+        /// converts its content to that version: a footprint newer than its board can read
+        /// differently there, or be refused. A footprint saved as a <c>.kicad_mod</c> keeps its
+        /// version.
         /// </para>
         /// </remarks>
         public string? Version
         {
             get => ReadChild(KiCadTokens.Common.Version);
             set => WriteChild(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
+        }
+
+        /// <summary>
+        /// Strips the header a footprint carries as a file of its own — <c>version</c>,
+        /// <c>generator</c> and <c>generator_version</c> — as it is placed on a board. Every path
+        /// that puts a footprint node inside a <c>kicad_pcb</c> calls this:
+        /// <see cref="KiCadBoard.Footprints"/> and <see cref="KiCadFootprintLibrary.AddFootprint"/>.
+        /// </summary>
+        /// <param name="footprint">The footprint node, already a child of the board.</param>
+        /// <remarks>
+        /// This is what pcbnew writes: <c>format( const FOOTPRINT* )</c> puts the three out only
+        /// without <c>CTL_OMIT_FOOTPRINT_VERSION</c> (<c>pcb_io_kicad_sexpr.cpp</c>, line 1210),
+        /// which <c>CTL_FOR_BOARD</c> carries. A footprint with none, which is every footprint on a
+        /// board pcbnew wrote, is left as it is, bytes included. See <see cref="Version"/> for what a
+        /// version inside a board does to the rest of it.
+        /// </remarks>
+        internal static void PlaceOnBoard(SExpression footprint)
+        {
+            footprint.RemoveChild(KiCadTokens.Common.Version);
+            footprint.RemoveChild(KiCadTokens.Common.Generator);
+            footprint.RemoveChild(KiCadTokens.Common.GeneratorVersion);
         }
 
         /// <summary>Gets or sets the layer the footprint sits on.</summary>

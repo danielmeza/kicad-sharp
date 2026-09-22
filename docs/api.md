@@ -327,11 +327,20 @@ footprint library (#63). Without a version, KiCad reads a `.kicad_mod` as format
 it refuses an arc drawn by `start`, `mid` and `end`, and it makes a footprint with no `attr` a
 through-hole one. A footprint read from a file keeps the version it has, or none, and so does a copy
 of one. A KiCad 5 module's `start`/`end`/`angle` arcs depend on having none. `KiCadFootprint.Version`
-reads it and sets it, and `null` removes it. KiCad writes a footprint inside a board without a
-version. A footprint that has one there makes KiCad read the rest of the board under the greater of
-the two versions. For example, a via after a new footprint on a `new KiCadBoard()` (`20241229`) loses
-its explicit "no" covering and plugging. To place a new footprint on a board stamped with an older
-format, set its `Version` to `null` first (#73).
+reads it and sets it, and `null` removes it.
+
+**A footprint placed on a board has no version of its own.** KiCad writes a footprint inside a board
+without a `version`, and a footprint that has one there makes KiCad read the rest of the board under
+the greater of the two versions. Measured with kicad-cli 10.0.6: a via after a new footprint on a
+`new KiCadBoard()` (`20241229`) lost its explicit "no" covering, plugging, capping and filling. So
+placing a footprint on a board — `KiCadBoard.Footprints.Add` or `Insert`, or
+`KiCadFootprintLibrary.AddFootprint` — removes its `version`, `generator` and `generator_version`, as
+pcbnew does, and its `Version` then reads `null` (#73). A footprint with none, which is every
+footprint on a board KiCad wrote, moves untouched. The footprint is then read under the board's
+version, and nothing converts its content to that version: a new footprint's fields read as hidden
+under a stamp older than `20230620`, such as `new KiCadFootprintLibrary()`'s `20211014`, and its
+arcs are refused under `20210925` or older. Take a copy first, `CloneAs` or `Node.Clone()`, to keep
+one with its version. A footprint saved with `SaveFootprint` keeps its version.
 
 **A footprint built in memory is written in KiCad 10's forms.** `new KiCadFootprint(id)` starts with
 the four fields KiCad gives every footprint, written as `(property …)`: `Reference` (`REF**`, on

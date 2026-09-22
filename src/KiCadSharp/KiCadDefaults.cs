@@ -66,7 +66,12 @@ namespace KiCadSharp
         /// collecting the literals is what made it visible. It is reproduced here rather than
         /// reconciled: raising it changes what the type writes, and that is a decision for
         /// whoever knows which readers depend on the old value. A footprint built in memory is
-        /// stamped with <see cref="FootprintVersion"/> instead.
+        /// stamped with <see cref="FootprintVersion"/> instead, and loses that stamp when it is
+        /// placed in the library (#73), so this is the format its footprints are read under.
+        /// MEASURED against kicad-cli 10.0.6: a new footprint placed in a new library came back
+        /// with its Reference and Value fields hidden, as any field is before <c>20230620</c>
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5226); in a library stamped
+        /// <see cref="BoardVersion"/> it came back as built.
         /// </para>
         /// </remarks>
         public const string FootprintLibraryVersion = "20211014";

@@ -238,12 +238,22 @@ namespace KiCadSharp.Documents
         private readonly SExpression? _owner;
         private readonly string _token;
         private readonly Func<SExpression, T> _view;
+        private readonly Action<SExpression>? _onPlaced;
 
-        internal KiCadNodeList(SExpression? owner, string token, Func<SExpression, T> view)
+        /// <param name="owner">The node whose children this lists, or <see langword="null"/> for an empty stand-in.</param>
+        /// <param name="token">The token the listed children carry.</param>
+        /// <param name="view">Wraps a child in a view.</param>
+        /// <param name="onPlaced">
+        /// Run on a node that <see cref="Add(T)"/> or <see cref="Insert"/> has just moved in, for a
+        /// list whose owner changes what a node means: a footprint placed on a board sheds the
+        /// header it carried as a file of its own (<see cref="KiCadBoard.Footprints"/>, #73).
+        /// </param>
+        internal KiCadNodeList(SExpression? owner, string token, Func<SExpression, T> view, Action<SExpression>? onPlaced = null)
         {
             _owner = owner;
             _token = token;
             _view = view;
+            _onPlaced = onPlaced;
         }
 
         /// <summary>Gets how many children carry the token.</summary>
@@ -300,7 +310,9 @@ namespace KiCadSharp.Documents
         /// <exception cref="ArgumentException">The node's token does not match.</exception>
         /// <remarks>
         /// The node leaves its previous parent, in this file or another; see <see cref="KiCadNode"/>.
-        /// Add <c>item.Node.Clone()</c> wrapped in a view to keep the original.
+        /// Add <c>item.Node.Clone()</c> wrapped in a view to keep the original. A footprint placed on
+        /// a board loses the version it carried as a file of its own; see
+        /// <see cref="KiCadBoard.Footprints"/>.
         /// </remarks>
         public T Add(T item)
         {
@@ -311,6 +323,7 @@ namespace KiCadSharp.Documents
             }
 
             Owner.AddChild(item.Node);
+            _onPlaced?.Invoke(item.Node);
             return item;
         }
 
@@ -334,6 +347,7 @@ namespace KiCadSharp.Documents
         {
             ArgumentNullException.ThrowIfNull(item);
             Owner.Children.Insert(index, item.Node);
+            _onPlaced?.Invoke(item.Node);
         }
 
         /// <summary>
