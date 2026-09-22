@@ -38,9 +38,10 @@ public class UnderlyingFidelityTests
         // A discovery gate that passes over an empty set proves nothing. Nine s-expression fixtures
         // shipped before the third-party boards arrived; the three of them make twelve, and the two
         // boards pcbnew 10.0.6 wrote for the Specctra oracles and the one it built to carry the pad
-        // shapes no vendored board has (data/oracles/) make fifteen, and the symbol library
-        // kicad-cli 10.0.6 wrote to carry a derived symbol makes sixteen.
-        Assert.Equal(16, EveryFixture().Count);
+        // shapes no vendored board has (data/oracles/) make fifteen, the symbol library kicad-cli
+        // 10.0.6 wrote to carry a derived symbol makes sixteen, and the board it saved with every
+        // primitive a custom pad can hold makes seventeen.
+        Assert.Equal(17, EveryFixture().Count);
     }
 
     [Theory]
@@ -51,7 +52,8 @@ public class UnderlyingFidelityTests
         var original = File.ReadAllBytes(path);
         var document = SDocument.Load(path);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), Path.GetFileName(path));
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, Path.GetFileName(path));
         document.Save(output);
 
         Assert.Equal(original.Length, new FileInfo(output).Length);

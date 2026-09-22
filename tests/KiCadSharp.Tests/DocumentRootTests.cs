@@ -197,7 +197,8 @@ public class DocumentRootTests
     {
         // The downstream case in #49: a board sitting where the importer expects its symbol library.
         // It used to load as an empty library, and the importer's next save replaced the board.
-        var path = Path.Combine(TestData.NewScratchDirectory(), "orbion.kicad_sym");
+        using var scratch = TestData.NewScratchDirectory();
+        var path = Path.Combine(scratch, "orbion.kicad_sym");
         File.Copy(TestData.StackupBoard, path);
         var before = File.ReadAllBytes(path);
 
@@ -247,7 +248,8 @@ public class DocumentRootTests
     [MemberData(nameof(NoFormCases))]
     public async Task Loader_RefusesAFileWithNoForm(string loader, string @case, string entry)
     {
-        var path = Path.Combine(TestData.NewScratchDirectory(), "input.kicad_file");
+        using var scratch = TestData.NewScratchDirectory();
+        var path = Path.Combine(scratch, "input.kicad_file");
         File.WriteAllBytes(path, FilesWithNoForm[@case]);
 
         var error = Assert.IsType<KiCadDocumentTypeException>(await Attempt(Loaders[loader], entry, path));
@@ -264,7 +266,8 @@ public class DocumentRootTests
     {
         // Not s-expressions at all: the parser says so, with a line and column, before there is a
         // root to check. That failure keeps its own type rather than being folded into this one.
-        var path = Path.Combine(TestData.NewScratchDirectory(), "input.kicad_file");
+        using var scratch = TestData.NewScratchDirectory();
+        var path = Path.Combine(scratch, "input.kicad_file");
         File.WriteAllText(path, MalformedText[@case]);
 
         var error = Assert.IsType<SExpressionFormatException>(await Attempt(Loaders[loader], entry, path));
@@ -329,9 +332,11 @@ public class DocumentRootTests
         _ => throw new ArgumentOutOfRangeException(nameof(fixture), fixture, null),
     };
 
+    // Read while the theory data is built and then by every case that names it, so no one test owns
+    // the directory: it is left undisposed, and deleted when the test process exits.
     private static readonly Lazy<string> LegacyModulePath = new(() =>
     {
-        var path = Path.Combine(TestData.NewScratchDirectory(), "legacy.kicad_mod");
+        var path = Path.Combine(TestData.NewScratchDirectory(nameof(LegacyModulePath)), "legacy.kicad_mod");
         File.WriteAllText(path, LegacyModuleText);
         return path;
     });

@@ -85,7 +85,8 @@ public class FootprintVersionTests
     [Fact]
     public void ANewFootprint_SavedAsAKiCadMod_ReadsBackItsVersionAndGenerator()
     {
-        var path = Path.Combine(TestData.NewScratchDirectory(), "R_0603.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var path = Path.Combine(scratch, "R_0603.kicad_mod");
         KiCadFootprintLibrary.SaveFootprint(new KiCadFootprint("R_0603"), path);
 
         var library = KiCadFootprintLibrary.Load(path);
@@ -155,7 +156,8 @@ public class FootprintVersionTests
         Assert.Equal(version, footprint.Version);
         Assert.Equal(text, library.ToText());
 
-        var path = Path.Combine(TestData.NewScratchDirectory(), "loaded.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var path = Path.Combine(scratch, "loaded.kicad_mod");
         KiCadFootprintLibrary.SaveFootprint(footprint, path);
         Assert.Equal(text, File.ReadAllText(path));
     }
@@ -211,7 +213,7 @@ public class FootprintVersionTests
             return;
         }
 
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         var footprint = new KiCadFootprint("InMemory");
         var arc = footprint.Arcs.Add();
         arc.Start = new KiCadPosition(0, 0);

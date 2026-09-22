@@ -25,8 +25,10 @@ namespace KiCadSharp.Geometry
     /// <para>
     /// Every shape is exact except a track arc, which is a chain of capsules whose radius is grown by
     /// the chord error, so the chain always COVERS the arc — a distance measured from it can be low
-    /// by at most <c>maxError</c>, never high. A clearance check built on this can only err on the
-    /// safe side. The same holds for the rounded corners of a chamfered pad.
+    /// by at most twice <c>maxError</c> (a chord's sag and the growth), never high. A clearance check
+    /// built on this can only err on the safe side. The same holds for the rounded corners of a
+    /// chamfered pad, and for what a custom pad draws along a curve: an arc, a stroked circle, the
+    /// corners of a stroked rounded rectangle and a Bézier. A filled rounded rectangle is exact.
     /// </para>
     /// <para>
     /// A pad whose padstack differs per layer (KiCad 9's <c>(padstack (mode custom) …)</c>) is
@@ -62,7 +64,7 @@ namespace KiCadSharp.Geometry
         /// <summary>The copper of one pad.</summary>
         /// <param name="footprint">The footprint the pad belongs to.</param>
         /// <param name="pad">The pad.</param>
-        /// <param name="maxError">Chord error for rounded corners, millimetres.</param>
+        /// <param name="maxError">Chord error for rounded corners, arcs and curves, millimetres.</param>
         /// <returns>The copper.</returns>
         public static CopperShape Pad(KiCadFootprint footprint, KiCadPad pad, double maxError = DefaultMaxError)
         {
@@ -461,8 +463,23 @@ namespace KiCadSharp.Geometry
                 {
                     var s = At(node, KiCadTokens.Common.Start);
                     var e = At(node, KiCadTokens.Common.End);
+                    var radius = CornerRadius(s, e, node.GetChild(KiCadTokens.Common.Radius)?.GetValueAsDouble(0) ?? 0);
+                    if (radius > 0)
+                    {
+                        return RoundedRectangle(s, e, radius, stroke, filled, maxError);
+                    }
+
                     BoardPoint[] pts = [s, new(e.X, s.Y), e, new(s.X, e.Y)];
                     return filled ? [RoundedShape.Polygon(pts, stroke)] : Ring(pts, stroke);
+                }
+
+                case KiCadTokens.Board.GrCurve:
+                {
+                    // A Bézier is only ever stroked: KiCad writes no (fill …) for it and draws none.
+                    var pts = (node.GetChild(KiCadTokens.Common.Pts)?.GetChildren(KiCadTokens.Common.Xy) ?? [])
+                        .Select(xy => new BoardPoint(xy.GetValueAsDouble(0), xy.GetValueAsDouble(1)))
+                        .ToList();
+                    return pts.Count == 4 ? BezierBand(pts[0], pts[1], pts[2], pts[3], stroke, maxError) : [];
                 }
 
                 case KiCadTokens.Board.GrCircle:
@@ -507,6 +524,144 @@ namespace KiCadSharp.Geometry
             {
                 yield return RoundedShape.Capsule(points[i], points[i + 1], halfWidth + maxError);
             }
+        }
+
+        /// <summary>A cubic Bézier drawn with a pen, as capsules that cover it, the way <see cref="ArcBand"/> covers an arc.</summary>
+        internal static IEnumerable<RoundedShape> BezierBand(
+            BoardPoint p0, BoardPoint p1, BoardPoint p2, BoardPoint p3, double halfWidth, double maxError)
+        {
+            var points = BezierPoints(p0, p1, p2, p3, maxError);
+            for (var i = 0; i + 1 < points.Count; i++)
+            {
+                yield return RoundedShape.Capsule(points[i], points[i + 1], halfWidth + maxError);
+            }
+        }
+
+        /// <summary>
+        /// Points ON a cubic Bézier, close enough that no part of the curve strays more than
+        /// <paramref name="maxError"/> from the polyline through them.
+        /// </summary>
+        /// <remarks>
+        /// Halves the curve (de Casteljau at t = ½) until each piece passes <see cref="Flat"/>. KiCad
+        /// flattens with a different scheme and its own tolerance, so the vertices differ from KiCad's;
+        /// both lie on the curve.
+        /// </remarks>
+        /// <returns>The points, both ends included.</returns>
+        internal static IReadOnlyList<BoardPoint> BezierPoints(BoardPoint p0, BoardPoint p1, BoardPoint p2, BoardPoint p3, double maxError)
+        {
+            // 2^16 pieces: far past what any curve on a board needs at any sane chord error.
+            const int maxDepth = 16;
+            var points = new List<BoardPoint> { p0 };
+            var pending = new Stack<(BoardPoint A, BoardPoint B, BoardPoint C, BoardPoint D, int Depth)>();
+            pending.Push((p0, p1, p2, p3, 0));
+            while (pending.TryPop(out var piece))
+            {
+                var (a, b, c, d, depth) = piece;
+                if (depth >= maxDepth || Flat(a, b, c, d, maxError))
+                {
+                    points.Add(d);
+                    continue;
+                }
+
+                var ab = (a + b) * 0.5;
+                var bc = (b + c) * 0.5;
+                var cd = (c + d) * 0.5;
+                var abc = (ab + bc) * 0.5;
+                var bcd = (bc + cd) * 0.5;
+                var mid = (abc + bcd) * 0.5;
+
+                // The left half on top, so the points come out in order along the curve.
+                pending.Push((mid, bcd, cd, d, depth + 1));
+                pending.Push((a, ab, abc, mid, depth + 1));
+            }
+
+            return points;
+        }
+
+        /// <summary>
+        /// Whether no point of a cubic Bézier lies further than <paramref name="maxError"/> from its
+        /// chord, the segment from <paramref name="a"/> to <paramref name="d"/>.
+        /// </summary>
+        /// <remarks>
+        /// A point of the curve lies 3t(1−t)²·d₁ + 3t²(1−t)·d₂ from the chord's line, where d₁ and d₂
+        /// are the signed distances of the inner control points from it: at most ¾ of the larger |dᵢ|
+        /// when both are on one side, 4/9 of it when they are not. That is the distance to the SEGMENT
+        /// when the curve projects inside it, which holds when both inner control points do, since the
+        /// curve lies in the hull of its control points. Otherwise the hull alone bounds it: no point
+        /// of the curve is further from the chord than the furthest control point.
+        /// </remarks>
+        private static bool Flat(BoardPoint a, BoardPoint b, BoardPoint c, BoardPoint d, double maxError)
+        {
+            var chord = d - a;
+            var squared = (chord.X * chord.X) + (chord.Y * chord.Y);
+            if (squared > 0)
+            {
+                var ub = (((b.X - a.X) * chord.X) + ((b.Y - a.Y) * chord.Y)) / squared;
+                var uc = (((c.X - a.X) * chord.X) + ((c.Y - a.Y) * chord.Y)) / squared;
+                if (ub is >= 0 and <= 1 && uc is >= 0 and <= 1)
+                {
+                    var length = Math.Sqrt(squared);
+                    var db = ((chord.X * (b.Y - a.Y)) - (chord.Y * (b.X - a.X))) / length;
+                    var dc = ((chord.X * (c.Y - a.Y)) - (chord.Y * (c.X - a.X))) / length;
+                    return (db * dc > 0 ? 0.75 : 4.0 / 9.0) * Math.Max(Math.Abs(db), Math.Abs(dc)) <= maxError;
+                }
+            }
+
+            return Math.Max(Planar.PointSegment(b, a, d), Planar.PointSegment(c, a, d)) <= maxError;
+        }
+
+        /// <summary>
+        /// The corner radius KiCad draws a rectangle with: the one written, clamped as KiCad clamps it
+        /// on load to half the shorter side (<c>EDA_SHAPE::SetCornerRadius</c>).
+        /// </summary>
+        private static double CornerRadius(BoardPoint start, BoardPoint end, double radius) =>
+            Math.Clamp(radius, 0, Math.Min(Math.Abs(end.X - start.X), Math.Abs(end.Y - start.Y)) / 2);
+
+        /// <summary>
+        /// A rectangle with rounded corners. Filled, it is the rectangle shrunk by the radius and swept
+        /// by the radius and the pen: exact. Stroked, it is its outline drawn with the pen: four straight
+        /// sides, exact, and four quarter arcs, covered as <see cref="ArcBand"/> covers an arc.
+        /// </summary>
+        private static IEnumerable<RoundedShape> RoundedRectangle(
+            BoardPoint start, BoardPoint end, double radius, double stroke, bool filled, double maxError)
+        {
+            var centre = (start + end) * 0.5;
+            var w = Math.Abs(end.X - start.X);
+            var h = Math.Abs(end.Y - start.Y);
+            if (filled)
+            {
+                var local = RoundRect(w, h, radius);
+                return [RoundedShape.Polygon(local.Core.Select(p => centre + p), local.Radius + stroke)];
+            }
+
+            var hx = (w / 2) - radius;
+            var hy = (h / 2) - radius;
+            var parts = new List<RoundedShape>();
+            if (hx > 0)
+            {
+                parts.Add(RoundedShape.Capsule(centre + new BoardPoint(-hx, -hy - radius), centre + new BoardPoint(hx, -hy - radius), stroke));
+                parts.Add(RoundedShape.Capsule(centre + new BoardPoint(-hx, hy + radius), centre + new BoardPoint(hx, hy + radius), stroke));
+            }
+
+            if (hy > 0)
+            {
+                parts.Add(RoundedShape.Capsule(centre + new BoardPoint(-hx - radius, -hy), centre + new BoardPoint(-hx - radius, hy), stroke));
+                parts.Add(RoundedShape.Capsule(centre + new BoardPoint(hx + radius, -hy), centre + new BoardPoint(hx + radius, hy), stroke));
+            }
+
+            var diagonal = radius / Math.Sqrt(2);
+            foreach (var (sx, sy) in new[] { (-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0) })
+            {
+                var corner = centre + new BoardPoint(sx * hx, sy * hy);
+                parts.AddRange(ArcBand(
+                    corner + new BoardPoint(sx * radius, 0),
+                    corner + new BoardPoint(sx * diagonal, sy * diagonal),
+                    corner + new BoardPoint(0, sy * radius),
+                    stroke,
+                    maxError));
+            }
+
+            return parts;
         }
 
         private static RoundedShape Place(RoundedShape local, BoardPoint centre, double angle) =>

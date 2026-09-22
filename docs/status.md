@@ -42,10 +42,12 @@ What has no view round-trips intact and is reachable through `Node`.
 - **A padstack that differs per layer** (KiCad 9's `(padstack (mode custom) …)`) is described by its
   main shape on every layer, in both `CopperGeometry` and the design a board exports.
 - **A custom pad** is exported to a design as the convex hull of its primitives, which covers it;
-  KiCad exports the outline of their union. In `CopperGeometry` its lines, polygons, square-cornered
-  rectangles and filled circles are exact, and an arc or a stroked circle among them is grown by
-  `maxError`, as a track arc is. **A Bézier primitive is dropped from both, and a rounded rectangle
-  is drawn with square corners** (#77).
+  KiCad exports the hull of the polygon it draws, up to its max error inside. In `CopperGeometry` its
+  lines, polygons and square-cornered rectangles are exact, and so are its filled circles and filled
+  rounded rectangles; an arc, a stroked circle, a stroked rounded rectangle's corners and a Bézier
+  among them are covered within `maxError`, as a track arc is. KiCad cuts a Bézier into chords
+  within its own max error, 5 µm by default, so it can measure up to that much closer to one than the
+  curve is.
 - **A session's `placement` is not applied.** A router does not move parts.
 - **Net classes are an input, not something read.** They live in the `.kicad_pro`, resolved through
   patterns and priorities; `SpecctraOptions` takes them resolved.
@@ -90,11 +92,12 @@ What has no view round-trips intact and is reachable through `Node`.
 - **A KiCad that goes away *after* taking the request is not reported by nng.** Measured against
   the in-process peer: the receive goes on answering "not yet", and the token or `RequestTimeout` is
   what ends the call. With neither, it waits.
-- **Nothing interrupts a dial.** `Connect()`, and a `Send` that has to connect first, block in nng's
-  dial, which returns at once against a path with nothing at it and after nng's own 10 s against a
-  socket that never completes the handshake. The caller's token is read before the dial, not during
-  it, and `Dispose()` does not end it either: a call it catches there ends with its
-  `OperationCanceledException` only when the dial returns.
+- **A dial holds a thread, though not the caller's.** nng's dial is blocking, so `Connect()`, and a
+  `Send` that has to connect first, run it on a thread of its own: for under a millisecond against a
+  KiCad that is there or a path with nothing at it, and for nng's own 10 s against a socket that
+  never completes the handshake. The caller's token and `Dispose()` end it at once, by closing the
+  socket under it (measured: `nng_dial` returns `NNG_ECLOSED` within 0.1 ms, on nng 1.3.2 and
+  1.4.0). `Disconnect()` does not touch a dial under way. `RequestTimeout` does not bound the dial.
 - **No `Async` suffixes, and one sync/async asymmetry**: `GetProject(DocumentSpecifier)` is
   synchronous while the parameterless `GetProject()` is not.
 
@@ -117,4 +120,5 @@ What has no view round-trips intact and is reachable through `Node`.
   tests that shell out to `kicad-cli` return early unless `KICADSHARP_KICAD_CLI` points at one.
   `tests/KiCadSharp.Fluent.Tests` covers the fluent package: every `With*` against the `Add*` it
   mirrors, a reflection check that the two sets match, and a footprint and a symbol library that
-  must save identically in both styles. Run them all with `dotnet test KiCadSharp.slnx`.
+  must save identically in both styles. Run them all with `dotnet test KiCadSharp.slnx`;
+  [building.md](building.md#testing) lists the variables they read and where they write files.
