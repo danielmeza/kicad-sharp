@@ -67,14 +67,33 @@ SExpressions. The schematic side of KiCad's IPC API does not answer on KiCad 10;
           Visible="false" />
   </ItemGroup>
 
+  <!-- runtimes/osx-arm64 and runtimes/win-arm64, which nng.NET does not publish. They are built from
+       nng's source by scripts/build-nng.sh and committed under native/<rid>/. native/NNG_PIN says
+       which nng, and the nng workflow proves each file rebuilds byte for byte. They reach the output
+       and the package the same way the six above do. -->
+  <PropertyGroup>
+    <NngNativeDirectory>$(MSBuildThisFileDirectory)../../native/</NngNativeDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(NngNativeDirectory)**/libnng.dylib;$(NngNativeDirectory)**/nng.dll"
+          Link="runtimes/%(RecursiveDir)native/%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Pack="true"
+          PackagePath="runtimes/%(RecursiveDir)native/%(Filename)%(Extension)"
+          Visible="false" />
+  </ItemGroup>
+
   <!-- Without this the failure is silent: an empty $(Pkgnng_NET) turns the glob above into nothing,
        the package builds without a single native library in it, and the first thing anyone sees is a
-       DllNotFoundException at run time. -->
+       DllNotFoundException at run time. The same goes for the two built here. -->
   <Target Name="RequireNngNativeAssets" BeforeTargets="BeforeBuild;GenerateNuspec">
     <Error Condition="'$(Pkgnng_NET)' == ''"
            Text="The nng.NET package path is not known, so no libnng would be shipped. Restore this project before building it." />
     <Error Condition="!Exists('$(Pkgnng_NET)/runtimes/linux-x64/native/libnng.so')"
            Text="nng.NET no longer lays its native libraries out under runtimes/&lt;rid&gt;/native/. Nothing would be shipped; fix src/KiCadSharp/KiCadSharp.csproj." />
+    <Error Condition="!Exists('$(NngNativeDirectory)osx-arm64/libnng.dylib') Or !Exists('$(NngNativeDirectory)win-arm64/nng.dll')"
+           Text="native/osx-arm64/libnng.dylib or native/win-arm64/nng.dll is missing, so the package would ship no libnng for that platform. Both are committed; see native/NNG_PIN." />
   </Target>
 
 </Project>

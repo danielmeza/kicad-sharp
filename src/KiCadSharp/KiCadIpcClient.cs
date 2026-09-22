@@ -64,11 +64,17 @@ namespace KiCadSharp
 
         private readonly ILogger<KiCadIPCClient> _logger;
         private readonly KiCadClientSettings _settings;
+
+        // REQ carries one request at a time; see Send. Never disposed, and that is deliberate: see
+        // Dispose.
         private readonly SemaphoreSlim _exchange = new(1, 1);
 
-        private NngRequestSocket? _socket;
-        private CancellationTokenSource _connectionCancellationSource;
-        private bool _disposed;
+        // Guards _connection and _disposed, together. A call reads both under it, and so does Dispose,
+        // so a call either finds the client disposed or gets a connection that Dispose will close.
+        private readonly object _gate = new();
+
+        private Connection? _connection;
+        private volatile bool _disposed;
 
         /// <param name="settings">Socket path, token and client name.</param>
         /// <param name="logger">Where dial and error detail goes.</param>
@@ -81,25 +87,26 @@ namespace KiCadSharp
         {
             _settings = settings;
             _logger = logger;
-            _connectionCancellationSource = new CancellationTokenSource();
         }
 
-        public bool IsConnected
-        {
-            get; private set;
+        /// <summary>Whether the client has a connection to KiCad open.</summary>
+        public bool IsConnected => Volatile.Read(ref _connection) is not null;
 
-        }
         /// <summary>
-        /// Opens the socket and dials KiCad. <see cref="Send{TResult}"/> calls this itself when the
-        /// client is not connected, so calling it first is only needed to fail early.
+        /// Opens the socket and dials KiCad, closing the connection first if there is one.
+        /// <see cref="Send{TResult}"/> connects by itself when the client is not connected, so calling
+        /// this first is only needed to fail early.
         /// </summary>
         /// <param name="cancellationToken">Observed before the dial, not during it.</param>
         /// <exception cref="KiCadConnectionException">
         /// No socket path is configured, nothing at it completes nng's handshake, or no native nng
         /// library could be loaded.
         /// </exception>
-        /// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was already cancelled.</exception>
-        /// <exception cref="ObjectDisposedException">The client has been disposed.</exception>
+        /// <exception cref="OperationCanceledException">
+        /// <paramref name="cancellationToken"/> was already cancelled; or <see cref="Dispose"/> was called
+        /// while the dial was in progress, and the connection it made has been closed.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">The client had been disposed before the call.</exception>
         public ValueTask Connect(CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -109,6 +116,42 @@ namespace KiCadSharp
                 Disconnect();
             }
 
+            Open(cancellationToken);
+            return ValueTask.CompletedTask;
+        }
+
+        /// <summary>
+        /// The client's connection, or <see langword="null"/> when it has none.
+        /// </summary>
+        /// <remarks>
+        /// Read under the same lock <see cref="Dispose"/> takes. A call that gets a connection here is
+        /// one that <see cref="Dispose"/> will cut off, with a cancellation. A call that comes too late
+        /// for that gets the <see cref="ObjectDisposedException"/> instead.
+        /// </remarks>
+        /// <exception cref="ObjectDisposedException">The client has been disposed.</exception>
+        private Connection? Current()
+        {
+            lock (_gate)
+            {
+                ObjectDisposedException.ThrowIf(_disposed, this);
+                return _connection;
+            }
+        }
+
+        /// <summary>
+        /// Dials KiCad, and makes the result the client's connection unless another call got there first,
+        /// in which case that one is returned.
+        /// </summary>
+        /// <remarks>
+        /// The dial is blocking and nothing can interrupt it, <see cref="Dispose"/> included. A dial that
+        /// returns after <see cref="Dispose"/> has run, whether or not it succeeded, ends the call with
+        /// the same <see cref="OperationCanceledException"/> as any other call <see cref="Dispose"/> cut
+        /// off, and a socket it opened is closed here. Nobody else has seen that socket, so if it were
+        /// not closed here, it would never be closed. The same goes for a socket that lost the race to
+        /// another call's dial.
+        /// </remarks>
+        private Connection Open(CancellationToken cancellationToken)
+        {
             if (string.IsNullOrWhiteSpace(_settings.PipeName))
             {
                 throw new KiCadConnectionException("Pipename not provided");
@@ -125,6 +168,10 @@ namespace KiCadSharp
                 // but not answering, and fails immediately against a path that is not there.
                 socket = NngRequestSocket.Dial(_settings.PipeName, _settings.RequestTimeout, _settings.RequestTimeout);
             }
+            catch (NngException exception) when (_disposed)
+            {
+                throw DisposedWhileConnecting(exception);
+            }
             catch (NngException exception)
             {
                 // nng's failures are the ones worth renaming here. A KiCadConnectionException from
@@ -134,12 +181,41 @@ namespace KiCadSharp
                     $"Failed to connect to KiCad at '{_settings.PipeName}': {exception.Message}", exception);
             }
 
-            _socket = socket;
-            _connectionCancellationSource = new CancellationTokenSource();
-            IsConnected = true;
-            _logger.LogDebug("Connected to KiCad at {Socket} using nng {NngVersion}.", _settings.PipeName, Nng.Version());
-            return ValueTask.CompletedTask;
+            var opened = new Connection(socket);
+            Connection? current;
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    current = null;
+                }
+                else
+                {
+                    _connection ??= opened;
+                    current = _connection;
+                }
+            }
+
+            if (current != opened)
+            {
+                opened.Close();
+            }
+
+            if (current is null)
+            {
+                throw DisposedWhileConnecting();
+            }
+
+            if (current == opened)
+            {
+                _logger.LogDebug("Connected to KiCad at {Socket} using nng {NngVersion}.", _settings.PipeName, Nng.Version());
+            }
+
+            return current;
         }
+
+        private static OperationCanceledException DisposedWhileConnecting(Exception? innerException = null) =>
+            new("The client was disposed while it was connecting to KiCad.", innerException, new CancellationToken(canceled: true));
 
 
         /// <summary>
@@ -171,11 +247,16 @@ namespace KiCadSharp
         /// </exception>
         /// <exception cref="OperationCanceledException">
         /// <paramref name="cancellationToken"/> was cancelled, and the exception carries it as its
-        /// <see cref="OperationCanceledException.CancellationToken"/>; or <see cref="Disconnect"/> was
-        /// called while the request was outstanding.
+        /// <see cref="OperationCanceledException.CancellationToken"/>; or <see cref="Disconnect"/> or
+        /// <see cref="Dispose"/> was called while the call was under way, at any point in it: while it
+        /// connected, waited behind another call on this client, waited to send, or waited for the
+        /// reply.
         /// </exception>
         /// <exception cref="ArgumentNullException"><paramref name="command"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ObjectDisposedException">The client has been disposed.</exception>
+        /// <exception cref="ObjectDisposedException">
+        /// The client had been disposed before the call. A call already under way when the client is
+        /// disposed ends with <see cref="OperationCanceledException"/> instead.
+        /// </exception>
         public async ValueTask<TResult> Send<TResult>(IMessage command, CancellationToken cancellationToken = default)
             where TResult : IMessage, new()
         {
@@ -187,21 +268,21 @@ namespace KiCadSharp
             ObjectDisposedException.ThrowIf(_disposed, this);
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!IsConnected)
-            {
-                await Connect(cancellationToken);
-            }
+            // The one connection this call runs on, start to finish: its socket, and the token that
+            // Disconnect() and Dispose() cancel before they close that socket. Reading the socket and
+            // the token separately let a call send on one connection while watching another's token,
+            // which nothing would ever cancel.
+            var connection = Current() ?? Open(cancellationToken);
 
-            // Linked after connecting, not before. Disconnect() cancels the connection's token and
-            // Connect() replaces it, so a token linked before the reconnect was already cancelled: a
-            // Send after Disconnect() failed with an OperationCanceledException nobody had asked for,
-            // instead of connecting again.
+            // Linked after connecting, not before. A token linked before a reconnect belonged to the
+            // connection Disconnect() had cancelled: a Send after Disconnect() failed with an
+            // OperationCanceledException nobody had asked for, instead of connecting again.
             //
             // The linked token used to be built and then never looked at, so nothing this client did
             // could be cancelled or would even notice a disconnect. It is now honoured for the whole
             // round trip: the send and the reply are both polled for rather than blocked on, so
             // cancelling while either waits returns here instead of waiting for KiCad.
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(_connectionCancellationSource.Token, cancellationToken);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(connection.Closing, cancellationToken);
             ThrowIfAbandoned(linked.Token, cancellationToken);
 
             var envelope = new ApiRequest();
@@ -221,9 +302,7 @@ namespace KiCadSharp
                 ClientName = _settings.ClientName ?? KiCadClientSettings.DefaultClientName,
             };
 
-
-            var socket = _socket ?? throw new KiCadConnectionException("Not connected to KiCad: the request socket has not been opened.");
-
+            var socket = connection.Socket;
             ApiResponse? reply;
 
             // REQ carries one request at a time. Two callers sharing a client would otherwise
@@ -268,6 +347,8 @@ namespace KiCadSharp
             }
             finally
             {
+                // Never disposed, so this cannot throw ObjectDisposedException over the exception
+                // that is already on its way out. See Dispose.
                 _exchange.Release();
             }
 
@@ -473,7 +554,7 @@ namespace KiCadSharp
         }
 
         /// <summary>Throws <see cref="Abandoned"/> once <paramref name="linked"/> is cancelled.</summary>
-        private static void ThrowIfAbandoned(CancellationToken linked, CancellationToken caller)
+        private void ThrowIfAbandoned(CancellationToken linked, CancellationToken caller)
         {
             if (linked.IsCancellationRequested)
             {
@@ -488,12 +569,18 @@ namespace KiCadSharp
         /// <remarks>
         /// When the caller cancelled, it carries the caller's own token, so that the caller can tell
         /// its cancellation from any other by <see cref="OperationCanceledException.CancellationToken"/>.
-        /// Otherwise <see cref="Disconnect"/> cut the request off, and it carries the linked token.
+        /// Otherwise <see cref="Disconnect"/> or <see cref="Dispose"/> cut the request off, and it
+        /// carries the linked token.
         /// </remarks>
-        private static OperationCanceledException Abandoned(CancellationToken linked, CancellationToken caller, Exception? innerException = null) =>
+        private OperationCanceledException Abandoned(CancellationToken linked, CancellationToken caller, Exception? innerException = null) =>
             caller.IsCancellationRequested
                 ? new OperationCanceledException("The request was cancelled.", innerException, caller)
-                : new OperationCanceledException("The request was abandoned: the client was disconnected.", innerException, linked);
+                : new OperationCanceledException(
+                    _disposed
+                        ? "The request was abandoned: the client was disposed."
+                        : "The request was abandoned: the client was disconnected.",
+                    innerException,
+                    linked);
 
         /// <summary>
         /// Sends a command whose reply carries no result. Fails exactly as
@@ -506,29 +593,116 @@ namespace KiCadSharp
             await Send<Empty>(command, cancellationToken);
         }
 
+        /// <summary>
+        /// Closes the connection, if there is one. Every call under way on it ends with an
+        /// <see cref="OperationCanceledException"/>, and the next <see cref="Send{TResult}"/> connects
+        /// again.
+        /// </summary>
+        /// <remarks>
+        /// Safe from any thread at any time: concurrently with calls, with <see cref="Dispose"/> and
+        /// with itself. After <see cref="Dispose"/> it does nothing.
+        /// </remarks>
         public void Disconnect()
         {
-            if (!_disposed)
+            Connection? connection;
+            lock (_gate)
             {
-                _connectionCancellationSource.Cancel();
+                connection = _connection;
+                _connection = null;
             }
 
-            IsConnected = false;
-            _socket?.Dispose();
-            _socket = null;
+            connection?.Close();
         }
 
+        /// <summary>
+        /// Closes the connection and ends every call under way on this client with an
+        /// <see cref="OperationCanceledException"/>. A call made afterwards throws
+        /// <see cref="ObjectDisposedException"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A call is under way from the moment it finds the client not disposed, and it ends with the
+        /// same exception at every point in the round trip: while it connects, while it waits behind
+        /// another call on this client, while it waits to send, and while it waits for the reply. The
+        /// exception is the one <see cref="Disconnect"/> produces, as <see cref="HttpClient"/> cancels
+        /// its pending requests when it is disposed: the call did not fail, it was stopped. Its
+        /// <see cref="OperationCanceledException.CancellationToken"/> is not the caller's, unless the
+        /// caller had cancelled too.
+        /// </para>
+        /// <para>
+        /// Safe to call more than once, and from any thread concurrently with calls,
+        /// <see cref="Disconnect"/> and itself. It does not wait for the calls it ends, and it never
+        /// waits on nng or on KiCad. The one call it cannot end at once is one that is dialing: nng's
+        /// dial cannot be interrupted, so that call ends when the dial returns. That is immediate
+        /// against a path with nothing at it, and at most nng's own 10 s against a socket that never
+        /// completes the handshake.
+        /// </para>
+        /// <para>
+        /// The <see cref="SemaphoreSlim"/> that keeps calls in turn is not disposed, and neither is the
+        /// connection's <see cref="CancellationTokenSource"/>. The calls this ends still use both while
+        /// they unwind, and neither holds anything but memory: neither has a timer, and nothing reads
+        /// their wait handles. Disposing the semaphore was #67. A call ended here threw
+        /// <see cref="ObjectDisposedException"/> from <see cref="SemaphoreSlim.Release()"/> in most
+        /// runs, and a call waiting behind another sometimes never ended, because disposing a
+        /// <see cref="SemaphoreSlim"/> drops its waiters without completing them. A disposed
+        /// <see cref="CancellationTokenSource"/> would throw from <see cref="CancellationTokenSource.Token"/>
+        /// the same way, for a call still starting.
+        /// </para>
+        /// </remarks>
         public void Dispose()
         {
-            if (_disposed)
+            Connection? connection;
+            lock (_gate)
             {
-                return;
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+                connection = _connection;
+                _connection = null;
             }
 
-            Disconnect();
-            _disposed = true;
-            _exchange.Dispose();
-            _connectionCancellationSource.Dispose();
+            connection?.Close();
+        }
+
+        /// <summary>
+        /// One dialled socket, and the token that ends every call made on it.
+        /// </summary>
+        /// <remarks>
+        /// Whoever takes a connection out of <see cref="_connection"/> closes it: <see cref="Disconnect"/>,
+        /// <see cref="Dispose"/>, or the <see cref="Open"/> that never put its own there. Nobody else can,
+        /// so <see cref="Close"/> runs once for each connection, on one thread. Its cancellation has
+        /// therefore reached every call's linked token before the socket closes under those calls, and
+        /// a call that then finds the socket closed always finds its token cancelled too. It reports a
+        /// cancellation rather than a transport failure.
+        /// </remarks>
+        private sealed class Connection(NngRequestSocket socket)
+        {
+            // Never disposed: see KiCadIPCClient.Dispose. A disposed one would also throw from Token,
+            // which a call still starting on this connection may read after Close.
+            private readonly CancellationTokenSource _closing = new();
+
+            internal NngRequestSocket Socket { get; } = socket;
+
+            internal CancellationToken Closing => _closing.Token;
+
+            internal void Close()
+            {
+                // The token first. Cancel() runs every linked token's cancellation before it returns,
+                // and Poll reads the token before each nng call, so a call sees a cancellation and not
+                // a closed socket. The socket is closed even if a callback throws, since nothing else
+                // will close it.
+                try
+                {
+                    _closing.Cancel();
+                }
+                finally
+                {
+                    Socket.Dispose();
+                }
+            }
         }
     }
 }

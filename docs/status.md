@@ -96,6 +96,11 @@ What has no view round-trips intact and is reachable through `Node`.
 - **A KiCad that goes away *after* taking the request is not reported by nng.** Measured against
   the in-process peer: the receive goes on answering "not yet", and the token or `RequestTimeout` is
   what ends the call. With neither, it waits.
+- **Nothing interrupts a dial.** `Connect()`, and a `Send` that has to connect first, block in nng's
+  dial, which returns at once against a path with nothing at it and after nng's own 10 s against a
+  socket that never completes the handshake. The caller's token is read before the dial, not during
+  it, and `Dispose()` does not end it either: a call it catches there ends with its
+  `OperationCanceledException` only when the dial returns.
 - **No `Async` suffixes, and one sync/async asymmetry**: `GetProject(DocumentSpecifier)` is
   synchronous while the parameterless `GetProject()` is not.
 

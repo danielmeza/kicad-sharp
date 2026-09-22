@@ -3,3 +3,8 @@
 # core.autocrlf=true would rewrite every LF in them and fail every one of those assertions with a
 # diff no one can see. They are treated as binary for that reason, not because they are.
 tests/KiCadSharp.Tests/data/** -text
+
+# The libnng built from source under native/ is compared byte for byte with a rebuild, and is shipped
+# as it is. Never diff, merge or translate it.
+native/**/*.dylib binary
+native/**/*.dll binary

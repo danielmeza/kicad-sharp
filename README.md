@@ -153,9 +153,19 @@ Every type and member: [docs/api.md](docs/api.md).
 
 ## Platforms
 
-`net10.0` on Linux, macOS and Windows, x64 and arm64. The transport talks to
-[nng](https://nng.nanomsg.org/) through P/Invoke and the native library ships in the package for six
-RIDs. Point `KICADSHARP_NNG_LIBRARY` at your own build if you need something else.
+`net10.0`. The transport talks to [nng](https://nng.nanomsg.org/) through P/Invoke, and the native
+library ships in the package for eight runtime identifiers:
+
+| | x64 | arm64 | 32-bit |
+|---|---|---|---|
+| Linux (glibc) | `linux-x64` | `linux-arm64` | `linux-arm` |
+| macOS | `osx-x64` | `osx-arm64` (Apple silicon) | — |
+| Windows | `win-x64` | `win-arm64` | `win-x86` |
+
+Anything else, musl (Alpine) included, gets no `libnng` from the package: point
+`KICADSHARP_NNG_LIBRARY` at one you supply. What each library links against, and where that bites (a
+slim container, the Visual C++ runtime on Windows), is in
+[docs/ipc.md](docs/ipc.md#nng-and-which-platforms-it-reaches).
 
 ## Building
 

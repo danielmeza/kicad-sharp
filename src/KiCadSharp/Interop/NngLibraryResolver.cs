@@ -27,13 +27,11 @@ namespace KiCadSharp.Interop
     /// resolver adds the one directory the convention implies, which is the whole of step 2 below.
     /// </para>
     /// <para>
-    /// <b>And an escape hatch.</b> Upstream publishes <c>libnng</c> for six runtime identifiers
-    /// (<see cref="ShippedRuntimeIdentifiers"/>). <c>osx-arm64</c>, <c>win-arm64</c> and
-    /// <c>linux-musl-*</c> are not among them, and were not before this either -- the same six
-    /// arrived through <c>nng.NET</c>. On those, <see cref="LibraryPathVariableName"/> names a
-    /// <c>libnng</c> to load instead (<c>brew install nng</c>, a distribution package, your own
-    /// build), which turns "unsupported" into "supply the binary". Without it there is no way in at
-    /// all.
+    /// <b>And an escape hatch.</b> The package carries <c>libnng</c> for eight runtime identifiers
+    /// (<see cref="ShippedRuntimeIdentifiers"/>). Any other, such as <c>linux-musl-x64</c>, has none,
+    /// and there <see cref="LibraryPathVariableName"/> names a <c>libnng</c> to load instead (a
+    /// distribution package, your own build), which turns "unsupported" into "supply the binary".
+    /// Without it there is no way in at all.
     /// </para>
     /// <para>
     /// <b>What that variable names is checked.</b> A library that loads is not necessarily nng, and
@@ -57,11 +55,13 @@ namespace KiCadSharp.Interop
         internal const string LibraryPathVariableName = Nng.LibraryPathVariable;
 
         /// <summary>
-        /// The runtime identifiers this package carries a <c>libnng</c> for. Exactly the set
-        /// <c>nng.NET</c> shipped, because these are the same files.
+        /// The runtime identifiers this package carries a <c>libnng</c> for: the six <c>nng.NET</c>
+        /// publishes, whose files are copied out of it, and <c>osx-arm64</c> and <c>win-arm64</c>,
+        /// which are built from nng's source in this repository (<c>native/NNG_PIN</c>).
+        /// <c>NngInteropTests</c> holds this list to the <c>runtimes/</c> folders a build produces.
         /// </summary>
         internal static readonly string[] ShippedRuntimeIdentifiers =
-            ["linux-x64", "linux-arm64", "linux-arm", "osx-x64", "win-x64", "win-x86"];
+            ["linux-x64", "linux-arm64", "linux-arm", "osx-x64", "osx-arm64", "win-x64", "win-x86", "win-arm64"];
 
         /// <summary>
         /// Every nng function <see cref="Nng"/> declares, which is every one this client calls. A
@@ -233,7 +233,8 @@ namespace KiCadSharp.Interop
             if (OperatingSystem.IsMacOS())
             {
                 return "on macOS libnng.dylib links only /usr/lib/libSystem.B.dylib, which is always present, so this "
-                    + "is more likely an architecture mismatch: nng is published for osx-x64 and not osx-arm64. ";
+                    + "is more likely an architecture mismatch: each libnng.dylib is built for one architecture, x64 or "
+                    + "arm64, and it has to be this process's. ";
             }
 
             return "on Linux libnng.so needs libatomic.so.1, libnsl.so.1, librt.so.1, libpthread.so.0 and glibc. "
