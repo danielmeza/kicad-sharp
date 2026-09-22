@@ -293,7 +293,77 @@ public class ZonePadsAndHatchTests
         Assert.Throws<ArgumentNullException>(() => new KiCadZone().HatchStyle = null!);
     }
 
+    // ------------------------------------------------------------------------------- clearance
+
+    /// <summary>
+    /// A zone with no <c>(connect_pads …)</c> used to read a clearance of 0, which KiCad never uses
+    /// (#102). Setting the clearance just read writes the <c>(connect_pads (clearance 0.5))</c> KiCad
+    /// itself writes for such a zone: no word, so thermal reliefs, and the clearance. It goes at
+    /// the end of the zone, where a child KiCad reads in any order goes, not after the
+    /// <c>(hatch …)</c> where pcbnew puts it.
+    /// </summary>
+    [Fact]
+    public void AZoneWithNoConnectPads_ReadsTheClearanceKiCadReads_AndWritingItBack_WritesWhatKiCadWrites()
+    {
+        var board = Board(string.Empty);
+        var zone = board.Zones[0];
+        Assert.Null(zone.Node.GetChild("connect_pads"));
+        Assert.Equal(0.5, zone.ConnectPadsClearance);
+        Assert.Equal(0.5, new KiCadZone().ConnectPadsClearance);
+
+        zone.ConnectPadsClearance = zone.ConnectPadsClearance;
+
+        var pads = SExpression.Parse(zone.Node.ToText()).GetChild("connect_pads")!;
+        Assert.Empty(pads.Values);
+        var clearance = Assert.Single(pads.Children);
+        Assert.Equal("clearance", clearance.Token);
+        Assert.Equal(["0.5"], clearance.Values.ToArray());
+        Assert.Equal(string.Empty, zone.ConnectPadsMode);
+        Assert.Equal(0.5, zone.ConnectPadsClearance);
+    }
+
     // --------------------------------------------------------------------------- KiCad reads them
+
+    /// <summary>
+    /// The fixture's zone with its <c>(connect_pads …)</c> removed, handed to <c>kicad-cli</c> 10:
+    /// KiCad's own re-save must carry the clearance <see cref="KiCadZone.ConnectPadsClearance"/>
+    /// read before the re-save. The second board has a legacy <c>(setup (zone_clearance 0.3))</c>,
+    /// which KiCad reads as the board's default instead; a zone view does not know its board, so it
+    /// reads 0.5 there, and that exception is documented on the property rather than resolved.
+    /// </summary>
+    [Fact]
+    public void KiCadReadsHalfAMillimetre_ForAZoneWithNoClearance()
+    {
+        if (TestData.KiCadCli is not { } cli)
+        {
+            return;
+        }
+
+        using var scratch = TestData.NewScratchDirectory();
+        var bare = Board(string.Empty);
+        var legacy = KiCadBoard.Parse(bare.ToText().Replace("\t(setup\n", "\t(setup\n\t\t(zone_clearance 0.3)\n", StringComparison.Ordinal));
+        Assert.Contains("(zone_clearance 0.3)", legacy.ToText(), StringComparison.Ordinal);
+        (string Name, KiCadBoard Board, double Expected)[] cases =
+        [
+            ("no-clearance", bare, 0.5),
+            ("legacy-clearance", legacy, 0.3),
+        ];
+
+        foreach (var (name, board, expected) in cases)
+        {
+            Assert.Equal(0.5, board.Zones[0].ConnectPadsClearance);
+            var path = Path.Combine(scratch, name + ".kicad_pcb");
+            board.Save(path);
+
+            Run(cli, scratch, "pcb", "upgrade", "--force", path);
+
+            var upgraded = KiCadBoard.Load(path);
+            Assert.Equal("pcbnew", upgraded.Generator);
+            var zone = Assert.Single(upgraded.Zones);
+            Assert.Equal((name, expected), (name, zone.ConnectPadsClearance));
+            Assert.NotNull(zone.Node.GetChild("connect_pads")?.GetChild("clearance"));
+        }
+    }
 
     /// <summary>
     /// The fixture's zone with each pad connection and hatch the API writes, each on its own board,

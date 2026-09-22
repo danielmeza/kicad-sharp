@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace KiCadSharp.Tests;
 
 /// <summary>
@@ -108,13 +110,16 @@ public static class TestData
     }
 
     /// <summary>
-    /// Copies the whole <c>duplicate-refs</c> fixture into a fresh scratch directory and returns the
-    /// path of the root schematic inside it. Annotation rewrites files, so no test may run against
-    /// the fixture in place.
+    /// Copies the whole <c>duplicate-refs</c> fixture into <paramref name="directory"/> and returns
+    /// the path of the root schematic inside it. Annotation rewrites files, so no test may run against
+    /// the fixture in place:
+    /// <code>
+    /// using var scratch = TestData.NewScratchDirectory();
+    /// var root = TestData.CopyDuplicateRefs(scratch);
+    /// </code>
     /// </summary>
-    public static string CopyDuplicateRefs(out string directory)
+    public static string CopyDuplicateRefs(string directory)
     {
-        directory = NewScratchDirectory();
         var source = Path.Combine(Root, "duplicate-refs");
         foreach (var file in Directory.GetFiles(source))
         {
@@ -124,13 +129,18 @@ public static class TestData
         return Path.Combine(directory, "duplicate-refs.kicad_sch");
     }
 
-    /// <summary>Creates an empty directory under the system temp path, unique to this call.</summary>
-    public static string NewScratchDirectory()
-    {
-        var path = Path.Combine(Path.GetTempPath(), "kicadsharp-tests", Guid.NewGuid().ToString("n"));
-        Directory.CreateDirectory(path);
-        return path;
-    }
+    /// <summary>
+    /// Creates an empty directory under <c>&lt;temp&gt;/kicadsharp-tests</c>, unique to this call and
+    /// named after the test that asked for it. Take it with <c>using</c> so it is deleted when the
+    /// test ends, pass or fail:
+    /// <code>
+    /// using var scratch = TestData.NewScratchDirectory();
+    /// var output = Path.Combine(scratch, "board.kicad_pcb");
+    /// </code>
+    /// <c>KICADSHARP_KEEP_TEST_FILES=1</c> keeps them all; see <see cref="ScratchDirectory"/>.
+    /// </summary>
+    public static ScratchDirectory NewScratchDirectory([CallerMemberName] string owner = "") =>
+        ScratchDirectory.Create("kicadsharp-tests", owner);
 
     /// <summary>
     /// A <c>kicad-cli</c> to shell out to, or <see langword="null"/>. Set <c>KICADSHARP_KICAD_CLI</c>

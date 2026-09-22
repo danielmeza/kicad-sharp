@@ -43,7 +43,7 @@ public class SpecctraKiCadCliTests
             return;
         }
 
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         var theirs = Path.Combine(scratch, "theirs.kicad_pcb");
         File.Copy(Path.Combine(TestData.Root, "oracles", "SNEdge-kicad-import.kicad_pcb"), theirs);
         var ours = Path.Combine(scratch, "ours.kicad_pcb");

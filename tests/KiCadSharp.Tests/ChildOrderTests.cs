@@ -362,7 +362,8 @@ public class ChildOrderTests
 
         Assert.True(written > 0, $"{path} has none of the forms this test is about");
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), Path.GetFileName(path));
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, Path.GetFileName(path));
         board.Save(output);
 
         Assert.Equal(File.ReadAllBytes(path), File.ReadAllBytes(output));
@@ -415,7 +416,7 @@ public class ChildOrderTests
         }
 
         var version = KiCadBoard.Load(TestData.Kicad10Board).Version;
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
 
         // ── a footprint ──────────────────────────────────────────────────────────────────────
         var footprint = new KiCadFootprint("WrongOrder");

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -69,22 +70,61 @@ namespace KiCadSharp.Documents
         /// <summary>Gets the root <c>kicad_symbol_lib</c> form.</summary>
         public SExpression Node => _root;
 
-        /// <summary>Gets or sets the library format version.</summary>
-        public string Version
+        /// <summary>
+        /// Gets or sets the library format version the file declares, its <c>(version …)</c>, or
+        /// <see langword="null"/> when it declares none.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <see langword="null"/> is not a format this library assumes for the file. It used to report
+        /// <see cref="KiCadDefaults.SymbolLibraryVersion"/>, <c>20211014</c>, there, where a lone
+        /// <c>~</c> is an empty value (#95). KiCad 10.0.6 reads a library's version only as the first
+        /// child of <c>kicad_symbol_lib</c> (<c>parseHeader</c>,
+        /// <c>eeschema/sch_io/kicad_sexpr/sch_io_kicad_sexpr_parser.cpp</c>, lines 905–927). When that
+        /// child is something else it assumes the current format, <c>20251024</c> (line 925, from
+        /// line 184). By then it has already taken that child's opening token, so the child is lost
+        /// with it. A symbol or a <c>(generator …)</c> there makes KiCad refuse the library, and an
+        /// empty form ends it early, so every symbol after it is dropped.
+        /// </para>
+        /// <para>
+        /// A version set on a library that has none goes first, where KiCad reads it. It cannot be set
+        /// to <see langword="null"/>: a library without one is not a file KiCad reads as written.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException">The value set is <see langword="null"/>.</exception>
+        [DisallowNull]
+        public string? Version
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.SymbolLibraryVersion;
+            get => _root.GetChildValue(KiCadTokens.Common.Version);
             set
             {
+                ArgumentNullException.ThrowIfNull(value);
                 KiCadChildOrder.Place(_root, KiCadTokens.Common.Version);
                 _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
             }
         }
 
-        /// <summary>Gets or sets the name of the program that wrote the library.</summary>
-        public string Generator
+        /// <summary>
+        /// Gets or sets the name of the program that wrote the library, or <see langword="null"/> when
+        /// the file names none. Setting <see langword="null"/> removes it.
+        /// </summary>
+        /// <remarks>
+        /// It used to report <see cref="KiCadDefaults.LibraryGenerator"/> for a file that names no
+        /// generator (#95). KiCad reads nothing by it (<c>sch_io_kicad_sexpr_parser.cpp</c>, line 212).
+        /// </remarks>
+        public string? Generator
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? KiCadDefaults.LibraryGenerator;
-            set => _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            get => _root.GetChildValue(KiCadTokens.Common.Generator);
+            set
+            {
+                if (value is null)
+                {
+                    _root.RemoveChild(KiCadTokens.Common.Generator);
+                    return;
+                }
+
+                _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            }
         }
 
         /// <summary>
@@ -620,7 +660,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>
@@ -686,7 +726,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>Gets or sets the pin length in millimetres.</summary>
@@ -828,10 +868,13 @@ namespace KiCadSharp.Documents
         /// <summary>Appends a vertex.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads (#101).</exception>
         public void AddPoint(double x, double y)
         {
+            var xText = Numbers.Format(x);
+            var yText = Numbers.Format(y);
             var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            points.CreateChild(KiCadTokens.Common.Xy, xText, yText);
         }
     }
 
@@ -861,14 +904,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the opposite corner.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
     }
 
@@ -897,7 +940,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Center
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Center));
-            set => value.Write(Require(KiCadTokens.Common.Center), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Center, includeRotation: false);
         }
 
         /// <summary>Gets or sets the radius in millimetres.</summary>
@@ -937,21 +980,21 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the mid point the arc passes through.</summary>
         public KiCadPosition Mid
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Mid));
-            set => value.Write(Require(KiCadTokens.Common.Mid), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Mid, includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
     }
 
@@ -1020,7 +1063,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>Gets or sets the text's angle in degrees, converting to what the file stores.</summary>

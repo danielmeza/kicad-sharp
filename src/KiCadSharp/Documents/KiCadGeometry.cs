@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 using SExpressions;
 
@@ -26,19 +27,45 @@ namespace KiCadSharp.Documents
             ? default
             : new KiCadPosition(at.GetValueAsDouble(0), at.GetValueAsDouble(1), at.GetValueAsDouble(2));
 
+        /// <summary>Writes the whole value into <paramref name="at"/>, or nothing.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads.</exception>
         internal readonly void Write(SExpression at, bool includeRotation)
         {
-            at.SetValue(0, Numbers.Format(X), SQuoteStyle.Bare);
-            at.SetValue(1, Numbers.Format(Y), SQuoteStyle.Bare);
+            var x = Numbers.Format(X);
+            var y = Numbers.Format(Y);
+            var rotation = Numbers.Format(Rotation);
+            at.SetValue(0, x, SQuoteStyle.Bare);
+            at.SetValue(1, y, SQuoteStyle.Bare);
             if (includeRotation || Rotation != 0 || at.GetValue(2) is not null)
             {
-                at.SetValue(2, Numbers.Format(Rotation), SQuoteStyle.Bare);
+                at.SetValue(2, rotation, SQuoteStyle.Bare);
             }
+        }
+
+        /// <summary>
+        /// Writes the whole value into <paramref name="owner"/>'s <paramref name="token"/> child,
+        /// creating it where KiCad reads it — or, when a coordinate is not a number KiCad reads,
+        /// throws before creating anything (#101).
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads.</exception>
+        internal readonly void Write(KiCadNode owner, string token, bool includeRotation)
+        {
+            Check();
+            Write(KiCadChildOrder.Require(owner.Node, token), includeRotation);
+        }
+
+        /// <summary>Throws when a coordinate is not a number KiCad reads, and does nothing otherwise.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads.</exception>
+        internal readonly void Check()
+        {
+            Numbers.Check(X);
+            Numbers.Check(Y);
+            Numbers.Check(Rotation);
         }
 
         /// <inheritdoc />
         public override readonly string ToString() =>
-            Rotation == 0 ? $"({Numbers.Format(X)}, {Numbers.Format(Y)})" : $"({Numbers.Format(X)}, {Numbers.Format(Y)}, {Numbers.Format(Rotation)}°)";
+            Rotation == 0 ? $"({Numbers.Text(X)}, {Numbers.Text(Y)})" : $"({Numbers.Text(X)}, {Numbers.Text(Y)}, {Numbers.Text(Rotation)}°)";
     }
 
     /// <summary>A width/height pair: <c>(size w h)</c>.</summary>
@@ -50,10 +77,34 @@ namespace KiCadSharp.Documents
             ? new KiCadSize(fallback, fallback)
             : new KiCadSize(size.GetValueAsDouble(0), size.GetValueAsDouble(1));
 
+        /// <summary>Writes the whole value into <paramref name="size"/>, or nothing.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">A side is not a number KiCad reads.</exception>
         internal readonly void Write(SExpression size)
         {
-            size.SetValue(0, Numbers.Format(Width), SQuoteStyle.Bare);
-            size.SetValue(1, Numbers.Format(Height), SQuoteStyle.Bare);
+            var width = Numbers.Format(Width);
+            var height = Numbers.Format(Height);
+            size.SetValue(0, width, SQuoteStyle.Bare);
+            size.SetValue(1, height, SQuoteStyle.Bare);
+        }
+
+        /// <summary>
+        /// Writes the whole value into <paramref name="owner"/>'s <paramref name="token"/> child,
+        /// creating it where KiCad reads it — or, when a side is not a number KiCad reads, throws
+        /// before creating anything (#101).
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">A side is not a number KiCad reads.</exception>
+        internal readonly void Write(KiCadNode owner, string token)
+        {
+            Check();
+            Write(KiCadChildOrder.Require(owner.Node, token));
+        }
+
+        /// <summary>Throws when a side is not a number KiCad reads, and does nothing otherwise.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">A side is not a number KiCad reads.</exception>
+        internal readonly void Check()
+        {
+            Numbers.Check(Width);
+            Numbers.Check(Height);
         }
     }
 
@@ -71,18 +122,89 @@ namespace KiCadSharp.Documents
                 : new KiCadXyz(xyz.GetValueAsDouble(0), xyz.GetValueAsDouble(1), xyz.GetValueAsDouble(2));
         }
 
+        /// <summary>Writes the whole value into <paramref name="owner"/>'s <c>(xyz …)</c>, or nothing.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads.</exception>
         internal readonly void Write(SExpression owner)
         {
+            var x = Numbers.Format(X);
+            var y = Numbers.Format(Y);
+            var z = Numbers.Format(Z);
             var xyz = owner.GetChild(KiCadTokens.Common.Xyz) ?? owner.CreateChild(KiCadTokens.Common.Xyz);
-            xyz.SetValue(0, Numbers.Format(X), SQuoteStyle.Bare);
-            xyz.SetValue(1, Numbers.Format(Y), SQuoteStyle.Bare);
-            xyz.SetValue(2, Numbers.Format(Z), SQuoteStyle.Bare);
+            xyz.SetValue(0, x, SQuoteStyle.Bare);
+            xyz.SetValue(1, y, SQuoteStyle.Bare);
+            xyz.SetValue(2, z, SQuoteStyle.Bare);
+        }
+
+        /// <summary>
+        /// Writes the whole value into the <c>(xyz …)</c> of <paramref name="owner"/>'s
+        /// <paramref name="token"/> child, creating both where KiCad reads them — or, when a
+        /// coordinate is not a number KiCad reads, throws before creating anything (#101).
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads.</exception>
+        internal readonly void Write(KiCadNode owner, string token)
+        {
+            Numbers.Check(X);
+            Numbers.Check(Y);
+            Numbers.Check(Z);
+            Write(KiCadChildOrder.Require(owner.Node, token));
         }
     }
 
+    /// <summary>
+    /// The one formatter every number this library writes goes through, and the one check on it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <c>double.NaN</c>, <c>double.PositiveInfinity</c> and <c>double.NegativeInfinity</c> format
+    /// as <c>NaN</c>, <c>Infinity</c> and <c>-Infinity</c>, and KiCad reads none of them as a
+    /// number. MEASURED against kicad-cli 10.0.6: <c>pcb export svg</c> refuses the whole board
+    /// over each, exit 3, "Failed to load board: need a number for 'hatch pitch'", "… for 'zone
+    /// clearance'", "… for 'min_thickness'", "… for 'X coordinate'". The message is the lexer's,
+    /// <c>DSNLEXER::NeedNUMBER</c> (<c>common/dsnlexer.cpp</c>, lines 427–439), so no token is
+    /// exempt. A setter therefore refuses such a value and writes nothing (#101).
+    /// </para>
+    /// <para>
+    /// A range is not checked. KiCad clamps some values when it loads a board rather than refusing
+    /// it — a zone's hatch pitch to 0.1–2 mm, for one — and which values, to what, is per token.
+    /// </para>
+    /// </remarks>
     internal static class Numbers
     {
-        internal static string Format(double value) => value.ToString("0.############", CultureInfo.InvariantCulture);
+        /// <summary>
+        /// Formats a number the way KiCad reads it: invariant, no exponent, no trailing zeroes
+        /// beyond what the value needs.
+        /// </summary>
+        /// <param name="value">The number.</param>
+        /// <param name="name">The argument the number came from; the compiler fills it in.</param>
+        /// <returns>The text.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is not a number KiCad reads.</exception>
+        internal static string Format(double value, [CallerArgumentExpression(nameof(value))] string? name = null)
+        {
+            Check(value, name);
+            return Text(value);
+        }
+
+        /// <summary>Throws when <paramref name="value"/> is not a number KiCad reads, and does nothing otherwise.</summary>
+        /// <param name="value">The number.</param>
+        /// <param name="name">The argument the number came from; the compiler fills it in.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is NaN or infinite.</exception>
+        internal static void Check(double value, [CallerArgumentExpression(nameof(value))] string? name = null)
+        {
+            if (!double.IsFinite(value))
+            {
+                throw new ArgumentOutOfRangeException(
+                    name,
+                    value,
+                    $"KiCad reads no number {Text(value)}: a value written to a document must be finite.");
+            }
+        }
+
+        /// <summary>
+        /// The text of any number, for a description. Only <see cref="Format"/> writes to a document.
+        /// </summary>
+        /// <param name="value">The number.</param>
+        /// <returns>The text, <c>NaN</c> and <c>Infinity</c> included.</returns>
+        internal static string Text(double value) => value.ToString("0.############", CultureInfo.InvariantCulture);
     }
 
     /// <summary>
@@ -335,6 +457,7 @@ namespace KiCadSharp.Documents
             get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Font)?.GetChild(KiCadTokens.Common.Size), 1.27);
             set
             {
+                value.Check();
                 var font = Font;
                 value.Write(font.GetChild(KiCadTokens.Common.Size) ?? font.CreateChild(KiCadTokens.Common.Size));
             }
@@ -349,7 +472,11 @@ namespace KiCadSharp.Documents
                 return thickness is not null && thickness.TryGetValue<double>(0, out var value) ? value : 0.25;
             }
 
-            set => Font.SetChildValue(KiCadTokens.Common.Thickness, Numbers.Format(value), SQuoteStyle.Bare);
+            set
+            {
+                var text = Numbers.Format(value);
+                Font.SetChildValue(KiCadTokens.Common.Thickness, text, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>Gets or sets whether the text is bold.</summary>

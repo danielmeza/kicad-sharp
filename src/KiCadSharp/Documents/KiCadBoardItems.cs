@@ -191,14 +191,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
         /// <summary>Gets or sets the track width in millimetres.</summary>
@@ -255,21 +255,21 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the point the arc passes through.</summary>
         public KiCadPosition Mid
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Mid));
-            set => value.Write(Require(KiCadTokens.Common.Mid), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Mid, includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
         /// <summary>Gets or sets the track width in millimetres.</summary>
@@ -349,7 +349,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: false);
         }
 
         /// <summary>Gets or sets the annular pad diameter in millimetres.</summary>
@@ -611,10 +611,15 @@ namespace KiCadSharp.Documents
         /// and 2 mm, and moves one outside that range to the nearer end when it loads the board
         /// (<c>pcbnew/zone.cpp</c>, lines 1341–1342; <c>pcbnew/zones.h</c>, lines 39–40).
         /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is not a number KiCad reads (#101).</exception>
         public double HatchPitch
         {
             get => Node.GetChild(KiCadTokens.Board.Hatch) is { } hatch && hatch.TryGetValue<double>(1, out var pitch) ? pitch : DefaultHatchPitch;
-            set => RequireHatch().SetValue(1, Numbers.Format(value), SQuoteStyle.Bare);
+            set
+            {
+                var text = Numbers.Format(value);
+                RequireHatch().SetValue(1, text, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>
@@ -669,16 +674,40 @@ namespace KiCadSharp.Documents
             }
         }
 
-        /// <summary>Gets or sets the gap left around a pad that connects to the pour, in millimetres.</summary>
+        /// <summary>
+        /// Gets or sets the gap left around a pad that connects to the pour, in millimetres. A zone
+        /// with no <c>(connect_pads (clearance …))</c> reads 0.5, the clearance KiCad reads for it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// KiCad 10.0.6 writes the clearance on every zone (<c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.cpp</c>,
+        /// lines 2925–2949), so a zone without one is a zone built in memory, or one edited by hand.
+        /// Its parser reads <see cref="KiCadDefaults.ZoneClearanceMm"/> for such a zone, and that
+        /// constant says how it was measured (#102). A set on such a zone writes a whole
+        /// <c>(connect_pads (clearance …))</c>, with no word, which is thermal reliefs; see
+        /// <see cref="ConnectPadsMode"/>.
+        /// </para>
+        /// <para>
+        /// The one board where the getter and KiCad disagree carries a legacy
+        /// <c>(setup (zone_clearance …))</c>, which KiCad reads as the default for every zone on it
+        /// that has no clearance of its own. A zone view does not know its board, so it reads 0.5
+        /// there too.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is not a number KiCad reads (#101).</exception>
         public double ConnectPadsClearance
         {
             get
             {
                 var clearance = Node.GetChild(KiCadTokens.Board.ConnectPads)?.GetChild(KiCadTokens.Board.Clearance);
-                return clearance is not null && clearance.TryGetValue<double>(0, out var value) ? value : 0;
+                return clearance is not null && clearance.TryGetValue<double>(0, out var value) ? value : KiCadDefaults.ZoneClearanceMm;
             }
 
-            set => Require(KiCadTokens.Board.ConnectPads).SetChildValue(KiCadTokens.Board.Clearance, Numbers.Format(value), SQuoteStyle.Bare);
+            set
+            {
+                var text = Numbers.Format(value);
+                Require(KiCadTokens.Board.ConnectPads).SetChildValue(KiCadTokens.Board.Clearance, text, SQuoteStyle.Bare);
+            }
         }
 
         /// <summary>Gets or sets the narrowest copper the filler may leave, in millimetres.</summary>
@@ -729,10 +758,13 @@ namespace KiCadSharp.Documents
         /// <summary>Appends a vertex to the outline, creating the <c>polygon</c> form when there is none.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads (#101).</exception>
         public void AddPoint(double x, double y)
         {
+            var xText = Numbers.Format(x);
+            var yText = Numbers.Format(y);
             var polygon = Node.GetChild(KiCadTokens.Board.Polygon) ?? Node.CreateChild(KiCadTokens.Board.Polygon);
-            KiCadChildOrder.Require(polygon, KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            KiCadChildOrder.Require(polygon, KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, xText, yText);
         }
 
         /// <summary>
@@ -956,6 +988,17 @@ namespace KiCadSharp.Documents
         /// Gets or sets the stroke width. KiCad 7+ writes <c>(stroke (width w) (type t))</c>; KiCad 5
         /// and 6 wrote a bare <c>(width w)</c>, and both are read here.
         /// </summary>
+        /// <remarks>
+        /// Setting it writes into whichever of the two the drawing has, so a loaded file changes only
+        /// the number. A drawing that has neither, such as one built here, gets the form KiCad 10.0.6
+        /// writes on a board, <c>(stroke (width w) (type solid))</c>, rather than the bare
+        /// <c>(width w)</c> of older files (#96). The board writer formats every shape's stroke through
+        /// <c>STROKE_PARAMS::Format</c> (<c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.cpp</c>, line
+        /// 1069; <c>common/stroke_params.cpp</c>, line 362). Its parser starts a shape's stroke as solid
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 3241) and reads a bare <c>width</c> into it
+        /// (line 3549), so the two spellings are the same drawing, and KiCad re-saves the old one as
+        /// the new. Footprint shapes do the same; see <see cref="KiCadFpItem.Width"/>.
+        /// </remarks>
         public double Width
         {
             get
@@ -976,7 +1019,15 @@ namespace KiCadSharp.Documents
                     return;
                 }
 
-                WriteChildDouble(KiCadTokens.Common.Width, value);
+                if (Node.GetChild(KiCadTokens.Common.Width) is not null)
+                {
+                    WriteChildDouble(KiCadTokens.Common.Width, value);
+                    return;
+                }
+
+                var created = RequireStroke();
+                created.Width = value;
+                created.Type = KiCadTokens.Common.Solid;
             }
         }
 
@@ -1034,14 +1085,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
     }
 
@@ -1066,14 +1117,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the opposite corner.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
         /// <summary>
@@ -1114,14 +1165,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Center
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Center));
-            set => value.Write(Require(KiCadTokens.Common.Center), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Center, includeRotation: false);
         }
 
         /// <summary>Gets or sets a point on the circumference; KiCad stores that rather than a radius.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
         /// <summary>Gets the radius in millimetres, the distance from the centre to the stored point.</summary>
@@ -1156,21 +1207,21 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the point the arc passes through.</summary>
         public KiCadPosition Mid
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Mid));
-            set => value.Write(Require(KiCadTokens.Common.Mid), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Mid, includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
         /// <summary>Gets or sets the KiCad 5 sweep angle, or 0 on a file that stores a mid point instead.</summary>
@@ -1203,9 +1254,12 @@ namespace KiCadSharp.Documents
         /// <summary>Appends a vertex.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads (#101).</exception>
         public void AddPoint(double x, double y)
         {
-            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            var xText = Numbers.Format(x);
+            var yText = Numbers.Format(y);
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, xText, yText);
         }
     }
 
@@ -1232,9 +1286,12 @@ namespace KiCadSharp.Documents
         /// <summary>Appends a control point.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads (#101).</exception>
         public void AddPoint(double x, double y)
         {
-            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            var xText = Numbers.Format(x);
+            var yText = Numbers.Format(y);
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, xText, yText);
         }
     }
 
@@ -1284,7 +1341,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>Gets or sets the layer.</summary>
@@ -1387,9 +1444,12 @@ namespace KiCadSharp.Documents
         /// <summary>Appends a measured point.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads (#101).</exception>
         public void AddPoint(double x, double y)
         {
-            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            var xText = Numbers.Format(x);
+            var yText = Numbers.Format(y);
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, xText, yText);
         }
     }
 

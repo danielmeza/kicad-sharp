@@ -266,7 +266,7 @@ public class SymbolLibraryVersionTests
             return;
         }
 
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         var source = Path.Combine(scratch, "source.kicad_sym");
         File.WriteAllText(source, KiCad10Library);
         var copy = new KiCadSymbolLibrary();

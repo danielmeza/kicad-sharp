@@ -119,11 +119,29 @@ namespace KiCadSharp.Documents
             }
         }
 
-        /// <summary>Gets or sets the name of the program that wrote the file.</summary>
-        public string Generator
+        /// <summary>
+        /// Gets or sets the name of the program that wrote the file, or <see langword="null"/> when
+        /// the file names none, as a KiCad 5 <c>module</c> does not. Setting <see langword="null"/>
+        /// removes it.
+        /// </summary>
+        /// <remarks>
+        /// It used to report <see cref="KiCadDefaults.LibraryGenerator"/> for a file that names no
+        /// generator (#95). KiCad reads nothing by it (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 1161
+        /// and 5053).
+        /// </remarks>
+        public string? Generator
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? KiCadDefaults.LibraryGenerator;
-            set => _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            get => _root.GetChildValue(KiCadTokens.Common.Generator);
+            set
+            {
+                if (value is null)
+                {
+                    _root.RemoveChild(KiCadTokens.Common.Generator);
+                    return;
+                }
+
+                _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            }
         }
 
         /// <summary>
@@ -249,11 +267,33 @@ namespace KiCadSharp.Documents
         /// <summary>Writes one footprint out as a <c>.kicad_mod</c>.</summary>
         /// <param name="footprint">The footprint to write.</param>
         /// <param name="filePath">Destination path.</param>
-        /// <remarks>The footprint's own bytes are reproduced; it is not re-formatted.</remarks>
+        /// <remarks>
+        /// The footprint's own bytes are reproduced; it is not re-formatted. The file ends with the
+        /// line ending the footprint was read with. A footprint built in memory, or one written on
+        /// a single line, ends with <c>\n</c>, which is what KiCad writes on every platform.
+        /// </remarks>
         public static void SaveFootprint(KiCadFootprint footprint, string filePath)
         {
             ArgumentNullException.ThrowIfNull(footprint);
-            new SExpressionWriter().WriteToFile(footprint.Node, filePath);
+            var options = new SExpressionWriterOptions { NewLine = NewLineOf(footprint.Node.SourceSpan) };
+            new SExpressionWriter(options).WriteToFile(footprint.Node, filePath);
+        }
+
+        /// <summary>
+        /// The line ending a form's source uses: the one at its first line break, or <c>\n</c> when
+        /// it has none.
+        /// </summary>
+        /// <remarks>
+        /// The trailing newline of a <c>.kicad_mod</c> is not part of the <c>footprint</c> form, so
+        /// the writer adds one of its own, and until #107 that was always <c>\n</c>. MEASURED on
+        /// Linux with a CRLF footprint: the form's bytes came back with CRLF and the file ended
+        /// <c>)\n</c>, a file with mixed endings. On a Windows checkout with
+        /// <c>core.autocrlf=true</c> that is every footprint in a test's string literal.
+        /// </remarks>
+        private static string NewLineOf(ReadOnlySpan<char> source)
+        {
+            var lineFeed = source.IndexOf('\n');
+            return lineFeed > 0 && source[lineFeed - 1] == '\r' ? "\r\n" : "\n";
         }
 
         private static bool IsFootprintToken(string token) =>
@@ -374,7 +414,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: false);
         }
 
         /// <summary>
@@ -686,14 +726,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
     }
 
@@ -717,14 +757,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the opposite corner.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
         /// <summary>
@@ -770,14 +810,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Center
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Center));
-            set => value.Write(Require(KiCadTokens.Common.Center), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Center, includeRotation: false);
         }
 
         /// <summary>Gets or sets a point on the circumference.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
         /// <summary>Gets the fill, or <see langword="null"/> when the circle has no <c>(fill ...)</c>.</summary>
@@ -812,21 +852,21 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the mid point the arc passes through, KiCad 6 and later.</summary>
         public KiCadPosition Mid
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Mid));
-            set => value.Write(Require(KiCadTokens.Common.Mid), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Mid, includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
         /// <summary>Gets or sets the KiCad 5 sweep angle, or 0 when the file uses a mid point instead.</summary>
@@ -862,9 +902,12 @@ namespace KiCadSharp.Documents
         /// <summary>Appends a vertex.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads (#101).</exception>
         public void AddPoint(double x, double y)
         {
-            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            var xText = Numbers.Format(x);
+            var yText = Numbers.Format(y);
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, xText, yText);
         }
 
         /// <summary>Gets the fill, or <see langword="null"/> when the polygon has no <c>(fill ...)</c>.</summary>
@@ -959,7 +1002,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>Gets or sets the layer.</summary>
@@ -1069,14 +1112,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: false);
         }
 
         /// <summary>Gets or sets the pad size.</summary>
         public KiCadSize Size
         {
             get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Size), 1);
-            set => value.Write(Require(KiCadTokens.Common.Size));
+            set => value.Write(this, KiCadTokens.Common.Size);
         }
 
         /// <summary>Gets or sets the layers the pad is on.</summary>
@@ -1193,21 +1236,21 @@ namespace KiCadSharp.Documents
         public KiCadXyz Offset
         {
             get => KiCadXyz.Read(Node.GetChild(KiCadTokens.Footprint.Offset), 0);
-            set => value.Write(Require(KiCadTokens.Footprint.Offset));
+            set => value.Write(this, KiCadTokens.Footprint.Offset);
         }
 
         /// <summary>Gets or sets the model scale.</summary>
         public KiCadXyz Scale
         {
             get => KiCadXyz.Read(Node.GetChild(KiCadTokens.Common.Scale), 1);
-            set => value.Write(Require(KiCadTokens.Common.Scale));
+            set => value.Write(this, KiCadTokens.Common.Scale);
         }
 
         /// <summary>Gets or sets the model rotation, in degrees.</summary>
         public KiCadXyz Rotation
         {
             get => KiCadXyz.Read(Node.GetChild(KiCadTokens.Footprint.Rotate), 0);
-            set => value.Write(Require(KiCadTokens.Footprint.Rotate));
+            set => value.Write(this, KiCadTokens.Footprint.Rotate);
         }
     }
 }

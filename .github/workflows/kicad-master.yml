@@ -1,0 +1,135 @@
+name: KiCad master
+
+# Weekly, and on demand: move the proto pin to KiCad master's current tip, rebuild and republish
+# the dev image so the nightly inside is current, run the whole suite live against it, and open a
+# pull request with the result. The pin is a commit and never moves by itself; this is what moves
+# it, so a change on KiCad master reaches this repository as a reviewable diff rather than as
+# silence -- and a behaviour change in the nightly shows up here as a red run even when no proto
+# changed.
+#
+# The pull request is opened with GITHUB_TOKEN, and GitHub does not start other workflows on
+# events that token creates, so ci.yml does not run on it. This workflow therefore runs the same
+# build, unit and live steps itself and reports them in the pull request. Pushing any commit to
+# the branch by hand runs ci.yml as usual.
+
+on:
+  schedule:
+    - cron: '17 5 * * 1'   # Mondays, 05:17 UTC; KiCad's nightly PPA builds around 02:40 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    env:
+      KICADSHARP_KICAD_FLAVOR: nightly
+      KICADSHARP_CONTAINER_RUNTIME: docker
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Move the pin to the tip of KiCad master
+        id: pin
+        run: |
+          scripts/sync-protos.sh --bump
+          commit=$(sed -n 's/^KICAD_COMMIT=//p' protos/KICAD_PIN)
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "short=${commit:0:8}" >> "$GITHUB_OUTPUT"
+          if git diff --quiet -- protos; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "The pin already points at master's tip ($commit); nothing to move."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat -- protos
+          fi
+
+      - name: Build
+        run: dotnet build KiCadSharp.slnx -c Release
+
+      - name: Unit tests
+        run: dotnet test KiCadSharp.slnx -c Release --no-build
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      # A fresh dev image: the nightly PPA moves daily, and the image the ipc-nightly job pulls
+      # should carry the same master this run measured against.
+      - name: Rebuild and publish the dev image
+        id: image
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: echo "nightly=$(scripts/kicad-dev-image.sh publish)" >> "$GITHUB_OUTPUT"
+
+      - name: Start KiCad master, pcbnew and eeschema
+        run: |
+          scripts/kicad-ipc-container.sh start tests/KiCadSharp.Tests/data/kicad10-pcbnew.kicad_pcb | sed 's/^export //' >> "$GITHUB_ENV"
+          scripts/kicad-ipc-container.sh start tests/KiCadSharp.Tests/data/duplicate-refs/duplicate-refs.kicad_sch | sed 's/^export //' >> "$GITHUB_ENV"
+
+      - name: Live tests
+        id: live
+        continue-on-error: true
+        run: >
+          dotnet test KiCadSharp.slnx -c Release --no-build
+          --filter "FullyQualifiedName~IpcTests|FullyQualifiedName~IpcMasterTests|FullyQualifiedName~IpcSchematicTests"
+          --logger "console;verbosity=normal" 2>&1 | tee live.log; exit "${PIPESTATUS[0]}"
+
+      - name: KiCad logs
+        if: steps.live.outcome == 'failure'
+        run: |
+          docker logs kicad-sharp-ipc-pcb 2>&1 | tail -50 || true
+          docker logs kicad-sharp-ipc-sch 2>&1 | tail -50 || true
+
+      - name: Stop KiCad
+        if: always()
+        run: scripts/kicad-ipc-container.sh stop
+
+      - name: Open or update the pull request
+        if: steps.pin.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch="chore/kicad-pin-${{ steps.pin.outputs.short }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add protos
+          git commit -m "chore(protos): move the KiCad pin to master at ${{ steps.pin.outputs.short }}" \
+                     -m "Moved by the kicad-master workflow: scripts/sync-protos.sh --bump, then the whole suite live against the dev image rebuilt with nightly ${{ steps.image.outputs.nightly }}."
+          git push --force origin "$branch"
+
+          {
+            echo "The KiCad master pin moved to \`${{ steps.pin.outputs.commit }}\` (\`scripts/sync-protos.sh --bump\`)."
+            echo
+            echo "The dev image was rebuilt and published with nightly \`${{ steps.image.outputs.nightly }}\`, and the whole suite ran against it in this workflow run, because a pull request opened by GITHUB_TOKEN does not start ci.yml:"
+            echo
+            echo "- unit tests: passed"
+            echo "- live tests against master: **${{ steps.live.outcome }}**"
+            echo
+            echo "Live test summary:"
+            echo
+            echo '```'
+            grep -E "Passed!|Failed!|Failed " live.log || tail -5 live.log
+            echo '```'
+            echo
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } > body.md
+
+          if [ "$(gh pr list --head "$branch" --json number --jq length)" = "0" ]; then
+            gh pr create --base master --head "$branch" \
+              --title "chore(protos): move the KiCad pin to master at ${{ steps.pin.outputs.short }}" \
+              --body-file body.md
+          else
+            gh pr edit "$branch" --body-file body.md
+          fi
+
+      - name: Fail if the live tests failed
+        if: steps.live.outcome == 'failure'
+        run: exit 1

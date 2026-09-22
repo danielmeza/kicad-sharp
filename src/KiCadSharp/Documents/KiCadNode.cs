@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -129,10 +128,12 @@ namespace KiCadSharp.Documents
         /// <param name="token">The child token.</param>
         /// <param name="value">The number.</param>
         /// <remarks>A missing child is created where KiCad reads it; see <see cref="Require"/>.</remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is not a number KiCad reads (#101).</exception>
         protected void WriteChildDouble(string token, double value)
         {
+            var text = Format(value);
             KiCadChildOrder.Place(Node, token);
-            Node.SetChildValue(token, Format(value), SQuoteStyle.Bare);
+            Node.SetChildValue(token, text, SQuoteStyle.Bare);
         }
 
         /// <summary>Writes a KiCad boolean child as <c>(token yes)</c> / <c>(token no)</c>.</summary>
@@ -153,12 +154,16 @@ namespace KiCadSharp.Documents
             Node.SetValue(index, value, quote);
 
         /// <summary>
-        /// Formats a number the way KiCad does: invariant, no exponent, no trailing zeroes beyond
+        /// Formats a number the way KiCad reads it: invariant, no exponent, no trailing zeroes beyond
         /// what the value needs.
         /// </summary>
         /// <param name="value">The number.</param>
         /// <returns>The text.</returns>
-        protected static string Format(double value) => value.ToString("0.############", CultureInfo.InvariantCulture);
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="value"/> is NaN or infinite. KiCad 10.0.6 reads <c>NaN</c> and
+        /// <c>Infinity</c> as no number at all and refuses the whole file (#101).
+        /// </exception>
+        protected static string Format(double value) => Numbers.Format(value);
 
         /// <summary>Gets or creates the child form with the given token.</summary>
         /// <param name="token">The child token.</param>

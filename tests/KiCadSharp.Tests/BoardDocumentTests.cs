@@ -400,7 +400,8 @@ public class BoardDocumentTests
         Assert.Equal(board.Footprints[0], board.Footprints[0]);
 
         // And it really is a .kicad_mod's worth of footprint: written out on its own it loads as one.
-        var output = Path.Combine(TestData.NewScratchDirectory(), "extracted.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "extracted.kicad_mod");
         KiCadFootprintLibrary.SaveFootprint(terminal, output);
 
         var standalone = KiCadFootprintLibrary.Load(output);
@@ -433,7 +434,8 @@ public class BoardDocumentTests
         // created the form it was asked for would show up right here as a changed file.
         ReadEverything(board);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), Path.GetFileName(source));
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, Path.GetFileName(source));
         board.Save(output);
 
         Assert.Equal(length, new FileInfo(output).Length);
@@ -450,7 +452,8 @@ public class BoardDocumentTests
         // `power` -> `signal` in (4 "In1.Cu" power): five characters become six.
         board.GetLayer("In1.Cu")!.Type = "signal";
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "probe-4layer.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "probe-4layer.kicad_pcb");
         board.Save(output);
 
         var before = File.ReadAllText(TestData.ProbeBoard);
@@ -474,7 +477,8 @@ public class BoardDocumentTests
         // (width 0.05) -> (width 0.15) on the first segment: same digits, one of them different.
         board.Segments[0].Width = 0.15;
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "probe-4layer.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "probe-4layer.kicad_pcb");
         board.Save(output);
 
         var before = File.ReadAllText(TestData.ProbeBoard);
@@ -500,7 +504,8 @@ public class BoardDocumentTests
         board.AddNet(56, "SPARE");
         board.RequireTitleBlock().Title = "Design rule probe";
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "probe-4layer.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "probe-4layer.kicad_pcb");
         board.Save(output);
 
         var reloaded = KiCadBoard.Load(output);
@@ -542,7 +547,8 @@ public class BoardDocumentTests
         // So a board that goes back to `through` is spelled the way KiCad spells it, with no word
         // there at all. The via's own bytes are re-laid-out because the node was touched — the
         // writer only reuses source text for nodes nobody wrote to — but nothing else in the file is.
-        var output = Path.Combine(TestData.NewScratchDirectory(), "probe-4layer.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "probe-4layer.kicad_pcb");
         board.Save(output);
 
         var reloaded = KiCadBoard.Load(output);
@@ -676,7 +682,8 @@ public class BoardDocumentTests
 
         board.RequireTitleBlock().SetComment(1, "Built, not loaded.");
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "built.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "built.kicad_pcb");
         board.Save(output);
 
         var reloaded = KiCadBoard.Load(output);

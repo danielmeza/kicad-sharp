@@ -246,7 +246,7 @@ public class NewFootprintFormsTests
             return;
         }
 
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         var empty = Path.Combine(scratch, "empty.kicad_pcb");
         new KiCadFootprintLibrary().Save(empty);
         var holding = Path.Combine(scratch, "holding.kicad_pcb");
@@ -279,7 +279,7 @@ public class NewFootprintFormsTests
             return;
         }
 
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         var footprint = new KiCadFootprint("Same");
         footprint.AddLine(0, 0, 1, 0, KiCadLayerNames.FSilkS);
 

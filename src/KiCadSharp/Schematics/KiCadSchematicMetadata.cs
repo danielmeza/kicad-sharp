@@ -118,7 +118,7 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>

@@ -281,14 +281,14 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: false);
         }
 
         /// <summary>Gets or sets the box's extent, in millimetres. The pins sit on its edges.</summary>
         public KiCadSize Size
         {
             get => KiCadSize.Read(Node.GetChild(KiCadTokens.Common.Size));
-            set => value.Write(Require(KiCadTokens.Common.Size));
+            set => value.Write(this, KiCadTokens.Common.Size);
         }
 
         /// <summary>Gets the box's border, or <see langword="null"/> when it carries no <c>(stroke ...)</c>.</summary>
@@ -405,7 +405,7 @@ namespace KiCadSharp.Schematics
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>
