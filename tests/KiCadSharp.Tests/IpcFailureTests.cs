@@ -49,7 +49,7 @@ public class IpcFailureTests
             NullLogger<KiCadIPCClient>.Instance);
 
     private static string AbsentSocket() =>
-        $"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}";
+        SocketPaths.NewUrl("absent");
 
     /// <summary>
     /// A connected client whose KiCad went away after the dial: the peer it dialled has closed.
@@ -119,7 +119,7 @@ public class IpcFailureTests
     {
         // A KiCad that has bound its socket and is not serving yet. nng gives up on the dial after
         // its own 10 s, which is the cost of this test.
-        var path = Path.Combine(Path.GetTempPath(), $"kicadsharp-silent-{Guid.NewGuid():N}.sock");
+        var path = SocketPaths.New("silent");
         using var listener = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
         listener.Bind(new UnixDomainSocketEndPoint(path));
         listener.Listen(8);

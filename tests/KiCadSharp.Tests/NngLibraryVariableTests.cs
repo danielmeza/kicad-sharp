@@ -242,7 +242,7 @@ public class NngLibraryVariableTests
         using var client = new KiCadIPCClient(
             new KiCadClientSettings
             {
-                PipeName = $"ipc://{Path.Combine(Path.GetTempPath(), $"kicadsharp-absent-{Guid.NewGuid():N}.sock")}",
+                PipeName = SocketPaths.NewUrl("absent"),
             },
             NullLogger<KiCadIPCClient>.Instance);
 
