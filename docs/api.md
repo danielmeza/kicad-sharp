@@ -116,11 +116,11 @@ plus `Document` and `Name`.
 |---|---|---|
 | `KiCadNode` | — | Base of every typed view: `Node` (the live s-expression), `ToSExpression()`. Everything below reads and writes through it. |
 | `KiCadNodeList<T>` | — | A live view over a node's children with one token: `Count`, indexer, `Add`, `Remove`, `Insert`. A `foreach` walks the children that were there when it started, so the loop may move, remove or append. |
-| `KiCadSymbolLibrary` | `.kicad_sym` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddSymbol`, `RemoveSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`, `Document`, `Node`. |
+| `KiCadSymbolLibrary` | `.kicad_sym` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddSymbol`, `RemoveSymbol`, `GetSymbol`, `Symbols`, `Version`, `Generator`, `Document`, `Node`. `Version` and `Generator` are what the file declares, or `null` when it declares none. |
 | `KiCadSymbol` | — | `Id`, `Properties`, `Units`, `Pins`, `GraphicalItems`, `HidePinNumbers`, `HidePinNames`, `InBom`, `OnBoard`, `GetPropertyValue`, `AddProperty`, `AddUnit`, `AddPin`, `CloneAs`. `Pins` and `GraphicalItems` look through the KiCad 6+ sub-units, which is where they live. Setting `Id` renames the sub-units with it (`R_1_1` → `UL_R_1_1`) and re-points every `(extends …)` in the same library that named the old symbol; KiCad refuses a library in which either still carries the old name. |
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
 | `KiCadText` | — | Text inside a symbol: `Text`, `Position`, `RotationDegrees`, `FontEffects`. KiCad stores this angle in **tenths of a degree**, so a vertical text is `(at x y 900)` and `Position.Rotation` reads 900. `RotationDegrees` converts. The four-argument constructor writes its angle unchanged and is obsolete. `KiCadSchematicText`, which is text on a sheet, stores degrees, so there `RotationDegrees` is the number in the file. |
-| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`, `Version`, `Generator`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). `Version` is the version the file declares, or `null` when it declares none. |
+| `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`, `Version`, `Generator`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). `Version` and `Generator` are what the file declares, or `null` when it declares none. |
 | `KiCadFootprint` | — | `Id`, `Version`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
 | `KiCadBoard` | `.kicad_pcb` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `Version`, `Generator`, `GeneratorVersion`, `Paper`, `EmbeddedFonts`, `General`, `TitleBlock`, `Setup` (and its `Stackup`), `Layers`, `GetLayer`, `Nets`, `GetNet` (by code or by name), `AddNet`, `Footprints`, `Segments`, `TrackArcs`, `Vias`, `Zones`, `GraphicLines`, `GraphicRectangles`, `GraphicCircles`, `GraphicArcs`, `GraphicPolygons`, `GraphicCurves`, `Texts`, `Dimensions`, `Groups`, `RequireGeneral`/`RequireTitleBlock`/`RequireSetup`, `Document`, `Node`. What it has no view for yet is listed in [status.md](status.md). |
 | `KiCadSchematic` | `.kicad_sch` | `Load`/`LoadAsync`/`Parse`, `Save`, `ToText`, `Uuid`, `Version`, `Generator`, `GeneratorVersion`, `Paper`, `EmbeddedFonts`, `TitleBlock`, `Symbols`, `Sheets`, `Wires`, `Buses`, `BusEntries`, `BusAliases`, `Junctions`, `NoConnects`, `Labels`, `GlobalLabels`, `HierarchicalLabels`, `NetClassFlags`, `TextItems`, `TextBoxes`, `Polylines`, `Rectangles`, `Circles`, `Arcs`, `Beziers`, `Images`, `LibrarySymbols`, `SheetInstances`, `RequireTitleBlock`/`RequireLibrarySymbols`/`RequireSheetInstances`, `FilePath`, `IsModified`, `Document`. What it has no view for yet is listed in [status.md](status.md). |
@@ -259,15 +259,25 @@ the four fields KiCad gives every footprint, written as `(property …)`: `Refer
 `F.Fab`. So `GetPropertyValue("Reference")` answers on a new footprint as it does on one KiCad wrote,
 and `TextItems` starts empty (#75). The `(fp_text reference …)` and `(fp_text value …)` it wrote
 before date from before format `20230620`, when fields replaced them. A width set on a new `fp_*`
-shape is written as `(stroke (width w) (type solid))`, not as the bare `(width w)` of older files. kicad-cli 10.0.6 reads the old
-and new spellings the same way. A footprint read from a file keeps its forms: its text items stay
+shape, or on a new board drawing (`gr_line`, `gr_rect`, `gr_circle`, `gr_arc`, `gr_poly`, `gr_curve`;
+#96), is written as `(stroke (width w) (type solid))`, not as the bare `(width w)` of older files.
+kicad-cli 10.0.6 reads the old and new spellings the same way, and re-saves the old as the new. A footprint read from a file keeps its forms: its text items stay
 text items, and a bare `width` stays bare when written to.
 
 **A new board-shaped `KiCadFootprintLibrary` starts with a layer table**, the same one a new
 `KiCadBoard` has. It used to write an empty `(layers)`, which KiCad refuses as "0 is not a valid layer
-count" (#74). `KiCadFootprintLibrary.Version` reports only what the file declares: `null` for a file
-with no version, which KiCad reads as format 0 (a `.kicad_mod`) or `20201115` (a board). It used to
-report `20211014` there (#76).
+count" (#74).
+
+**`Version` and `Generator` report only what the file declares.** On `KiCadBoard`,
+`KiCadFootprintLibrary` and `KiCadSymbolLibrary` they are `null` for a file that declares none. They
+used to report the stamp and name a new document is written with, `20241229`, `20211014` and
+`KiCadSharp` or `KiCad Library Importer`, which neither the file nor KiCad uses (#76, #95). KiCad reads
+a `.kicad_mod` with no version as format 0. A board or symbol library with no version is not one it
+reads as written at all: KiCad 10.0.6 takes the version only as the first child, and when that child
+is something else it assumes one (`20201115` for a board, the current `20251024` for a library) and
+loses that child. A `(generator …)` there makes it refuse the file, and an empty form ends the file
+early. So `KiCadBoard.Version` and `KiCadSymbolLibrary.Version` cannot be set to `null`, and a version
+set on a file that has none goes first. `KiCadSchematic` still reports `""` for both.
 
 ### Copper geometry — `KiCadSharp.Geometry`
 

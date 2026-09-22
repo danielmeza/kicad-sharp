@@ -119,11 +119,29 @@ namespace KiCadSharp.Documents
             }
         }
 
-        /// <summary>Gets or sets the name of the program that wrote the file.</summary>
-        public string Generator
+        /// <summary>
+        /// Gets or sets the name of the program that wrote the file, or <see langword="null"/> when
+        /// the file names none, as a KiCad 5 <c>module</c> does not. Setting <see langword="null"/>
+        /// removes it.
+        /// </summary>
+        /// <remarks>
+        /// It used to report <see cref="KiCadDefaults.LibraryGenerator"/> for a file that names no
+        /// generator (#95). KiCad reads nothing by it (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 1161
+        /// and 5053).
+        /// </remarks>
+        public string? Generator
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? KiCadDefaults.LibraryGenerator;
-            set => _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            get => _root.GetChildValue(KiCadTokens.Common.Generator);
+            set
+            {
+                if (value is null)
+                {
+                    _root.RemoveChild(KiCadTokens.Common.Generator);
+                    return;
+                }
+
+                _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            }
         }
 
         /// <summary>
