@@ -157,7 +157,8 @@ public class DocumentDefaultsTests
         // typed on the line below it, so it held whatever IsPowerSymbol did — review inverted
         // that property to EndsWith and all 200 tests still passed. Assert through the property
         // and the mutation dies.
-        var hierarchy = SchematicHierarchy.Load(TestData.CopyDuplicateRefs(out _));
+        using var scratch = TestData.NewScratchDirectory();
+        var hierarchy = SchematicHierarchy.Load(TestData.CopyDuplicateRefs(scratch));
 
         var power = hierarchy.Placements.First(
             p => p.Symbol.ReferenceProperty?.StartsWith("#PWR", StringComparison.Ordinal) == true);

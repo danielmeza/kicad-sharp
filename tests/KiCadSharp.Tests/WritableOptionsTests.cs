@@ -19,8 +19,12 @@ namespace KiCadSharp.Tests;
 /// (Newtonsoft is case-insensitive, STJ is not), non-ASCII escaping, and how unknown properties
 /// survive a round trip.
 /// </remarks>
-public class WritableOptionsTests
+public sealed class WritableOptionsTests : IDisposable
 {
+    // xUnit builds one instance per test and disposes it after the test, so each test has a
+    // directory of its own and it goes when the test does.
+    private readonly ScratchDirectory _scratch = TestData.NewScratchDirectory(nameof(WritableOptionsTests));
+
     public sealed class KiCadOptions
     {
         public string? PipeName { get; set; }
@@ -153,9 +157,11 @@ public class WritableOptionsTests
         Assert.Contains("does not contain a JSON object", error.Message);
     }
 
-    private static (TestableOptions Options, string Path) Build(string json)
+    public void Dispose() => _scratch.Dispose();
+
+    private (TestableOptions Options, string Path) Build(string json)
     {
-        var directory = TestData.NewScratchDirectory();
+        string directory = _scratch;
         var path = Path.Combine(directory, "appsettings.json");
         File.WriteAllText(path, json);
 
