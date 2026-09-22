@@ -300,6 +300,18 @@ namespace KiCadSharp
         /// (<c>api_server.cpp</c>, lines 115-125). No default can know that process id.
         /// </para>
         /// <para>
+        /// <b>KiCad from Flathub</b> is an exception on Linux (#110). It runs with
+        /// <c>TMPDIR=/var/tmp</c> inside its sandbox, and the sandbox's <c>/var/tmp</c> is
+        /// <c>~/.var/app/org.kicad.KiCad/cache/tmp</c> on the host, so a client outside the sandbox
+        /// finds nothing at the address above. When no socket exists there, and one exists at
+        /// <c>~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock</c>, the result is that one; see
+        /// <see cref="FlathubSocketFile"/>. Existence is <see cref="File.Exists(string)"/>, which is
+        /// true for a socket. A native KiCad that is listening at the address above always wins. A
+        /// socket file left behind by a KiCad that did not exit cleanly counts as existing, so the
+        /// dial then fails with "Connection refused", as it does for a native KiCad's; KiCad removes
+        /// such a file the next time it starts (<c>api_server.cpp</c>, lines 96-112).
+        /// </para>
+        /// <para>
         /// The path can be longer than the platform allows. KiCad does not shorten it. On Linux a
         /// socket path has to fit in <c>sun_path</c>, 108 bytes with its terminating NUL, so a
         /// <c>TMPDIR</c> longer than 92 characters leaves KiCad with no socket at all. The
@@ -310,7 +322,12 @@ namespace KiCadSharp
         public static string GetDefaultSocketPath()
         {
             return GetDefaultSocketPath(
-                CurrentSocketPlatform, Environment.GetEnvironmentVariable, Directory.Exists, Path.GetTempPath);
+                CurrentSocketPlatform,
+                Environment.GetEnvironmentVariable,
+                Directory.Exists,
+                Path.GetTempPath,
+                File.Exists,
+                () => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         }
 
         /// <summary>The three ways KiCad places its socket; see <see cref="GetDefaultSocketPath()"/>.</summary>
@@ -327,14 +344,18 @@ namespace KiCadSharp
             : SocketPlatform.Unix;
 
         /// <summary>
-        /// <see cref="GetDefaultSocketPath()"/> over a platform, an environment, a file system and a
-        /// system temp directory the caller supplies, so a test can describe each one.
+        /// <see cref="GetDefaultSocketPath()"/> over a platform, an environment, a file system, a
+        /// system temp directory and a home directory the caller supplies, so a test can describe
+        /// each one. <paramref name="fileExists"/> answers whether a socket file is there;
+        /// <paramref name="homeDirectory"/> is where a Flathub KiCad's sandbox data lives under.
         /// </summary>
         internal static string GetDefaultSocketPath(
             SocketPlatform platform,
             Func<string, string?> getVariable,
             Func<string, bool> directoryExists,
-            Func<string> systemTempPath)
+            Func<string> systemTempPath,
+            Func<string, bool> fileExists,
+            Func<string?> homeDirectory)
         {
             var configured = getVariable("KICAD_API_SOCKET");
             if (!string.IsNullOrEmpty(configured))
@@ -348,8 +369,56 @@ namespace KiCadSharp
             }
 
             var directory = TempDirectory(platform, getVariable, directoryExists, systemTempPath);
-            return "ipc://" + SocketFileIn(directory, windows: platform == SocketPlatform.Windows);
+            var socket = SocketFileIn(directory, windows: platform == SocketPlatform.Windows);
+
+            // A KiCad from Flathub listens where its sandbox's /var/tmp is on the host (#110). Only
+            // when nothing is at KiCad's own address: a native KiCad that is listening wins over a
+            // socket file the Flatpak left behind.
+            if (platform == SocketPlatform.Unix && !fileExists(socket))
+            {
+                var flathub = FlathubSocketFile(homeDirectory());
+                if (flathub is not null && fileExists(flathub))
+                {
+                    socket = flathub;
+                }
+            }
+
+            return "ipc://" + socket;
         }
+
+        /// <summary>
+        /// Where a KiCad from Flathub listens, seen from the host:
+        /// <c>&lt;home&gt;/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock</c>; or
+        /// <see langword="null"/> when there is no home directory to put it under.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The Flathub manifest (<c>flathub/org.kicad.KiCad</c>, <c>org.kicad.KiCad.yml</c>,
+        /// <c>finish-args</c>, at <c>279821a</c>) starts KiCad with <c>TMPDIR=/var/tmp</c>. Commit
+        /// <c>761588f</c> (2025-02-19) had first shared the host's <c>/tmp</c> into the sandbox,
+        /// "Required for default path of KiCad's IPC API"; <c>8d96620</c> (2025-02-21) replaced that
+        /// with the variable. Flatpak binds the sandbox's <c>/var/tmp</c> to
+        /// <c>&lt;app data&gt;/cache/tmp</c>, and the app data directory is
+        /// <c>g_get_home_dir()/.var/app/&lt;app id&gt;</c> (flatpak 1.14.6,
+        /// <c>common/flatpak-run.c</c>, lines 3617 and 2096). <c>g_get_home_dir()</c> is
+        /// <c>$HOME</c>, then the passwd entry, which is also how
+        /// <see cref="Environment.GetFolderPath(Environment.SpecialFolder)"/> finds
+        /// <see cref="Environment.SpecialFolder.UserProfile"/> on Unix.
+        /// </para>
+        /// <para>
+        /// MEASURED with org.kicad.KiCad 10.0.6 from Flathub on flatpak 1.14.6: inside the sandbox
+        /// pcbnew has <c>TMPDIR=/var/tmp</c>; <c>/var/tmp</c> is a bind mount of
+        /// <c>~/.var/app/org.kicad.KiCad/cache/tmp</c>; <c>/tmp</c> and <c>$XDG_RUNTIME_DIR</c> are
+        /// private tmpfs mounts the host never sees. pcbnew listens on
+        /// <c>/var/tmp/kicad/api.sock</c>, and a process on the host connects to
+        /// <c>~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock</c> as it is. It is an ordinary
+        /// socket inode on the host's file system: nothing has to be granted with
+        /// <c>flatpak override</c>. kipy tries the same path (<c>_default_socket_path</c> in
+        /// <c>kipy/kicad.py</c>). See docs/ipc.md.
+        /// </para>
+        /// </remarks>
+        private static string? FlathubSocketFile(string? home) =>
+            string.IsNullOrEmpty(home) ? null : SocketFileIn(home + "/.var/app/org.kicad.KiCad/cache/tmp", windows: false);
 
         private static readonly string[] TempVariables = ["TMPDIR", "TMP", "TEMP"];
 
