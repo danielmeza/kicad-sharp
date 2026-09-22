@@ -34,9 +34,14 @@ namespace KiCadSharp.Interop
     internal sealed class NngRequestSocket : IDisposable
     {
         private Nng.NngSocket _socket;
-        private bool _closed;
+
+        // 1 once closed. An int, so that a close from another thread -- the one that ends a dial --
+        // and the owner's own Dispose settle who closes with one Interlocked exchange.
+        private int _closed;
 
         private NngRequestSocket(Nng.NngSocket socket) => _socket = socket;
+
+        private bool IsClosed => Volatile.Read(ref _closed) != 0;
 
         /// <summary>
         /// Opens a REQ v0 socket, applies the timeouts and dials <paramref name="url"/>.
@@ -61,11 +66,9 @@ namespace KiCadSharp.Interop
         /// </remarks>
         internal static NngRequestSocket Dial(string url, TimeSpan sendTimeout, TimeSpan receiveTimeout)
         {
-            var socket = Open();
+            var socket = Open(sendTimeout, receiveTimeout);
             try
             {
-                socket.SetSendTimeout(sendTimeout);
-                socket.SetReceiveTimeout(receiveTimeout);
                 socket.Dial(url);
             }
             catch
@@ -75,6 +78,29 @@ namespace KiCadSharp.Interop
             }
 
             // Success: still open, and the caller's to close.
+            return socket;
+        }
+
+        /// <summary>
+        /// Opens a REQ v0 socket and applies the timeouts, without dialing: the first two of
+        /// <see cref="Dial(string, TimeSpan, TimeSpan)"/>'s three steps, for a caller that runs the
+        /// dial itself, on a thread of its own, and closes the socket under it to end it early.
+        /// </summary>
+        /// <returns>An open socket the caller now owns and must dispose, dialed or not.</returns>
+        internal static NngRequestSocket Open(TimeSpan sendTimeout, TimeSpan receiveTimeout)
+        {
+            var socket = Open();
+            try
+            {
+                socket.SetSendTimeout(sendTimeout);
+                socket.SetReceiveTimeout(receiveTimeout);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
+
             return socket;
         }
 
@@ -106,18 +132,31 @@ namespace KiCadSharp.Interop
         }
 
         /// <summary>
-        /// Connects to <paramref name="url"/>, blocking until nng has a connection or gives up.
+        /// Connects to <paramref name="url"/>, blocking until nng has a connection, gives up, or the
+        /// socket is closed under it.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Measured on this transport: an <c>ipc://</c> path that does not exist fails in under a
         /// millisecond with <c>NNG_ECONNREFUSED</c>; a path that is bound but never completes nng's
         /// handshake -- a KiCad that has opened its socket and is not serving yet -- takes
         /// <b>10.0 s</b> to fail with <c>NNG_ETIMEDOUT</c>. That 10 s is nng's own bound and is the
         /// reason a caller waiting for KiCad to come up must count seconds rather than attempts.
+        /// </para>
+        /// <para>
+        /// <b><see cref="Dispose"/> from another thread ends it.</b> Measured on nng 1.3.2 and 1.4.0,
+        /// against a listener that never accepts and against one that accepted and holds the
+        /// handshake: <c>nng_close</c> returned in under 0.1 ms, and this returned <c>NNG_ECLOSED</c>
+        /// at the same moment, with the connection closed on the peer's side 0.4 ms later. That is how
+        /// <see cref="KiCadIPCClient"/> ends a dial the caller's token or its own <c>Dispose</c> has
+        /// abandoned (#105). A close that lands before this reaches nng throws
+        /// <see cref="ObjectDisposedException"/> instead, and one that lands between the check and the
+        /// call is answered by nng with the same <c>NNG_ECLOSED</c>.
+        /// </para>
         /// </remarks>
         internal void Dial(string url)
         {
-            ObjectDisposedException.ThrowIf(_closed, this);
+            ObjectDisposedException.ThrowIf(IsClosed, this);
             Check(nameof(Nng.nng_dial), Nng.nng_dial(_socket, url, out _, 0));
         }
 
@@ -138,7 +177,7 @@ namespace KiCadSharp.Interop
 
         private void SetTimeout(string option, TimeSpan timeout)
         {
-            ObjectDisposedException.ThrowIf(_closed, this);
+            ObjectDisposedException.ThrowIf(IsClosed, this);
 
             var milliseconds = timeout == Timeout.InfiniteTimeSpan
                 ? -1
@@ -169,7 +208,7 @@ namespace KiCadSharp.Interop
         /// </remarks>
         internal bool TrySend(byte[] payload)
         {
-            ObjectDisposedException.ThrowIf(_closed, this);
+            ObjectDisposedException.ThrowIf(IsClosed, this);
             ArgumentNullException.ThrowIfNull(payload);
 
             Check(nameof(Nng.nng_msg_alloc), Nng.nng_msg_alloc(out var message, 0));
@@ -208,7 +247,7 @@ namespace KiCadSharp.Interop
         /// </summary>
         internal bool TryReceive([NotNullWhen(true)] out byte[]? payload)
         {
-            ObjectDisposedException.ThrowIf(_closed, this);
+            ObjectDisposedException.ThrowIf(IsClosed, this);
 
             var result = Nng.nng_recvmsg(_socket, out var message, Nng.FlagNonBlock);
             if (result == Nng.Again)
@@ -239,15 +278,17 @@ namespace KiCadSharp.Interop
             return true;
         }
 
-        /// <summary>Closes the socket. Anything waiting on it fails with <c>NNG_ECLOSED</c>.</summary>
+        /// <summary>
+        /// Closes the socket. Anything waiting on it fails with <c>NNG_ECLOSED</c>, a dial blocked on
+        /// another thread included. Safe from any thread, and more than once: the first call closes.
+        /// </summary>
         public void Dispose()
         {
-            if (_closed)
+            if (Interlocked.Exchange(ref _closed, 1) != 0)
             {
                 return;
             }
 
-            _closed = true;
             Nng.nng_close(_socket);
         }
 
