@@ -58,6 +58,15 @@ public class ChildOrderTests
             (Pts, c => AddPoints(c.AddPoint, 4)));
 
     [Fact]
+    public void FpCurve_PointsGoFirst_WhateverOrderThePropertiesAreSetIn() =>
+        AssertEveryOrder(
+            () => new KiCadFpCurve(),
+            [Pts],
+            ("layer", c => c.Layer = KiCadLayerNames.FSilkS),
+            ("stroke", c => c.Width = 0.12),
+            (Pts, c => AddPoints(c.AddPoint, 4)));
+
+    [Fact]
     public void FpLine_StartThenEndGoFirst_WhateverOrderThePropertiesAreSetIn() =>
         AssertEveryOrder(
             () => new KiCadFpLine(),

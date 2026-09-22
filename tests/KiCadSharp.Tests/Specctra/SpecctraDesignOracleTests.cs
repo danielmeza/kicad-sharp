@@ -1,6 +1,7 @@
 using KiCadSharp.Documents;
 using KiCadSharp.Geometry;
 using KiCadSharp.Specctra;
+using KiCadSharp.Tests.Geometry;
 
 namespace KiCadSharp.Tests.Specctra;
 
@@ -14,7 +15,9 @@ namespace KiCadSharp.Tests.Specctra;
 /// <see cref="SpecctraOptions"/>'s: 0.2 mm tracks at 0.2 mm, a 0.6/0.3 mm via, 0.25 mm around a bare
 /// hole. The boards between them carry every pad shape but custom and chamfered, parts on both
 /// sides, through-hole pins and bare holes, planes on outer and inner layers, rule-area keepouts,
-/// routed arcs, and locked copper.
+/// routed arcs, and locked copper. <c>outline-curves.dsn</c> adds the two outline forms none of them
+/// draws, a Bézier and a rounded rectangle; <see cref="BoardOutlineOracleTests"/> holds its boundary
+/// to a far tighter measure than the one below.
 /// </para>
 /// <para>
 /// Compared item by item through <see cref="DsnView"/> within 1.5 µm: the layer stack, every
@@ -36,6 +39,7 @@ public class SpecctraDesignOracleTests
         { "m2-pcie-adapter.dsn", TestData.M2PcieAdapterBoard },
         { "SNEdge-unrouted.dsn", Path.Combine(TestData.Root, "oracles", "SNEdge-unrouted.kicad_pcb") },
         { "pad-shapes.dsn", Path.Combine(TestData.Root, "oracles", "pad-shapes.kicad_pcb") },
+        { "outline-curves.dsn", Path.Combine(TestData.Root, "oracles", "outline-curves.kicad_pcb") },
     };
 
     [Theory]
@@ -88,13 +92,16 @@ public class SpecctraDesignOracleTests
 
         // The boundary: KiCad approximates the outline's arcs with its own vertices, this library
         // with others; both enclose the same board, which is what is asserted - to 0.2 % of area
-        // and 5 µm of extent.
+        // and 5 µm of extent. A board of several pieces has one path per piece, in whatever order
+        // each writer's polygon set keeps them; they are paired by where they lie.
         Assert.Equal(kicad.Boundary.Count, ours.Boundary.Count);
-        for (var i = 0; i < kicad.Boundary.Count; i++)
+        var theirPaths = kicad.Boundary.OrderBy(b => b.Min(p => p.X)).ThenBy(b => b.Min(p => p.Y)).ToList();
+        var myPaths = ours.Boundary.OrderBy(b => b.Min(p => p.X)).ThenBy(b => b.Min(p => p.Y)).ToList();
+        for (var i = 0; i < theirPaths.Count; i++)
         {
-            Assert.Equal(Area(kicad.Boundary[i]), Area(ours.Boundary[i]), Area(kicad.Boundary[i]) * 0.002);
-            Assert.Equal(kicad.Boundary[i].Min(p => p.X), ours.Boundary[i].Min(p => p.X), tolerance: 5.0);
-            Assert.Equal(kicad.Boundary[i].Max(p => p.Y), ours.Boundary[i].Max(p => p.Y), tolerance: 5.0);
+            Assert.Equal(Area(theirPaths[i]), Area(myPaths[i]), Area(theirPaths[i]) * 0.002);
+            Assert.Equal(theirPaths[i].Min(p => p.X), myPaths[i].Min(p => p.X), tolerance: 5.0);
+            Assert.Equal(theirPaths[i].Max(p => p.Y), myPaths[i].Max(p => p.Y), tolerance: 5.0);
         }
     }
 

@@ -503,6 +503,9 @@ namespace KiCadSharp.Documents
         /// <summary>Gets the footprint's polygons.</summary>
         public KiCadNodeList<KiCadFpPoly> Polygons => new(Node, KiCadTokens.Footprint.FpPoly, n => new KiCadFpPoly(n));
 
+        /// <summary>Gets the footprint's Bézier curves.</summary>
+        public KiCadNodeList<KiCadFpCurve> Curves => new(Node, KiCadTokens.Footprint.FpCurve, n => new KiCadFpCurve(n));
+
         /// <summary>Gets the value of a named field.</summary>
         /// <param name="key">The field key, e.g. <c>Reference</c>.</param>
         /// <returns>The value, or <see langword="null"/>.</returns>
@@ -764,6 +767,17 @@ namespace KiCadSharp.Documents
             set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
 
+        /// <summary>
+        /// Gets or sets the corner radius in millimetres: KiCad 10's <c>(radius r)</c>, 0 when the
+        /// rectangle has none. KiCad writes the form only for a radius above 0, and clamps one it
+        /// reads to half the rectangle's shorter side.
+        /// </summary>
+        public double CornerRadius
+        {
+            get => ReadChildDouble(KiCadTokens.Common.Radius);
+            set => WriteChildDouble(KiCadTokens.Common.Radius, value);
+        }
+
         /// <summary>Gets the fill, or <see langword="null"/> when the rectangle has no <c>(fill ...)</c>.</summary>
         public KiCadFill? Fill => Node.GetChild(KiCadTokens.Common.Fill) is { } node ? new KiCadFill(node, KiCadFillSpelling.Board) : null;
 
@@ -906,6 +920,38 @@ namespace KiCadSharp.Documents
         /// </summary>
         /// <returns>The view.</returns>
         public KiCadFill RequireFill() => new(Require(KiCadTokens.Common.Fill), KiCadFillSpelling.Board);
+    }
+
+    /// <summary>A Bézier curve: <c>(fp_curve (pts (xy ...) (xy ...) (xy ...) (xy ...)) (stroke ...) (layer "..."))</c>.</summary>
+    /// <remarks>The four points are a cubic Bézier: start, two control points, end — not a polyline.</remarks>
+    public class KiCadFpCurve : KiCadFpItem
+    {
+        /// <summary>Creates a view over an <c>(fp_curve ...)</c> form.</summary>
+        /// <param name="node">The form.</param>
+        public KiCadFpCurve(SExpression node)
+            : base(node)
+        {
+        }
+
+        /// <summary>Creates an empty curve.</summary>
+        public KiCadFpCurve()
+            : base(new SExpression(KiCadTokens.Footprint.FpCurve))
+        {
+        }
+
+        /// <summary>Gets the four control points, in order.</summary>
+        public IReadOnlyList<KiCadPosition> Points =>
+            (Node.GetChild(KiCadTokens.Common.Pts)?.GetChildren(KiCadTokens.Common.Xy) ?? Enumerable.Empty<SExpression>())
+                .Select(xy => new KiCadPosition(xy.GetValueAsDouble(0), xy.GetValueAsDouble(1)))
+                .ToArray();
+
+        /// <summary>Appends a control point.</summary>
+        /// <param name="x">X, millimetres.</param>
+        /// <param name="y">Y, millimetres.</param>
+        public void AddPoint(double x, double y)
+        {
+            Require(KiCadTokens.Common.Pts).CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+        }
     }
 
     /// <summary>Footprint text: <c>(fp_text reference "REF**" (at ...) (layer "...") (effects ...))</c>.</summary>
