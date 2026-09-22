@@ -190,7 +190,8 @@ public class FootprintVersionTests
         var text = File.ReadAllText(TestData.Kicad10Board).ReplaceLineEndings("\r\n");
         var footprint = KiCadFootprintLibrary.Parse(text).Footprints[0];
 
-        var path = Path.Combine(TestData.NewScratchDirectory(), "extracted.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var path = Path.Combine(scratch, "extracted.kicad_mod");
         KiCadFootprintLibrary.SaveFootprint(footprint, path);
 
         var saved = File.ReadAllText(path);
