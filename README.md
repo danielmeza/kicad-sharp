@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A .NET client for [KiCad](https://www.kicad.org/). Drive a running pcbnew over KiCad's IPC API, and
-read symbol and footprint libraries off disk.
+read and write symbol libraries, footprints, boards and schematics off disk.
 
 ```
 dotnet add package KiCadSharp
@@ -43,16 +43,18 @@ wraps it, along with the embedded-file, variant, library, job and cross-probe co
 it is measured live against a master nightly in CI (`KICADSHARP_KICAD_FLAVOR=nightly` with the
 test harness); see [docs/ipc.md](docs/ipc.md) for what master handles and what it only declares.
 
-For **lossless** work on `.kicad_sch` and `.kicad_pcb` files, reach for
-[SExpressions](https://github.com/danielmeza/sexpressions) or the `kicadsharp` CLI below. The typed
-document model here covers symbol and footprint libraries well; its write path is partial, and
-[docs/status.md](docs/status.md) says exactly where.
+**On disk, the typed document model is a set of views**: `KiCadSymbolLibrary`, `KiCadFootprintLibrary`,
+`KiCadBoard` and `KiCadSchematic` read and write the file's own s-expressions, and an untouched save
+is byte-identical. Not every form has a view yet, and the write path is partial;
+[docs/status.md](docs/status.md) says exactly where. Anything without a view is still reachable,
+losslessly, through `Node`, [SExpressions](https://github.com/danielmeza/sexpressions) or the
+`kicadsharp` CLI below.
 
 ## The packages
 
 | Package | What it's for |
 |---|---|
-| [`KiCadSharp`](https://www.nuget.org/packages/KiCadSharp) | The client: IPC, plus the on-disk symbol, footprint and board formats, copper geometry checked against KiCad's own, and Specctra DSN export and session import for an autorouter. |
+| [`KiCadSharp`](https://www.nuget.org/packages/KiCadSharp) | The client: IPC, plus the on-disk symbol, footprint, board and schematic formats, copper geometry checked against KiCad's own, and Specctra DSN export and session import for an autorouter. |
 | [`KiCadSharp.Fluent`](https://www.nuget.org/packages/KiCadSharp.Fluent) | A fluent style for building documents: a chainable `With*` for every `Add*`. Optional, and layered over `KiCadSharp` — see [below](#two-ways-to-build-a-document). |
 | [`KiCadSharp.Protos`](https://www.nuget.org/packages/KiCadSharp.Protos) | Generated C# types for KiCad's protobuf API. Separate package because they appear in `KiCadSharp`'s public surface. |
 | [`KiCadSharp.Cli`](https://www.nuget.org/packages/KiCadSharp.Cli) | A dotnet tool, `kicadsharp`, for s-expression files from a shell. |
