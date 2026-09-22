@@ -130,12 +130,13 @@ appears on disk, and the client has to spell the path exactly as KiCad does. Unt
 wrote `…\Temp\\kicad\api.sock`: `Path.GetTempPath()` already ends in `\`, and the code added
 another.
 
-The tests that need a peer which takes nng's connection and never completes its handshake, or holds
-it, follow the same rule (`HeldHandshake`): a Unix domain socket on Linux and macOS, and on Windows a
-`NamedPipeServerStream`, because a Unix socket bound at the path is never looked at there and the
-dial fails at once with "Connection refused" (#106, #122). MEASURED 2026-09-22 on GitHub's
-`windows-11-arm` runner, nng 1.4.0: against the named pipe, the silent dial fails "Timed out" after
-nng's 10 s, as on Linux, and a dial caught mid-handshake returns when the pipe answers it.
+The tests that need a peer which takes nng's connection and holds, or never completes, its
+handshake bind a Unix domain socket (`HeldHandshake`), which nng never dials on Windows: the dial
+fails at once with "Connection refused". They are `[UnixSocketFact]`s, skipped there with a message
+that says so (#106). MEASURED 2026-09-22 on GitHub's `windows-11-arm` runner, nng 1.4.0, in pull
+request #125's first run: the same two silent-socket tests, run against a `NamedPipeServerStream`
+on the name nng derives, failed "Timed out" after nng's 10 s, as on Linux. So the trap they pin is
+real on Windows too; only the peer differs.
 
 Measured on Linux, in `ghcr.io/danielmeza/orbion-kicad-release:10.0.6` with no network and a fresh
 `HOME`. Each row started pcbnew with only the variables shown. Three things were read for each:

@@ -113,12 +113,13 @@ public class IpcFailureTests
         await FailsWith<KiCadConnectionException>(async () => await client.Send(new Ping()));
     }
 
-    [Fact]
+    [UnixSocketFact]
     public async Task ASocketThatNeverCompletesTheHandshakeIsAConnectionFailure()
     {
         // A KiCad that has bound its socket and is not serving yet. nng gives up on the dial after
-        // its own 10 s, which is the cost of this test. HeldHandshake is that socket on Linux and
-        // macOS, and on Windows the named pipe that nng's ipc:// dials there instead (#106).
+        // its own 10 s, which is the cost of this test. HeldHandshake is that socket, never
+        // answered. On Windows the test is skipped: nng dials a named pipe there, not the Unix
+        // socket HeldHandshake binds (#106).
         using var silent = HeldHandshake.Start();
         using var client = Client(silent.Url);
 

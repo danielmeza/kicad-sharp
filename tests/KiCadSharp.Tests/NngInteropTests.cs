@@ -120,15 +120,16 @@ public class NngInteropTests
         Assert.True(elapsed.Elapsed < Immediately, $"took {elapsed.Elapsed}");
     }
 
-    [Fact]
+    [UnixSocketFact]
     public void DialingASocketThatIsBoundButSilentIsBoundedByNng()
     {
         // The trap this pins: a socket that exists and never completes nng's handshake -- a KiCad
         // that has opened its API socket and is not serving yet -- is not refused and is not
         // accepted. It costs nng's own dial timeout, measured at 10.0 s, every attempt. Anything
         // waiting for KiCad to come up has to count seconds rather than attempts, or three
-        // "retries" become half a minute of apparent hang. HeldHandshake is that socket, and on
-        // Windows the named pipe nng dials there instead (#106).
+        // "retries" become half a minute of apparent hang. HeldHandshake is that socket, never
+        // answered. On Windows the test is skipped: nng dials a named pipe there, not the Unix
+        // socket HeldHandshake binds (#106).
         using var silent = HeldHandshake.Start();
         using var socket = NngRequestSocket.Open();
         var elapsed = Stopwatch.StartNew();

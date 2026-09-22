@@ -142,60 +142,38 @@ public class IpcDisposeTests
         Assert.Equal(1, peer.RequestsReceived);
     }
 
-    [Fact]
-    public async Task DisposingWhileTheCallConnectsCancelsItAndClosesTheSocketTheDialOpens()
+    [UnixSocketFact]
+    public async Task DisposingWhileTheCallConnectsEndsItAtOnceAndClosesTheSocketTheDialOpened()
     {
-        // The dial cannot be interrupted, so Dispose cannot end this call at once. It must end when
-        // the dial returns, without the call going on as if the client were still there, and without
-        // leaving the socket the dial opened behind. Before #67 the call did go on: it made that socket
-        // the disposed client's connection, so IsConnected read true again, and then failed with
-        // ObjectDisposedException from the disposed semaphore. The socket was still open 5 s later,
-        // with nothing left that would close it.
+        // Until #105 nothing could interrupt the dial, so Dispose could only wait for it: this test
+        // completed the handshake by hand and asserted that the call ended then, and a sibling had the
+        // peer refuse the handshake instead. Dispose now closes the socket under the dial, which nng
+        // answers at once with NNG_ECLOSED (measured on nng 1.3.2 and 1.4.0: within 0.1 ms), and the
+        // call ends without the handshake ever being answered. Before #67 the call went on instead: it
+        // made its socket the disposed client's connection, so IsConnected read true again, and then
+        // failed with ObjectDisposedException from the disposed semaphore, leaving the socket open.
         using var kicad = HeldHandshake.Start();
         using var client = Client(kicad.Url);
 
-        Task? call = null;
-        var caller = new Thread(() => call = client.Send(new Ping()).AsTask()) { IsBackground = true };
-        caller.Start();
-
+        // Called directly: since #105 Send returns at the dial's await, so the call is dialing.
+        var call = client.Send(new Ping()).AsTask();
         using var connection = await kicad.AcceptDial();
-        Assert.True(caller.IsAlive, "the dial was expected to be waiting for the handshake");
+        Assert.False(call.IsCompleted, "the call was expected to be waiting for the handshake");
 
+        var elapsed = Stopwatch.StartNew();
         DisposePromptly(client);
-        Assert.True(caller.IsAlive, "Dispose was not expected to end a dial that nng is still running");
 
-        await HeldHandshake.CompleteHandshake(connection);
-        Assert.True(caller.Join(Bound), "the dial did not return once the handshake completed");
+        var cancelled = await EndedByDispose(call);
+        Assert.InRange(elapsed.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(2));
 
-        var cancelled = await EndedByDispose(call!);
-        Assert.Null(cancelled.InnerException);
+        // What nng said when the socket closed under its dial is kept inside, as it is for a send or a
+        // receive that the close cut off.
+        var nng = Assert.IsType<NngException>(cancelled.InnerException);
+        Assert.Equal(nameof(Nng.nng_dial), nng.Operation);
+        Assert.Equal(Nng.Closed, nng.Error);
 
         // The client closed the socket, and sent nothing on it.
         Assert.Equal(0, await HeldHandshake.ReadUntilClosed(connection));
-    }
-
-    [Fact]
-    public async Task ADialThatFailsAfterDisposeIsStillACancellation()
-    {
-        // The same call, but the dial fails once the client is disposed. The call was under way when
-        // Dispose ran, so it ends the way every such call does, and not with a connection failure. The
-        // failure itself is kept inside.
-        using var kicad = HeldHandshake.Start();
-        using var client = Client(kicad.Url);
-
-        Task? call = null;
-        var caller = new Thread(() => call = client.Send(new Ping()).AsTask()) { IsBackground = true };
-        caller.Start();
-
-        using var connection = await kicad.AcceptDial();
-        DisposePromptly(client);
-
-        await HeldHandshake.RefuseHandshake(connection);
-        Assert.True(caller.Join(Bound), "the dial did not return once the handshake was refused");
-
-        var cancelled = await EndedByDispose(call!);
-        var nng = Assert.IsType<NngException>(cancelled.InnerException);
-        Assert.Equal(nameof(Nng.nng_dial), nng.Operation);
     }
 
     [Fact]

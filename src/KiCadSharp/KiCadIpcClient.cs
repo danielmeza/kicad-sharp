@@ -76,6 +76,12 @@ namespace KiCadSharp
         private Connection? _connection;
         private volatile bool _disposed;
 
+        // The sockets whose dials are under way, so that Dispose() can end them. nng's dial blocks
+        // until the handshake completes, nng gives up, or the socket is closed under it, and the close
+        // is what ends it here. Whoever removes a socket from this set closes it: Dispose(), the
+        // caller's token, or the Open that ran the dial. Guarded by _gate.
+        private readonly HashSet<NngRequestSocket> _dialing = [];
+
         /// <param name="settings">Socket path, token and client name.</param>
         /// <param name="logger">Where dial and error detail goes.</param>
         /// <remarks>
@@ -97,17 +103,28 @@ namespace KiCadSharp
         /// <see cref="Send{TResult}"/> connects by itself when the client is not connected, so calling
         /// this first is only needed to fail early.
         /// </summary>
-        /// <param name="cancellationToken">Observed before the dial, not during it.</param>
+        /// <param name="cancellationToken">
+        /// Ends the dial, at any point in it. The task then fails with an
+        /// <see cref="OperationCanceledException"/> that carries this token, and the socket the dial
+        /// opened is closed.
+        /// </param>
+        /// <remarks>
+        /// The dial does not hold the calling thread. nng's dial is blocking, and against a socket that
+        /// is bound but never completes the handshake -- a KiCad that has opened its API socket and is
+        /// not serving yet -- it takes nng's own 10 s to give up, so it runs on a thread of its own and
+        /// the task returned here completes when it returns (#105). Against a path with nothing at it
+        /// the dial still fails at once, with connection refused, and nothing retries it.
+        /// </remarks>
         /// <exception cref="KiCadConnectionException">
         /// No socket path is configured, it is longer than a socket path can be on this platform,
         /// nothing at it completes nng's handshake, or no native nng library could be loaded.
         /// </exception>
         /// <exception cref="OperationCanceledException">
-        /// <paramref name="cancellationToken"/> was already cancelled; or <see cref="Dispose"/> was called
-        /// while the dial was in progress, and the connection it made has been closed.
+        /// <paramref name="cancellationToken"/> was cancelled, before or during the dial; or
+        /// <see cref="Dispose"/> was called while the dial was under way, which ended it.
         /// </exception>
         /// <exception cref="ObjectDisposedException">The client had been disposed before the call.</exception>
-        public ValueTask Connect(CancellationToken cancellationToken = default)
+        public async ValueTask Connect(CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -116,8 +133,7 @@ namespace KiCadSharp
                 Disconnect();
             }
 
-            Open(cancellationToken);
-            return ValueTask.CompletedTask;
+            await Open(cancellationToken);
         }
 
         /// <summary>
@@ -143,14 +159,26 @@ namespace KiCadSharp
         /// in which case that one is returned.
         /// </summary>
         /// <remarks>
-        /// The dial is blocking and nothing can interrupt it, <see cref="Dispose"/> included. A dial that
-        /// returns after <see cref="Dispose"/> has run, whether or not it succeeded, ends the call with
-        /// the same <see cref="OperationCanceledException"/> as any other call <see cref="Dispose"/> cut
-        /// off, and a socket it opened is closed here. Nobody else has seen that socket, so if it were
-        /// not closed here, it would never be closed. The same goes for a socket that lost the race to
-        /// another call's dial.
+        /// <para>
+        /// The dial runs on a thread of its own, because nng's <c>nng_dial</c> blocks until the
+        /// handshake completes, nng gives up, or the socket is closed under it. Closing it is how a dial
+        /// is ended here, by <paramref name="cancellationToken"/> and by <see cref="Dispose"/>.
+        /// Measured on nng 1.3.2 and 1.4.0, the two this package ships, against a listener that never
+        /// accepts and against one that holds the handshake: <c>nng_close</c> from another thread
+        /// returned in under 0.1 ms, and the blocked <c>nng_dial</c> returned <c>NNG_ECLOSED</c> at the
+        /// same moment. In nng's core (<c>src/core/dialer.c</c>, both versions) the socket's shutdown
+        /// aborts the dialer's connect aio with <c>NNG_ECLOSED</c>, and <c>dialer_connect_cb</c> finishes
+        /// the aio the synchronous dial waits on with that result, whatever the transport.
+        /// </para>
+        /// <para>
+        /// Whoever removes the socket from <see cref="_dialing"/> closes it, so the close runs once, on
+        /// one thread. A dial whose socket somebody else removed was ended on purpose, and the call
+        /// reports the cancellation, with the caller's token when it was the caller's. A dial that fails
+        /// on its own closes its socket here, since nobody else has seen it. A socket that dialed after
+        /// <see cref="Dispose"/> ran, or that lost the race to another call's dial, is closed here too.
+        /// </para>
         /// </remarks>
-        private Connection Open(CancellationToken cancellationToken)
+        private async ValueTask<Connection> Open(CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(_settings.PipeName))
             {
@@ -170,22 +198,67 @@ namespace KiCadSharp
             try
             {
                 // Sending and receiving are both polled, and bounded by the loop in Poll; the socket
-                // options are set too, but no call this client makes waits on them. The dial itself
-                // is blocking, as before: nng bounds it at about 10 s against a socket that is bound
-                // but not answering, and fails immediately against a path that is not there.
-                socket = NngRequestSocket.Dial(_settings.PipeName, _settings.RequestTimeout, _settings.RequestTimeout);
-            }
-            catch (NngException exception) when (_disposed)
-            {
-                throw DisposedWhileConnecting(exception);
+                // options are set too, but no call this client makes waits on them.
+                socket = NngRequestSocket.Open(_settings.RequestTimeout, _settings.RequestTimeout);
             }
             catch (NngException exception)
             {
                 // nng's failures are the ones worth renaming here. A KiCadConnectionException from
                 // the loader -- no libnng for this platform -- already says everything it can, and
                 // goes past untouched.
-                throw new KiCadConnectionException(
-                    $"Failed to connect to KiCad at '{_settings.PipeName}': {exception.Message}", exception);
+                throw ConnectionFailed(exception);
+            }
+
+            var disposed = false;
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    disposed = true;
+                }
+                else
+                {
+                    _dialing.Add(socket);
+                }
+            }
+
+            if (disposed)
+            {
+                socket.Dispose();
+                throw DisposedWhileConnecting();
+            }
+
+            Exception? failure;
+            using (cancellationToken.UnsafeRegister(_ => AbandonDial(socket), null))
+            {
+                // On a thread of its own: it blocks in nng for up to nng's 10 s, and holding a thread
+                // pool thread for that starves the pool on a small machine (#68).
+                failure = await Task.Factory.StartNew(
+                    () => Dial(socket, _settings.PipeName),
+                    CancellationToken.None,
+                    TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
+                    TaskScheduler.Default);
+            }
+
+            bool mine;
+            lock (_gate)
+            {
+                mine = _dialing.Remove(socket);
+            }
+
+            if (!mine)
+            {
+                // The token or Dispose() closed the socket under the dial, and the dial reported the
+                // close. Whichever it was, the call was ended on purpose.
+                throw cancellationToken.IsCancellationRequested
+                    ? new OperationCanceledException("Connecting to KiCad was cancelled.", failure, cancellationToken)
+                    : DisposedWhileConnecting(failure);
+            }
+
+            if (failure is not null)
+            {
+                socket.Dispose();
+                throw ConnectionFailed(failure);
             }
 
             var opened = new Connection(socket);
@@ -221,9 +294,52 @@ namespace KiCadSharp
             return current;
         }
 
+        /// <summary>
+        /// The dial itself, on the thread that runs it: <see langword="null"/> when it connected, or
+        /// what nng said when it did not.
+        /// </summary>
+        /// <remarks>
+        /// An <see cref="ObjectDisposedException"/> is the socket's own, for a close that landed before
+        /// the dial reached nng; a close that lands during it comes back as nng's <c>NNG_ECLOSED</c>.
+        /// Either way the socket is not in <see cref="_dialing"/> any more, and <see cref="Open"/>
+        /// reports the cancellation rather than this.
+        /// </remarks>
+        private static Exception? Dial(NngRequestSocket socket, string url)
+        {
+            try
+            {
+                socket.Dial(url);
+                return null;
+            }
+            catch (Exception exception) when (exception is NngException or ObjectDisposedException)
+            {
+                return exception;
+            }
+        }
+
+        /// <summary>
+        /// Ends the dial on <paramref name="socket"/>, if it is still under way, by closing the socket
+        /// under it. The caller's token runs this when it is cancelled.
+        /// </summary>
+        private void AbandonDial(NngRequestSocket socket)
+        {
+            bool mine;
+            lock (_gate)
+            {
+                mine = _dialing.Remove(socket);
+            }
+
+            if (mine)
+            {
+                socket.Dispose();
+            }
+        }
+
+        private KiCadConnectionException ConnectionFailed(Exception exception) =>
+            new($"Failed to connect to KiCad at '{_settings.PipeName}': {exception.Message}", exception);
+
         private static OperationCanceledException DisposedWhileConnecting(Exception? innerException = null) =>
             new("The client was disposed while it was connecting to KiCad.", innerException, new CancellationToken(canceled: true));
-
 
         /// <summary>
         /// Sends <paramref name="command"/> to KiCad and returns its reply, connecting first if the
@@ -232,8 +348,9 @@ namespace KiCadSharp
         /// <typeparam name="TResult">The message type the command returns.</typeparam>
         /// <param name="command">The command to send.</param>
         /// <param name="cancellationToken">
-        /// Cancels the round trip at any point in it: while the send waits for KiCad to take the
-        /// request, which it does without holding a thread when KiCad has gone away, and while the
+        /// Cancels the round trip at any point in it: while the client dials KiCad, which it does
+        /// without holding a thread (see <see cref="Connect"/>); while the send waits for KiCad to take
+        /// the request, which it does without holding a thread when KiCad has gone away; and while the
         /// reply is awaited.
         /// </param>
         /// <returns>KiCad's reply.</returns>
@@ -279,7 +396,7 @@ namespace KiCadSharp
             // Disconnect() and Dispose() cancel before they close that socket. Reading the socket and
             // the token separately let a call send on one connection while watching another's token,
             // which nothing would ever cancel.
-            var connection = Current() ?? Open(cancellationToken);
+            var connection = Current() ?? await Open(cancellationToken);
 
             // Linked after connecting, not before. A token linked before a reconnect belonged to the
             // connection Disconnect() had cancelled: a Send after Disconnect() failed with an
@@ -607,7 +724,9 @@ namespace KiCadSharp
         /// </summary>
         /// <remarks>
         /// Safe from any thread at any time: concurrently with calls, with <see cref="Dispose"/> and
-        /// with itself. After <see cref="Dispose"/> it does nothing.
+        /// with itself. After <see cref="Dispose"/> it does nothing. A call that is still dialing is not
+        /// on the connection, and this does not end it: its dial goes on, and what it connects becomes
+        /// the client's connection, as a <see cref="Send{TResult}"/> made after this would connect.
         /// </remarks>
         public void Disconnect()
         {
@@ -639,10 +758,8 @@ namespace KiCadSharp
         /// <para>
         /// Safe to call more than once, and from any thread concurrently with calls,
         /// <see cref="Disconnect"/> and itself. It does not wait for the calls it ends, and it never
-        /// waits on nng or on KiCad. The one call it cannot end at once is one that is dialing: nng's
-        /// dial cannot be interrupted, so that call ends when the dial returns. That is immediate
-        /// against a path with nothing at it, and at most nng's own 10 s against a socket that never
-        /// completes the handshake.
+        /// waits on nng or on KiCad. A call that is dialing is ended at once too, by closing the socket
+        /// under its dial; see <see cref="Open"/> for what nng does then, and how quickly.
         /// </para>
         /// <para>
         /// The <see cref="SemaphoreSlim"/> that keeps calls in turn is not disposed, and neither is the
@@ -659,6 +776,7 @@ namespace KiCadSharp
         public void Dispose()
         {
             Connection? connection;
+            NngRequestSocket[] dialing;
             lock (_gate)
             {
                 if (_disposed)
@@ -669,9 +787,17 @@ namespace KiCadSharp
                 _disposed = true;
                 connection = _connection;
                 _connection = null;
+                dialing = [.. _dialing];
+                _dialing.Clear();
             }
 
             connection?.Close();
+
+            // Each dial ends as soon as its socket closes; the call that ran it reports the disposal.
+            foreach (var socket in dialing)
+            {
+                socket.Dispose();
+            }
         }
 
         /// <summary>

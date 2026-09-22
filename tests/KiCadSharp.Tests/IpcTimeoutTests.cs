@@ -78,14 +78,21 @@ public class IpcTimeoutTests
         using var client = Client(peer.Url);
 
         await client.Connect();
-        var elapsed = Stopwatch.StartNew();
 
-        // Called directly, not through Task.Run: Send hands the request to nng before it returns its
-        // task, so it is on the wire before the Disconnect below. Through Task.Run it went out only
-        // once the thread pool started it, and on a busy 2-CPU machine that could be after the
-        // Disconnect. Send then connected again, and got the peer's reply 30 s later (#68).
+        // Called directly, not through Task.Run: on a connected client, Send hands the request to nng
+        // before it returns its task. Through Task.Run it went out only once the thread pool started
+        // it, and on a busy 2-CPU machine that could be after the Disconnect. Send then connected
+        // again, and got the peer's reply 30 s later (#68, #117).
+        //
+        // Then the peer is waited for, rather than a fixed 250 ms. This test is about what Disconnect
+        // does to a call that is under way, so it disconnects only once the call provably is: the
+        // peer has taken the request, and the call has not ended. No scheduler can make it assert
+        // anything else.
         var request = client.Send(new Ping()).AsTask();
-        await Task.Delay(250);
+        await WaitUntil(() => peer.RequestsReceived == 1);
+        Assert.False(request.IsCompleted, "the call was expected to be waiting for its reply");
+
+        var elapsed = Stopwatch.StartNew();
         client.Disconnect();
 
         // Specifically a cancellation, not "something went wrong": Disconnect cancels the client's
@@ -133,6 +140,16 @@ public class IpcTimeoutTests
         {
             // Never leave the peer's thread waiting, whatever failed above.
             mayAnswer.Set();
+        }
+    }
+
+    private static async Task WaitUntil(Func<bool> condition)
+    {
+        var elapsed = Stopwatch.StartNew();
+        while (!condition())
+        {
+            Assert.True(elapsed.Elapsed < TimeSpan.FromSeconds(10), "the peer never received the request");
+            await Task.Delay(10);
         }
     }
 
