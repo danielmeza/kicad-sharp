@@ -178,8 +178,8 @@ dotnet test
 ```
 
 KiCad's `.proto` files are vendored under `protos/`, pinned to a release tag — no submodule, no
-1.4 GB checkout. To build against a local SExpressions checkout, see
-[docs/building.md](docs/building.md).
+1.4 GB checkout. To build against a local SExpressions checkout, or to run the tests against a real
+`kicad-cli` or keep the files they write, see [docs/building.md](docs/building.md).
 
 ## Contributing
 

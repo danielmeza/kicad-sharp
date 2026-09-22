@@ -141,7 +141,8 @@ public class GettersDoNotModifyTests
 
         Assert.False(board.Document.IsModified);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "power-input.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "power-input.kicad_pcb");
         board.Save(output);
         Assert.Equal(before, File.ReadAllBytes(output));
     }
