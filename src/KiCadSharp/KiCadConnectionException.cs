@@ -5,7 +5,9 @@
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Thrown for: no socket path configured; nothing listening at the path, or a socket there that
+    /// Thrown for: no socket path configured; a path longer than a socket path can be on this
+    /// platform, in which case the message says how long it is and how long is allowed (see
+    /// <c>IpcPathLimit</c>); nothing listening at the path, or a socket there that
     /// never completes nng's handshake (nng gives up after about 10 s); no native nng library for
     /// this platform, or a <c>KICADSHARP_NNG_LIBRARY</c> that names something which does not load
     /// or is not nng; a send or a receive that nng refused; a reply that does not parse as an

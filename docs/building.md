@@ -14,10 +14,10 @@ reference or a submodule. To build against an unreleased local checkout of it:
 
 ```
 scripts/use-local-libs.sh ../sexpressions
-dotnet build KiCadSharp.slnx -c Release -p:SExpressionsVersion=0.1.1-local.<stamp>
+dotnet build KiCadSharp.slnx -c Release -p:SExpressionsVersion=0.2.0-local.<stamp>
 
 # to pack too, stamp this repo's own packages with the same prerelease version:
-dotnet pack KiCadSharp.slnx -c Release -p:SExpressionsVersion=0.1.1-local.<stamp> -p:Version=0.1.1-local.<stamp>
+dotnet pack KiCadSharp.slnx -c Release -p:SExpressionsVersion=0.2.0-local.<stamp> -p:Version=0.2.0-local.<stamp>
 ```
 
 `pack` needs both properties, and that is NuGet being right rather than a workaround: a stable

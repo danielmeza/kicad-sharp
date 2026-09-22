@@ -119,11 +119,29 @@ namespace KiCadSharp.Documents
             }
         }
 
-        /// <summary>Gets or sets the name of the program that wrote the file.</summary>
-        public string Generator
+        /// <summary>
+        /// Gets or sets the name of the program that wrote the file, or <see langword="null"/> when
+        /// the file names none, as a KiCad 5 <c>module</c> does not. Setting <see langword="null"/>
+        /// removes it.
+        /// </summary>
+        /// <remarks>
+        /// It used to report <see cref="KiCadDefaults.LibraryGenerator"/> for a file that names no
+        /// generator (#95). KiCad reads nothing by it (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 1161
+        /// and 5053).
+        /// </remarks>
+        public string? Generator
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? KiCadDefaults.LibraryGenerator;
-            set => _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            get => _root.GetChildValue(KiCadTokens.Common.Generator);
+            set
+            {
+                if (value is null)
+                {
+                    _root.RemoveChild(KiCadTokens.Common.Generator);
+                    return;
+                }
+
+                _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            }
         }
 
         /// <summary>
@@ -249,11 +267,33 @@ namespace KiCadSharp.Documents
         /// <summary>Writes one footprint out as a <c>.kicad_mod</c>.</summary>
         /// <param name="footprint">The footprint to write.</param>
         /// <param name="filePath">Destination path.</param>
-        /// <remarks>The footprint's own bytes are reproduced; it is not re-formatted.</remarks>
+        /// <remarks>
+        /// The footprint's own bytes are reproduced; it is not re-formatted. The file ends with the
+        /// line ending the footprint was read with. A footprint built in memory, or one written on
+        /// a single line, ends with <c>\n</c>, which is what KiCad writes on every platform.
+        /// </remarks>
         public static void SaveFootprint(KiCadFootprint footprint, string filePath)
         {
             ArgumentNullException.ThrowIfNull(footprint);
-            new SExpressionWriter().WriteToFile(footprint.Node, filePath);
+            var options = new SExpressionWriterOptions { NewLine = NewLineOf(footprint.Node.SourceSpan) };
+            new SExpressionWriter(options).WriteToFile(footprint.Node, filePath);
+        }
+
+        /// <summary>
+        /// The line ending a form's source uses: the one at its first line break, or <c>\n</c> when
+        /// it has none.
+        /// </summary>
+        /// <remarks>
+        /// The trailing newline of a <c>.kicad_mod</c> is not part of the <c>footprint</c> form, so
+        /// the writer adds one of its own, and until #107 that was always <c>\n</c>. MEASURED on
+        /// Linux with a CRLF footprint: the form's bytes came back with CRLF and the file ended
+        /// <c>)\n</c>, a file with mixed endings. On a Windows checkout with
+        /// <c>core.autocrlf=true</c> that is every footprint in a test's string literal.
+        /// </remarks>
+        private static string NewLineOf(ReadOnlySpan<char> source)
+        {
+            var lineFeed = source.IndexOf('\n');
+            return lineFeed > 0 && source[lineFeed - 1] == '\r' ? "\r\n" : "\n";
         }
 
         private static bool IsFootprintToken(string token) =>

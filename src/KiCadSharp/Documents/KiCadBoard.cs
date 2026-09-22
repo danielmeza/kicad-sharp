@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -132,22 +133,61 @@ namespace KiCadSharp.Documents
         /// <summary>Gets the <c>(kicad_pcb …)</c> form every property here reads and writes through.</summary>
         public SExpression Node => _root;
 
-        /// <summary>Gets or sets the file format version, KiCad's <c>(version …)</c> date stamp.</summary>
-        public string Version
+        /// <summary>
+        /// Gets or sets the file format version the board declares, KiCad's <c>(version …)</c> date
+        /// stamp, or <see langword="null"/> when it declares none.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <see langword="null"/> is not a format this library assumes for the file. It used to report
+        /// <see cref="KiCadDefaults.BoardVersion"/> there, a format neither the file nor KiCad uses
+        /// (#95). KiCad 10.0.6 reads a board's version only as the first child of <c>kicad_pcb</c>
+        /// (<c>parseHeader</c>, <c>pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr_parser.cpp</c>, lines
+        /// 1663–1681), and assumes <c>20201115</c> when that child is something else (line 1679). By
+        /// then it has already taken that child's opening token, so the child is lost with it. A
+        /// <c>(generator …)</c> there makes KiCad refuse the board, and an empty form such as
+        /// <c>(general)</c> ends the board early, so every form after it is dropped.
+        /// </para>
+        /// <para>
+        /// A version set on a board that has none goes first, where KiCad reads it. It cannot be set
+        /// to <see langword="null"/>: a board without one is not a file KiCad reads as written.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException">The value set is <see langword="null"/>.</exception>
+        [DisallowNull]
+        public string? Version
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Version) ?? KiCadDefaults.BoardVersion;
+            get => _root.GetChildValue(KiCadTokens.Common.Version);
             set
             {
+                ArgumentNullException.ThrowIfNull(value);
                 KiCadChildOrder.Place(_root, KiCadTokens.Common.Version);
                 _root.SetChildValue(KiCadTokens.Common.Version, value, SQuoteStyle.Bare);
             }
         }
 
-        /// <summary>Gets or sets the name of the program that wrote the file.</summary>
-        public string Generator
+        /// <summary>
+        /// Gets or sets the name of the program that wrote the file, or <see langword="null"/> when
+        /// the file names none. Setting <see langword="null"/> removes it.
+        /// </summary>
+        /// <remarks>
+        /// It used to report <see cref="KiCadDefaults.BoardGenerator"/> for a file that names no
+        /// generator (#95). KiCad keeps the name but reads nothing by it
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 1161).
+        /// </remarks>
+        public string? Generator
         {
-            get => _root.GetChildValue(KiCadTokens.Common.Generator) ?? KiCadDefaults.BoardGenerator;
-            set => _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            get => _root.GetChildValue(KiCadTokens.Common.Generator);
+            set
+            {
+                if (value is null)
+                {
+                    _root.RemoveChild(KiCadTokens.Common.Generator);
+                    return;
+                }
+
+                _root.SetChildValue(KiCadTokens.Common.Generator, value, SQuoteStyle.Quoted);
+            }
         }
 
         /// <summary>

@@ -79,6 +79,19 @@ internal static class SocketPaths
     internal static string NewUrl(string purpose) => "ipc://" + New(purpose);
 
     /// <summary>
+    /// A socket path nothing has used yet, of exactly <paramref name="bytes"/> bytes: the run's
+    /// directory, then <c>long-</c>, an <see cref="int"/> and as many <c>x</c> as it takes. Unlike
+    /// <see cref="New"/>, it hands out a path longer than nng takes, for a test of that refusal.
+    /// </summary>
+    internal static string OfLength(int bytes)
+    {
+        var stem = Path.Combine(RunDirectory.Value, $"long-{Interlocked.Increment(ref _count)}");
+        var padding = bytes - Encoding.UTF8.GetByteCount(stem);
+        ArgumentOutOfRangeException.ThrowIfNegative(padding, nameof(bytes));
+        return stem + new string('x', padding);
+    }
+
+    /// <summary>
     /// Where the run's directory goes: <paramref name="tempPath"/> if the longest socket path fits
     /// under it, and otherwise <c>/tmp</c>, except on Windows.
     /// </summary>

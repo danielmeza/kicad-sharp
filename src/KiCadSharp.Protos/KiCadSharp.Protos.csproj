@@ -17,8 +17,8 @@ in KiCadSharp's public surface, so consumers have to be able to name them.</Desc
     <PackageTags>kicad;protobuf;ipc;eda;pcb;kiapi</PackageTags>
   </PropertyGroup>
 
-  <!-- The .proto sources are vendored under protos/ at the repository root and pinned to a KiCad
-       release tag by protos/KICAD_PIN. They used to come from a `submodules/kicad` git submodule,
+  <!-- The .proto sources are vendored under protos/ at the repository root and pinned to one KiCad
+       commit by protos/KICAD_PIN. They used to come from a `submodules/kicad` git submodule,
        which cost a 1.4 GB checkout of the entire KiCad source tree per clone and per CI run to
        obtain 128 KB of interface definitions; scripts/sync-protos.sh re-fetches them from the pin
        and its `check` mode (run in CI) fails if the vendored copies have drifted from it.

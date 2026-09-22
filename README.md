@@ -37,6 +37,12 @@ the client picks one up on the first round trip.
 registers essentially nothing over IPC, not even `GetVersion`. The schematic commands land in
 KiCad 11. What we measured is in [docs/ipc.md](docs/ipc.md).
 
+Against KiCad master (`10.99.0`, the 11.0 line) `eeschema` does answer, and `kicad.GetSchematic()`
+wraps it, along with the embedded-file, variant, library, job and cross-probe commands master added.
+`KiCadVersion.SupportsSchematic` and its sibling flags say which KiCad you are talking to. All of
+it is measured live against a master nightly in CI (`KICADSHARP_KICAD_FLAVOR=nightly` with the
+test harness); see [docs/ipc.md](docs/ipc.md) for what master handles and what it only declares.
+
 **On disk, the typed document model is a set of views**: `KiCadSymbolLibrary`, `KiCadFootprintLibrary`,
 `KiCadBoard` and `KiCadSchematic` read and write the file's own s-expressions, and an untouched save
 is byte-identical. Not every form has a view yet, and the write path is partial;
@@ -146,10 +152,14 @@ lib.Save("orbion.kicad_sym");
 **Net classes and text variables**
 
 ```csharp
-var project = await kicad.GetProject();
-var classes = await project.GetNetClasses();
-var expanded = await project.ExpandTextVariables("${ORBION_PN} rev ${BOARD_REV}");
+var board = await kicad.GetBoard();
+var classes = await board.GetProject().GetNetClasses();
+var expanded = await board.ExpandTextVariables("${ORBION_PN} rev ${BOARD_REV}");
 ```
+
+Expand through the document rather than the project: the board's resolver sees the project's
+variables too, and on KiCad 10.0.6 pcbnew rejects a project-scoped expansion before KiCad's own
+project handler can answer it (measured; docs/ipc.md).
 
 Every type and member: [docs/api.md](docs/api.md).
 
@@ -177,7 +187,7 @@ cd kicad-sharp
 dotnet test
 ```
 
-KiCad's `.proto` files are vendored under `protos/`, pinned to a release tag — no submodule, no
+KiCad's `.proto` files are vendored under `protos/`, pinned to one KiCad commit — no submodule, no
 1.4 GB checkout. To build against a local SExpressions checkout, or to run the tests against a real
 `kicad-cli` or keep the files they write, see [docs/building.md](docs/building.md).
 

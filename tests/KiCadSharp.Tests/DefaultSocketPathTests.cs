@@ -11,7 +11,8 @@ namespace KiCadSharp.Tests;
 /// Every case goes through the internal overload, which takes the platform, the environment, the
 /// file system and the system temp path as arguments. So a test describes Windows and macOS on
 /// any machine, and nothing here reads or changes the <c>TMPDIR</c> of the process running it,
-/// which other tests use for their scratch directories.
+/// which other tests use for their scratch directories. Which socket files exist is described the
+/// same way, so no test depends on a KiCad, native or Flatpak, having run on the machine.
 /// </remarks>
 public class DefaultSocketPathTests
 {
@@ -21,8 +22,27 @@ public class DefaultSocketPathTests
 
         public HashSet<string> Directories { get; } = platform == SocketPlatform.Windows ? [] : ["/tmp"];
 
+        /// <summary>The socket files that exist, by path. None does until a test says so.</summary>
+        public HashSet<string> Files { get; } = [];
+
+        /// <summary>Every path the rule asked <see cref="Files"/> about, in the order it asked.</summary>
+        public List<string> FilesAsked { get; } = [];
+
+        /// <summary>The home directory, as <c>Environment.GetFolderPath(UserProfile)</c> would give it.</summary>
+        public string? Home { get; set; } = platform == SocketPlatform.Windows ? @"C:\Users\me" : "/home/me";
+
         public string DefaultSocketPath() =>
-            GetDefaultSocketPath(platform, name => Variables.GetValueOrDefault(name), Directories.Contains, () => systemTemp);
+            GetDefaultSocketPath(
+                platform,
+                name => Variables.GetValueOrDefault(name),
+                Directories.Contains,
+                () => systemTemp,
+                path =>
+                {
+                    FilesAsked.Add(path);
+                    return Files.Contains(path);
+                },
+                () => Home);
     }
 
     // ------------------------------------------------------------------------------------ Linux
@@ -113,6 +133,104 @@ public class DefaultSocketPathTests
         Assert.Equal("ipc:///tmp/kicad/api.sock", machine.DefaultSocketPath());
     }
 
+    // ------------------------------------------------ KiCad from Flathub, outside its sandbox (#110)
+    //
+    // MEASURED against org.kicad.KiCad 10.0.6 from Flathub (flatpak 1.14.6). The manifest starts
+    // KiCad with --env=TMPDIR=/var/tmp, and flatpak binds the sandbox's /var/tmp to
+    // ~/.var/app/org.kicad.KiCad/cache/tmp on the host. So pcbnew listens on
+    // /var/tmp/kicad/api.sock inside, which is ~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock
+    // outside, and a host process connects to that socket as it is, with no flatpak override. A
+    // client on the host with no TMPDIR used to dial ipc:///tmp/kicad/api.sock, where nothing
+    // listens: "Connection refused".
+
+    private const string FlathubSocket = "/home/me/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock";
+
+    [Fact]
+    public void Linux_NoSocketWhereKiCadsRuleSays_ButOneInTheFlathubSandbox_IsTheFlathubOne()
+    {
+        var machine = new Machine(SocketPlatform.Unix);
+        machine.Files.Add(FlathubSocket);
+
+        Assert.Equal("ipc://" + FlathubSocket, machine.DefaultSocketPath());
+    }
+
+    [Fact]
+    public void Linux_ASocketWhereKiCadsRuleSays_WinsOverTheFlathubOne()
+    {
+        // kipy looks in the Flathub directory first. Here KiCad's own rule comes first: a native
+        // KiCad that is listening is not passed over for a socket file the Flatpak left behind.
+        var machine = new Machine(SocketPlatform.Unix);
+        machine.Files.Add("/tmp/kicad/api.sock");
+        machine.Files.Add(FlathubSocket);
+
+        Assert.Equal("ipc:///tmp/kicad/api.sock", machine.DefaultSocketPath());
+    }
+
+    [Fact]
+    public void Linux_TheFlathubSocket_IsLookedForAfterTmpdirWasHonoured()
+    {
+        var machine = new Machine(SocketPlatform.Unix);
+        machine.Variables["TMPDIR"] = "/tmp/alt";
+        machine.Directories.Add("/tmp/alt");
+        machine.Files.Add(FlathubSocket);
+
+        Assert.Equal("ipc://" + FlathubSocket, machine.DefaultSocketPath());
+
+        machine.Files.Add("/tmp/alt/kicad/api.sock");
+        Assert.Equal("ipc:///tmp/alt/kicad/api.sock", machine.DefaultSocketPath());
+    }
+
+    [Fact]
+    public void Linux_NoSocketAnywhere_IsStillTheAddressKiCadsRuleGives()
+    {
+        // No KiCad has started yet, or a native one is about to: the address is the one it will
+        // listen on, as before. Both places were looked at, KiCad's own first.
+        var machine = new Machine(SocketPlatform.Unix);
+
+        Assert.Equal("ipc:///tmp/kicad/api.sock", machine.DefaultSocketPath());
+        Assert.Equal(new[] { "/tmp/kicad/api.sock", FlathubSocket }, machine.FilesAsked);
+    }
+
+    [Theory]
+    [InlineData("/var/home/alice", "ipc:///var/home/alice/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock")]  // Silverblue
+    [InlineData("/home/alice/", "ipc:///home/alice/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock")]          // a trailing separator
+    public void Linux_TheFlathubDirectory_IsUnderTheHomeDirectory(string home, string expected)
+    {
+        // flatpak_get_data_dir is g_get_home_dir() + ".var/app/" + the app id: the home directory
+        // as $HOME names it, not a fixed /home/<user>.
+        var machine = new Machine(SocketPlatform.Unix) { Home = home };
+        machine.Files.Add(expected["ipc://".Length..]);
+
+        Assert.Equal(expected, machine.DefaultSocketPath());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void Linux_NoHomeDirectory_LeavesTheFlathubSocketUnlookedFor(string? home)
+    {
+        var machine = new Machine(SocketPlatform.Unix) { Home = home };
+        machine.Files.Add("/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock");
+
+        Assert.Equal("ipc:///tmp/kicad/api.sock", machine.DefaultSocketPath());
+        Assert.Equal(new[] { "/tmp/kicad/api.sock" }, machine.FilesAsked);
+    }
+
+    [Theory]
+    [InlineData(nameof(SocketPlatform.MacOS))]
+    [InlineData(nameof(SocketPlatform.Windows))]
+    public void NotLinux_NeverLooksForAFlathubSocket(string platform)
+    {
+        // Flatpak is Linux only. macOS and Windows are the rule as before, and no file is consulted.
+        var machine = new Machine(Enum.Parse<SocketPlatform>(platform));
+        machine.Files.Add(machine.Home + "/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock");
+
+        var path = machine.DefaultSocketPath();
+
+        Assert.Empty(machine.FilesAsked);
+        Assert.DoesNotContain(".var", path);
+    }
+
     // ---------------------------------------------------------------------------------- Windows
 
     [Fact]
@@ -167,8 +285,10 @@ public class DefaultSocketPathTests
         var machine = new Machine(Enum.Parse<SocketPlatform>(platform));
         machine.Variables["TMPDIR"] = "/tmp";
         machine.Variables["KICAD_API_SOCKET"] = "ipc:///somewhere/else/api-4242.sock";
+        machine.Files.Add(FlathubSocket);
 
         Assert.Equal("ipc:///somewhere/else/api-4242.sock", machine.DefaultSocketPath());
+        Assert.Empty(machine.FilesAsked);
 
         machine.Variables["KICAD_API_SOCKET"] = "";
         Assert.EndsWith("api.sock", machine.DefaultSocketPath());
@@ -184,7 +304,13 @@ public class DefaultSocketPathTests
             : SocketPlatform.Unix;
 
         Assert.Equal(
-            GetDefaultSocketPath(platform, Environment.GetEnvironmentVariable, Directory.Exists, Path.GetTempPath),
+            GetDefaultSocketPath(
+                platform,
+                Environment.GetEnvironmentVariable,
+                Directory.Exists,
+                Path.GetTempPath,
+                File.Exists,
+                () => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
             KiCadEnvironment.GetDefaultSocketPath());
     }
 }

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 syntax = "proto3";
@@ -34,6 +34,7 @@ enum ApiStatusCode
   AS_TOKEN_MISMATCH = 6; // The kicad_token in the request didn't match this KiCad's token
   AS_BUSY           = 7; // KiCad is busy performing an operation and can't accept API commands
   AS_UNIMPLEMENTED  = 8; // The requested API call has not yet been implemented
+  AS_INTERNAL_ERROR = 9; // KiCad was unable to handle the request properly
 }
 
 /*

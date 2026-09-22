@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Sockets;
 
 using KiCadSharp.Interop;
 
@@ -143,60 +142,38 @@ public class IpcDisposeTests
         Assert.Equal(1, peer.RequestsReceived);
     }
 
-    [Fact]
-    public async Task DisposingWhileTheCallConnectsCancelsItAndClosesTheSocketTheDialOpens()
+    [UnixSocketFact]
+    public async Task DisposingWhileTheCallConnectsEndsItAtOnceAndClosesTheSocketTheDialOpened()
     {
-        // The dial cannot be interrupted, so Dispose cannot end this call at once. It must end when
-        // the dial returns, without the call going on as if the client were still there, and without
-        // leaving the socket the dial opened behind. Before #67 the call did go on: it made that socket
-        // the disposed client's connection, so IsConnected read true again, and then failed with
-        // ObjectDisposedException from the disposed semaphore. The socket was still open 5 s later,
-        // with nothing left that would close it.
+        // Until #105 nothing could interrupt the dial, so Dispose could only wait for it: this test
+        // completed the handshake by hand and asserted that the call ended then, and a sibling had the
+        // peer refuse the handshake instead. Dispose now closes the socket under the dial, which nng
+        // answers at once with NNG_ECLOSED (measured on nng 1.3.2 and 1.4.0: within 0.1 ms), and the
+        // call ends without the handshake ever being answered. Before #67 the call went on instead: it
+        // made its socket the disposed client's connection, so IsConnected read true again, and then
+        // failed with ObjectDisposedException from the disposed semaphore, leaving the socket open.
         using var kicad = HeldHandshake.Start();
         using var client = Client(kicad.Url);
 
-        Task? call = null;
-        var caller = new Thread(() => call = client.Send(new Ping()).AsTask()) { IsBackground = true };
-        caller.Start();
-
+        // Called directly: since #105 Send returns at the dial's await, so the call is dialing.
+        var call = client.Send(new Ping()).AsTask();
         using var connection = await kicad.AcceptDial();
-        Assert.True(caller.IsAlive, "the dial was expected to be waiting for the handshake");
+        Assert.False(call.IsCompleted, "the call was expected to be waiting for the handshake");
 
+        var elapsed = Stopwatch.StartNew();
         DisposePromptly(client);
-        Assert.True(caller.IsAlive, "Dispose was not expected to end a dial that nng is still running");
 
-        await HeldHandshake.CompleteHandshake(connection);
-        Assert.True(caller.Join(Bound), "the dial did not return once the handshake completed");
+        var cancelled = await EndedByDispose(call);
+        Assert.InRange(elapsed.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(2));
 
-        var cancelled = await EndedByDispose(call!);
-        Assert.Null(cancelled.InnerException);
+        // What nng said when the socket closed under its dial is kept inside, as it is for a send or a
+        // receive that the close cut off.
+        var nng = Assert.IsType<NngException>(cancelled.InnerException);
+        Assert.Equal(nameof(Nng.nng_dial), nng.Operation);
+        Assert.Equal(Nng.Closed, nng.Error);
 
         // The client closed the socket, and sent nothing on it.
         Assert.Equal(0, await HeldHandshake.ReadUntilClosed(connection));
-    }
-
-    [Fact]
-    public async Task ADialThatFailsAfterDisposeIsStillACancellation()
-    {
-        // The same call, but the dial fails once the client is disposed. The call was under way when
-        // Dispose ran, so it ends the way every such call does, and not with a connection failure. The
-        // failure itself is kept inside.
-        using var kicad = HeldHandshake.Start();
-        using var client = Client(kicad.Url);
-
-        Task? call = null;
-        var caller = new Thread(() => call = client.Send(new Ping()).AsTask()) { IsBackground = true };
-        caller.Start();
-
-        using var connection = await kicad.AcceptDial();
-        DisposePromptly(client);
-
-        await HeldHandshake.RefuseHandshake(connection);
-        Assert.True(caller.Join(Bound), "the dial did not return once the handshake was refused");
-
-        var cancelled = await EndedByDispose(call!);
-        var nng = Assert.IsType<NngException>(cancelled.InnerException);
-        Assert.Equal(nameof(Nng.nng_dial), nng.Operation);
     }
 
     [Fact]
@@ -273,93 +250,6 @@ public class IpcDisposeTests
         {
             Assert.True(elapsed.Elapsed < TimeSpan.FromSeconds(10), "the peer never received the request");
             await Task.Delay(10);
-        }
-    }
-
-    /// <summary>
-    /// A unix socket that takes nng's connection and holds its handshake until the test answers it, so
-    /// that a dial can be caught while it waits.
-    /// </summary>
-    /// <remarks>
-    /// nng's <c>ipc://</c> transport opens a connection with an 8-byte header each way:
-    /// <c>00 'S' 'P' 00</c>, the protocol number, and two zero bytes. REQ's arrives as
-    /// <c>00 53 50 00 00 30 00 00</c>. nng's dial returns only once the other side's header has
-    /// arrived, or after nng's own 10 s, which <c>ASocketThatNeverCompletesTheHandshakeIsAConnectionFailure</c>
-    /// measures. Measured against the nng 1.3.2 this repository ships for linux-x64: the dial was
-    /// still waiting 500 ms after the connection was accepted, returned as soon as REP's header
-    /// (protocol <c>0x31</c>) was written, and failed at once with <c>NNG_EPROTO</c> when the header was
-    /// not <c>'S' 'P'</c>.
-    /// </remarks>
-    private sealed class HeldHandshake : IDisposable
-    {
-        private const byte Rep0 = 0x31;
-        private const byte Req0 = 0x30;
-
-        private readonly string _path;
-        private readonly Socket _listener;
-
-        private HeldHandshake(string path, Socket listener)
-        {
-            _path = path;
-            _listener = listener;
-        }
-
-        internal string Url => $"ipc://{_path}";
-
-        internal static HeldHandshake Start()
-        {
-            var path = Path.Combine(Path.GetTempPath(), $"kicadsharp-held-{Guid.NewGuid():N}.sock");
-            var listener = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
-            listener.Bind(new UnixDomainSocketEndPoint(path));
-            listener.Listen(1);
-            return new HeldHandshake(path, listener);
-        }
-
-        /// <summary>Takes the dial's connection, and reads REQ's header off it.</summary>
-        internal async Task<Socket> AcceptDial()
-        {
-            var connection = await _listener.AcceptAsync().WaitAsync(Bound);
-            var header = new byte[8];
-            for (var read = 0; read < header.Length;)
-            {
-                var got = await connection.ReceiveAsync(header.AsMemory(read)).AsTask().WaitAsync(Bound);
-                Assert.NotEqual(0, got);
-                read += got;
-            }
-
-            Assert.Equal(Header(Req0), header);
-            return connection;
-        }
-
-        internal static async Task CompleteHandshake(Socket connection) =>
-            await connection.SendAsync(Header(Rep0));
-
-        internal static async Task RefuseHandshake(Socket connection) =>
-            await connection.SendAsync(new byte[] { 0x00, (byte)'X', (byte)'X', 0x00, 0x00, Rep0, 0x00, 0x00 });
-
-        /// <summary>How many bytes arrive before the client closes the connection.</summary>
-        internal static async Task<int> ReadUntilClosed(Socket connection)
-        {
-            var total = 0;
-            var buffer = new byte[256];
-            while (true)
-            {
-                var got = await connection.ReceiveAsync(buffer.AsMemory()).AsTask().WaitAsync(Bound);
-                if (got == 0)
-                {
-                    return total;
-                }
-
-                total += got;
-            }
-        }
-
-        private static byte[] Header(byte protocol) => [0x00, (byte)'S', (byte)'P', 0x00, 0x00, protocol, 0x00, 0x00];
-
-        public void Dispose()
-        {
-            _listener.Dispose();
-            File.Delete(_path);
         }
     }
 }

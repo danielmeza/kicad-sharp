@@ -135,21 +135,38 @@ public class FootprintVersionTests
 
     // --------------------------------------------------------------------- a footprint read from a file
 
-    public static TheoryData<string, string?> LoadedFootprints => new()
+    /// <summary>
+    /// Each footprint with both line endings, spelled out rather than taken from the checkout. The
+    /// literals above come out of a Windows checkout with CRLF (<c>core.autocrlf=true</c> is the Git
+    /// for Windows default), which is where #107 showed: <c>SaveFootprint</c> ended a CRLF footprint
+    /// with a bare <c>\n</c>. Spelling the ending makes the CRLF case run on every platform.
+    /// </summary>
+    public static TheoryData<string, string, string?> LoadedFootprints
     {
-        { KiCad6Footprint, "20211014" },
-        { KiCad5Module, null },
-    };
+        get
+        {
+            var data = new TheoryData<string, string, string?>();
+            foreach (var newLine in new[] { "\n", "\r\n" })
+            {
+                data.Add(KiCad6Footprint, newLine, "20211014");
+                data.Add(KiCad5Module, newLine, null);
+            }
+
+            return data;
+        }
+    }
 
     /// <summary>
     /// A footprint read from a file reports the version it has, or none, and nothing here gives it
-    /// another: the file still saves byte for byte. A KiCad 5 module has to stay without one, because
-    /// KiCad reads its <c>start</c>/<c>end</c>/<c>angle</c> arc only under format 20210925 or older.
+    /// another: the file still saves byte for byte, with the line ending it came with. A KiCad 5
+    /// module has to stay without one, because KiCad reads its <c>start</c>/<c>end</c>/<c>angle</c>
+    /// arc only under format 20210925 or older.
     /// </summary>
     [Theory]
     [MemberData(nameof(LoadedFootprints))]
-    public void ALoadedFootprint_KeepsItsOwnVersion_AndSavesByteForByte(string text, string? version)
+    public void ALoadedFootprint_KeepsItsOwnVersion_AndSavesByteForByte(string text, string newLine, string? version)
     {
+        text = text.ReplaceLineEndings(newLine);
         var library = KiCadFootprintLibrary.Parse(text);
         var footprint = Assert.Single(library.Footprints);
 
@@ -160,6 +177,26 @@ public class FootprintVersionTests
         var path = Path.Combine(scratch, "loaded.kicad_mod");
         KiCadFootprintLibrary.SaveFootprint(footprint, path);
         Assert.Equal(text, File.ReadAllText(path));
+    }
+
+    /// <summary>
+    /// A footprint taken out of a board is written with the board's line ending. Only the last
+    /// newline is at stake: the footprint's own bytes are copied, so a CRLF footprint saved with a
+    /// bare <c>\n</c> was a file with mixed endings (#107).
+    /// </summary>
+    [Fact]
+    public void AFootprintOutOfACrlfBoard_SavedAsAKiCadMod_EndsWithCrlf()
+    {
+        var text = File.ReadAllText(TestData.Kicad10Board).ReplaceLineEndings("\r\n");
+        var footprint = KiCadFootprintLibrary.Parse(text).Footprints[0];
+
+        using var scratch = TestData.NewScratchDirectory();
+        var path = Path.Combine(scratch, "extracted.kicad_mod");
+        KiCadFootprintLibrary.SaveFootprint(footprint, path);
+
+        var saved = File.ReadAllText(path);
+        Assert.Contains("\r\n", saved, StringComparison.Ordinal);
+        Assert.Equal(footprint.Node.SourceSpan.ToString() + "\r\n", saved);
     }
 
     [Fact]
