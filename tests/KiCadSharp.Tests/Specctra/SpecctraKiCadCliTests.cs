@@ -28,6 +28,11 @@ namespace KiCadSharp.Tests.Specctra;
 /// in what this library wrote.
 /// </para>
 /// <para>
+/// That rule is pinned by <see cref="KiCadTypesAContactWithNoNetCopperByUuidOrder"/> on the
+/// smallest board that shows it. When that test fails, KiCad has changed the rule, and
+/// <see cref="TakeKiCadsUuids"/> may no longer be needed.
+/// </para>
+/// <para>
 /// Each kicad-cli call gets an empty <c>KICAD_CONFIG_HOME</c> of its own, so the report does not
 /// depend on the settings of whoever runs the test. Unconnected items are compared by count only:
 /// which items KiCad names for a missing connection changes from run to run on the same file.
@@ -57,6 +62,135 @@ public class SpecctraKiCadCliTests
 
         Assert.Equal(theirsUnconnected, oursUnconnected);
         Assert.Equal(theirsErrors, oursErrors);
+    }
+
+    /// <summary>
+    /// The KiCad behaviour <see cref="TakeKiCadsUuids"/> exists for, on the smallest board that shows
+    /// it (#71): one track on a net, ending on a footprint's copper polygon that has no net. The two
+    /// boards differ only in which of the two items has the larger UUID.
+    /// </summary>
+    /// <remarks>
+    /// MEASURED against kicad-cli 10.0.6: with the track's UUID below the polygon's, the contact is
+    /// a <c>clearance</c> violation, "Clearance violation ( clearance 0.2000 mm; actual 0.0000 mm)";
+    /// with it above, the same contact is <c>shorting_items</c>, "Items shorting two nets (nets
+    /// &lt;no net&gt; and N1)". Same two items, same distance 0, only the type changes. A board-level
+    /// <c>gr_line</c> on copper in place of the footprint polygon is not checked against the track
+    /// at all: no violation in either order.
+    /// </remarks>
+    [Fact]
+    public void KiCadTypesAContactWithNoNetCopperByUuidOrder()
+    {
+        if (TestData.KiCadCli is not { } cli)
+        {
+            return;
+        }
+
+        const string Low = "10000000-0000-4000-8000-000000000001";
+        const string High = "f0000000-0000-4000-8000-000000000001";
+        using var scratch = TestData.NewScratchDirectory();
+        var trackLower = Path.Combine(scratch, "track-lower.kicad_pcb");
+        var trackHigher = Path.Combine(scratch, "track-higher.kicad_pcb");
+        File.WriteAllText(trackLower, TrackEndingOnNoNetCopper(track: Low, polygon: High));
+        File.WriteAllText(trackHigher, TrackEndingOnNoNetCopper(track: High, polygon: Low));
+
+        // KiCad names the two items in UUID order, so the pair reads the same both times.
+        Assert.Equal([("clearance", $"{Low} {High}")], Violations(cli, trackLower));
+        Assert.Equal([("shorting_items", $"{Low} {High}")], Violations(cli, trackHigher));
+    }
+
+    /// <summary>
+    /// A two-layer board in KiCad 10's spelling: a 0.25 mm track on net <c>N1</c> from (5, 10) to
+    /// (15, 10) on F.Cu, and a footprint at (20, 10) whose only copper is a filled <c>fp_poly</c>
+    /// on no net from (15, 9.5) to (25, 10.5), so the track's end lies on its edge.
+    /// </summary>
+    private static string TrackEndingOnNoNetCopper(string track, string polygon) => $"""
+        (kicad_pcb
+        	(version 20260206)
+        	(generator "pcbnew")
+        	(generator_version "10.0")
+        	(general
+        		(thickness 1.6)
+        		(legacy_teardrops no)
+        	)
+        	(paper "A4")
+        	(layers
+        		(0 "F.Cu" signal)
+        		(2 "B.Cu" signal)
+        		(25 "Edge.Cuts" user)
+        	)
+        	(setup
+        		(pad_to_mask_clearance 0)
+        	)
+        	(gr_rect
+        		(start 0 0)
+        		(end 30 20)
+        		(stroke
+        			(width 0.05)
+        			(type default)
+        		)
+        		(fill no)
+        		(layer "Edge.Cuts")
+        		(uuid "00000000-0000-4000-8000-000000000001")
+        	)
+        	(segment
+        		(start 5 10)
+        		(end 15 10)
+        		(width 0.25)
+        		(layer "F.Cu")
+        		(net "N1")
+        		(uuid "{track}")
+        	)
+        	(footprint "repro:NONET"
+        		(layer "F.Cu")
+        		(uuid "00000000-0000-4000-8000-000000000010")
+        		(at 20 10)
+        		(property "Reference" "J1"
+        			(at 0 -2 0)
+        			(layer "F.SilkS")
+        			(uuid "00000000-0000-4000-8000-000000000011")
+        			(effects
+        				(font
+        					(size 1 1)
+        					(thickness 0.15)
+        				)
+        			)
+        		)
+        		(property "Value" "NONET"
+        			(at 0 2 0)
+        			(layer "F.Fab")
+        			(uuid "00000000-0000-4000-8000-000000000012")
+        			(effects
+        				(font
+        					(size 1 1)
+        					(thickness 0.15)
+        				)
+        			)
+        		)
+        		(attr through_hole)
+        		(fp_poly
+        			(pts
+        				(xy -5 -0.5) (xy 5 -0.5) (xy 5 0.5) (xy -5 0.5)
+        			)
+        			(stroke
+        				(width 0)
+        				(type solid)
+        			)
+        			(fill yes)
+        			(layer "F.Cu")
+        			(uuid "{polygon}")
+        		)
+        	)
+        )
+
+        """;
+
+    /// <summary>Every violation in the DRC report of <paramref name="board"/>: its type and the UUIDs of its items, as KiCad orders them.</summary>
+    private static List<(string Type, string Items)> Violations(string cli, string board)
+    {
+        using var json = JsonDocument.Parse(File.ReadAllText(RunDrc(cli, board)));
+        return json.RootElement.GetProperty("violations").EnumerateArray()
+            .Select(v => (v.GetProperty("type").GetString()!, string.Join(" ", v.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("uuid").GetString()))))
+            .ToList();
     }
 
     /// <summary>
@@ -99,6 +233,15 @@ public class SpecctraKiCadCliTests
 
     private static (int Unconnected, string Errors) Drc(string cli, string board)
     {
+        using var json = JsonDocument.Parse(File.ReadAllText(RunDrc(cli, board)));
+        var errors = json.RootElement.GetProperty("violations").EnumerateArray()
+            .Select(v => v.GetProperty("type").GetString()).Order(StringComparer.Ordinal);
+        return (json.RootElement.GetProperty("unconnected_items").GetArrayLength(), string.Join(",", errors));
+    }
+
+    /// <summary>Runs <c>pcb drc --severity-error</c> on <paramref name="board"/> and returns the path of its JSON report.</summary>
+    private static string RunDrc(string cli, string board)
+    {
         var report = Path.ChangeExtension(board, ".json");
         var info = new ProcessStartInfo(cli) { WorkingDirectory = Path.GetDirectoryName(board)!, RedirectStandardError = true, RedirectStandardOutput = true };
         info.Environment["KICAD_CONFIG_HOME"] = Directory.CreateDirectory(Path.ChangeExtension(board, ".kicad-config")).FullName;
@@ -112,10 +255,6 @@ public class SpecctraKiCadCliTests
         var stderr = process.StandardError.ReadToEnd();
         process.WaitForExit();
         Assert.True(File.Exists(report), $"kicad-cli wrote no report for {board} (exit {process.ExitCode}): KiCad could not load it.\n{stdout.Result}\n{stderr}");
-
-        using var json = JsonDocument.Parse(File.ReadAllText(report));
-        var errors = json.RootElement.GetProperty("violations").EnumerateArray()
-            .Select(v => v.GetProperty("type").GetString()).Order(StringComparer.Ordinal);
-        return (json.RootElement.GetProperty("unconnected_items").GetArrayLength(), string.Join(",", errors));
+        return report;
     }
 }
