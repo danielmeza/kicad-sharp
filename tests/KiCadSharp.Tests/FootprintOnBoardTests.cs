@@ -221,7 +221,47 @@ public class FootprintOnBoardTests
         Assert.NotNull(read.GetChild("plugging"));
     }
 
+    /// <summary>
+    /// The ordinary way to author a library with this API: <c>new KiCadFootprintLibrary()</c> holding
+    /// <c>new KiCadFootprint(id)</c>, handed to kicad-cli 10.0.6. The footprint's own stamp is gone on
+    /// the way in, so the library's is what KiCad reads it under, and that stamp is now the board's
+    /// <c>20241229</c>. MEASURED under the library's old <c>20211014</c>: KiCad wrote the Reference
+    /// and Value back with <c>(hide yes)</c>, because a field is hidden by default before
+    /// <c>20230620</c> (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5226).
+    /// </summary>
+    [Fact]
+    public void KiCadReadsANewFootprintInANewLibrary_WithItsReferenceAndValueVisible()
+    {
+        if (TestData.KiCadCli is not { } cli)
+        {
+            return;
+        }
+
+        using var scratch = TestData.NewScratchDirectory();
+        var library = new KiCadFootprintLibrary();
+        library.AddFootprint(new KiCadFootprint("InLibrary"));
+        var path = Path.Combine(scratch, "library.kicad_pcb");
+        library.Save(path);
+
+        Run(cli, scratch, "pcb", "upgrade", "--force", path);
+
+        // What KiCad understood, as it wrote it back.
+        var upgraded = KiCadBoard.Load(path);
+        Assert.Equal("pcbnew", upgraded.Generator);
+        var footprint = Assert.Single(upgraded.Footprints);
+        Assert.Null(footprint.Version);
+        Assert.Equal("REF**", footprint.GetPropertyValue(KiCadPropertyNames.Reference));
+        Assert.Equal("InLibrary", footprint.GetPropertyValue(KiCadPropertyNames.Value));
+        var visible = footprint.Properties.Where(p => !IsHidden(p)).Select(p => p.Key).ToList();
+        Assert.Contains(KiCadPropertyNames.Reference, visible);
+        Assert.Contains(KiCadPropertyNames.Value, visible);
+    }
+
     // ------------------------------------------------------------------------------------- helpers
+
+    /// <summary>A field is hidden by a <c>(hide yes)</c> child, or KiCad 6's bare <c>(hide)</c>.</summary>
+    private static bool IsHidden(KiCadProperty property) =>
+        property.Node.GetChild("hide") is { } hide && hide.GetValue(0) is null or "yes";
 
     private static IEnumerable<SExpression> AllVersionForms(SExpression node) =>
         node.Children.Where(c => c.Token == KiCadTokens.Common.Version)

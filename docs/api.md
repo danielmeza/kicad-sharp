@@ -338,9 +338,12 @@ placing a footprint on a board — `KiCadBoard.Footprints.Add` or `Insert`, or
 pcbnew does, and its `Version` then reads `null` (#73). A footprint with none, which is every
 footprint on a board KiCad wrote, moves untouched. The footprint is then read under the board's
 version, and nothing converts its content to that version: a new footprint's fields read as hidden
-under a stamp older than `20230620`, such as `new KiCadFootprintLibrary()`'s `20211014`, and its
-arcs are refused under `20210925` or older. Take a copy first, `CloneAs` or `Node.Clone()`, to keep
-one with its version. A footprint saved with `SaveFootprint` keeps its version.
+under a stamp older than `20230620`, and its arcs are refused under `20210925` or older. For that
+reason a new board-shaped `KiCadFootprintLibrary` is now stamped like a new board, `20241229`, and no
+longer KiCad 6's `20211014`: measured with kicad-cli 10.0.6, a new footprint in a new library came
+back with its Reference and Value hidden under the old stamp and as built under the new one. Take a
+copy first, `CloneAs` or `Node.Clone()`, to keep one with its version. A footprint saved with
+`SaveFootprint` keeps its version.
 
 **A footprint built in memory is written in KiCad 10's forms.** `new KiCadFootprint(id)` starts with
 the four fields KiCad gives every footprint, written as `(property …)`: `Reference` (`REF**`, on
@@ -355,7 +358,8 @@ text items, and a bare `width` stays bare when written to.
 
 **A new board-shaped `KiCadFootprintLibrary` starts with a layer table**, the same one a new
 `KiCadBoard` has. It used to write an empty `(layers)`, which KiCad refuses as "0 is not a valid layer
-count" (#74).
+count" (#74). It also carries the same stamp as a new board, `KiCadDefaults.BoardVersion`
+(`20241229`), because it is a `kicad_pcb` and its footprints are read under it (#73).
 
 **`Version` and `Generator` report only what the file declares.** On `KiCadBoard`,
 `KiCadFootprintLibrary` and `KiCadSymbolLibrary` they are `null` for a file that declares none. They

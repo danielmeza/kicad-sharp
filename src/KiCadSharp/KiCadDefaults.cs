@@ -59,22 +59,22 @@ namespace KiCadSharp
         /// rather than this (#76).
         /// </para>
         /// <para>
-        /// <b>Not a <c>.kicad_mod</c> stamp on the write path.</b> That type builds a
+        /// <b>It is the board's stamp, <see cref="BoardVersion"/>.</b> That type builds a
         /// <c>kicad_pcb</c> root — its own summary says "board-shaped" — so what it stamps is a
-        /// board, and an OLDER format than <see cref="BoardVersion"/>: KiCad 6 against KiCad 9.
-        /// Two stamps three lines apart for the same root token is a real divergence, and
-        /// collecting the literals is what made it visible. It is reproduced here rather than
-        /// reconciled: raising it changes what the type writes, and that is a decision for
-        /// whoever knows which readers depend on the old value. A footprint built in memory is
-        /// stamped with <see cref="FootprintVersion"/> instead, and loses that stamp when it is
-        /// placed in the library (#73), so this is the format its footprints are read under.
-        /// MEASURED against kicad-cli 10.0.6: a new footprint placed in a new library came back
-        /// with its Reference and Value fields hidden, as any field is before <c>20230620</c>
-        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5226); in a library stamped
-        /// <see cref="BoardVersion"/> it came back as built.
+        /// board, and KiCad reads the whole file, footprints included, under it. A footprint built
+        /// in memory carries <see cref="FootprintVersion"/> as a file of its own and loses that
+        /// stamp when it is placed in the library, as pcbnew writes a footprint inside a board
+        /// (#73), so this is the format the library's footprints are read under. It used to be
+        /// <c>20211014</c>, KiCad 6's, older than the forms a new footprint is written in.
+        /// MEASURED against kicad-cli 10.0.6 (<c>pcb upgrade</c>) on
+        /// <c>new KiCadFootprintLibrary()</c> holding <c>new KiCadFootprint("InLibrary")</c>:
+        /// stamped <c>20211014</c>, KiCad wrote its Reference and Value fields back with
+        /// <c>(hide yes)</c>, as any field is hidden by default before <c>20230620</c>
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 5226); stamped <c>20241229</c>, it wrote them
+        /// back as built. Nothing else in KiCad's re-save differed.
         /// </para>
         /// </remarks>
-        public const string FootprintLibraryVersion = "20211014";
+        public const string FootprintLibraryVersion = BoardVersion;
 
         /// <summary>
         /// The format stamp a footprint built in memory, <c>new KiCadFootprint(id)</c>, starts with:
