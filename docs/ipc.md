@@ -196,12 +196,81 @@ limit with nothing listening fails with "Connection refused", one byte more with
 On `linux-x64` (107 and 108), on GitHub's `macos-14` runner (`osx-arm64`, 103 and 104) and on its
 `windows-11-arm` runner (`win-arm64`, 127 and 128).
 
-Two more cases have no default address that could be right:
+One more case has no default address that could be right: **a second KiCad**, started while the
+first one holds `api.sock`, listens on `api-<pid>.sock` in the same directory
+(`api_server.cpp:115-125`). The default reaches the first.
 
-- **A second KiCad**, started while the first one holds `api.sock`, listens on
-  `api-<pid>.sock` in the same directory (`api_server.cpp:115-125`). The default reaches the first.
-- **KiCad from Flathub, seen from outside its sandbox.** It runs with `TMPDIR=/var/tmp`, which
-  is `~/.var/app/org.kicad.KiCad/cache/tmp` on the host. That is #110.
+### KiCad from Flathub, for a client outside its sandbox
+
+A KiCad installed from Flathub (`org.kicad.KiCad`) runs in a Flatpak sandbox, and from the host the
+rule above gives an address where nothing listens (#110). So on Linux `GetDefaultSocketPath()` has
+one more step: when no socket exists at the address the rule gives, and one exists at
+`~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock`, it returns that one. Existence is
+`File.Exists`, which is true for a socket.
+
+Why that path, from the sources:
+
+- **The Flathub manifest starts KiCad with `TMPDIR=/var/tmp`** (`flathub/org.kicad.KiCad`,
+  `org.kicad.KiCad.yml`, `finish-args`, at `279821a`). Commit `761588f` (2025-02-19) first shared the
+  host's `/tmp` into the sandbox, "Required for default path of KiCad's IPC API"; `8d96620`
+  (2025-02-21, "Change temp directory to /var/tmp, disable access to host /tmp") replaced that with
+  the variable.
+- **Flatpak binds the sandbox's `/var/tmp` to `<app data>/cache/tmp`**, and the app data directory
+  is `g_get_home_dir()/.var/app/<app id>` (flatpak 1.14.6, `common/flatpak-run.c`, lines 3617 and
+  2096). `g_get_home_dir()` is `$HOME`, then the passwd entry, which is also how .NET's
+  `Environment.GetFolderPath(UserProfile)` finds the home directory on Unix.
+- So `KICAD_API_SERVER::Start` puts the socket at `/var/tmp/kicad/api.sock` inside the sandbox,
+  which is `~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock` outside it.
+
+kipy tries the same path (`_default_socket_path` in `kipy/kicad.py`, at `3dcb6c9`), with one
+difference: kipy looks in the Flathub directory first, whenever that file exists. Here KiCad's own
+rule comes first, so a native KiCad that is listening is never passed over for a socket file the
+Flatpak left behind.
+
+Measured on Linux, flatpak 1.14.6, with org.kicad.KiCad 10.0.6 from Flathub installed for the user
+(`flatpak install --user --no-related`), pcbnew started with `flatpak run --command=pcbnew` on a
+board, and no `TMPDIR` set on the host:
+
+| | Inside the sandbox | On the host |
+|---|---|---|
+| `TMPDIR` in pcbnew's environment (`/proc/<pid>/environ`) | `/var/tmp` | not set |
+| `/var/tmp` | a bind mount of `~/.var/app/org.kicad.KiCad/cache/tmp` (ext4) | that directory |
+| `/tmp` | a private tmpfs, `/.flatpak/org.kicad.KiCad/tmp` | the host's, which the sandbox never sees |
+| `$XDG_RUNTIME_DIR` (`/run/user/1000`) | a private tmpfs, `/.flatpak/org.kicad.KiCad/xdg-run` | the host's |
+| pcbnew listening (`ss -xlp`) | `/var/tmp/kicad/api.sock` | `~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock`, a socket; `File.Exists` is true |
+| a raw `connect()` from a host process | | succeeds |
+| `GetDefaultSocketPath()` before #110 | | `ipc:///tmp/kicad/api.sock`; the dial failed, "Connection refused (nng error 6)" |
+| `GetDefaultSocketPath()` now | | `ipc://~/.var/app/org.kicad.KiCad/cache/tmp/kicad/api.sock`; `GetVersion()` answered 10.0.6 and `GetBoard()` named the open board |
+| the same, with a socket bound at `/tmp/kicad/api.sock` as well | | `ipc:///tmp/kicad/api.sock`: KiCad's own address wins |
+
+**No `flatpak override` is needed.** The socket is an ordinary inode on the host's file system, and
+the manifest already put it there. A plugin that the Flatpak KiCad launches is not affected either
+way: it runs inside the sandbox and gets `KICAD_API_SOCKET`.
+
+The mechanism is not KiCad's: any Flatpak started with `--env=TMPDIR=/var/tmp` puts a socket bound
+under `$TMPDIR` at `~/.var/app/<app id>/cache/tmp` on the host, where a host process connects to it.
+Measured with a shell in `org.freecad.FreeCAD`'s sandbox and a socket bound from Python, before the
+KiCad Flatpak was installed.
+
+**Stale socket files count.** pcbnew sent `SIGTERM` was gone within a second and left `api.sock`
+behind; `GetDefaultSocketPath()` then still returned the Flathub address, and the dial failed with
+"Connection refused (nng error 6)", as it does for a native KiCad's stale socket. KiCad removes such
+a file the next time it starts: it takes `flock` on `api.lock` in the same directory, and holding it
+proves the old socket is orphaned (`api_server.cpp:96-112`). Measured: a stale `api.sock` from an
+earlier session was gone once pcbnew had started, and an `api-2.sock` from a second instance of that
+session, which nothing cleans up, was still there. A clean exit closes the nng listener, which
+unlinks the path (nng 1.10.1, `posix_ipclisten.c:59-62`); that was not measured.
+
+What is left out:
+
+- A Flatpak KiCad started while another holds `api.sock` listens on `api-<pid>.sock` there, as a
+  native one would; no default can know the pid.
+- A Flatpak with another app id, or one whose `TMPDIR` the user overrode
+  (`flatpak override --user --env=TMPDIR=… org.kicad.KiCad`), listens somewhere else. Set
+  `KICAD_API_SOCKET` to the socket as the host sees it.
+- A client that is itself inside a Flatpak sandbox sees its own private `/tmp`, and whether it sees
+  another app's `~/.var/app` directory depends on its own permissions. Not measured.
+- Nothing changes on macOS or Windows: Flatpak is Linux only, and no file is looked at there.
 
 ### nng, and which platforms it reaches
 
@@ -284,6 +353,105 @@ same ones. What is new is that the exception says which one it is.
 Either way the exception says which of the two it is, names every path that was tried, and names the
 environment variable — rather than the loader's bare `DllNotFoundException`.
 
+### What the master pin adds, and what KiCad answers
+
+`protos/KICAD_PIN` points at KiCad `master` (builds as `10.99.0`, the 11.0 line). Every command
+that master declares and 10.0.6 did not has a typed method now; the table is which ones KiCad
+registers a handler for at the pinned commit `965fb680`, read out of `api_handler_*.cpp`. A command
+without a handler is answered `AS_UNHANDLED`, which the client throws as `ApiException`.
+
+| Area | Methods | Handled on master |
+|---|---|---|
+| Embedded files (10.0.7+) | `Board.GetEmbeddedFiles` / `AddEmbeddedFiles` / `AddEmbeddedFile` / `SetEmbeddedFiles`, `EmbeddedFileCodec` | yes, pcbnew |
+| Design variants (10.0.7+) | `KiCadDocument.GetVariants` … `GetCurrentVariant` | yes, pcbnew and eeschema |
+| Commit document header (10.0.7+) | `BeginCommit` / `PushCommit` / `DropCommit` carry `Document` | yes; KiCad says it will require it |
+| Jobs | `KiCadDocument.RunJob` with any of the 15 `RunBoardJob*` and 7 `RunSchematicJob*` messages | yes, all 22 |
+| Design rules, plot settings, netlist | `Board.GetDesignRules` / `SetDesignRules` / `GetCustomDesignRules` / `SetCustomDesignRules` / `GetPlotSettings` / `SetPlotSettings` / `ImportNetlist` | yes, pcbnew |
+| Page settings, modified state, focus | `KiCadDocument.GetPageSettings` / `SetPageSettings` / `GetModifiedState` / `FocusOnItems` | yes, both editors |
+| Schematic | `KiCad.GetSchematic`, `Schematic.GetHierarchy` / `GetNetlist` / `PlaceSymbolFromLibrary`, and everything on `KiCadDocument` | yes, eeschema |
+| Placing from a library | `Board.PlaceFootprintFromLibrary`, `Schematic.PlaceSymbolFromLibrary` | yes |
+| Library queries | `KiCad.GetLibraryStatuses` / `ReloadLibrary` / `LoadAllLibraries` / `GetLibraryItems` / `GetItemsFromLibrary` | yes, `api_handler_libraries.cpp` |
+| Library **table editing** | `KiCad.GetLibraryTable` / `AddLibraryTableEntry` / `UpdateLibraryTableEntry` / `DeleteLibraryTableEntry` / `ImportLibrary` / `SearchLibraries` | **no** — declared `Since: 11.0`, no handler yet; `IpcMasterTests` pins the `AS_UNHANDLED` |
+| Documents | `KiCad.OpenDocument` / `CreateDocument` / `CloseDocument` / `CloseAllDocuments` | yes, but only in `kicad-cli api-server` mode |
+| Library items in their editor | `KiCad.OpenLibraryItem` | footprint editor only |
+| Paths, net class assignments | `KiCad.GetPaths`, `Project.GetNetClassAssignments` / `SetNetClassAssignments` | yes |
+| Cross-probe | `KiCad.SyncSelection` / `HighlightNets` / `CrossProbeAnnounce` | yes, both editors; `CrossProbeAnnounce` is marked internal by KiCad |
+| | `KiCad.FocusOnItem` (by reference or pad; `FocusOnItems` by id is the handled one) | **no** |
+
+Every method's wire shape — which message, which document or header, how the reply unpacks — is
+pinned in `tests/KiCadSharp.Tests/IpcCommandTests.cs` against an in-process nng peer. What KiCad
+does with them is measured live, against master, by `IpcMasterTests` and `IpcSchematicTests`.
+
+`GetVersion()` is how to tell the two apart at runtime: master reports `10.99.0`, and
+`KiCadVersion.SupportsLibraryCommands` and friends turn that into a check a caller can branch on.
+
+### Running the live tests against KiCad master
+
+The harness has a flavor switch. `stable` (the default) runs the 10.0.6 release image;
+`nightly` runs the **dev image**, `ghcr.io/danielmeza/orbion-kicad-dev:10.99`, which is the
+`dev` stage of the same Containerfile: the nightly PPA's KiCad master installed beside 10.0.6,
+as `pcbnew-nightly` / `eeschema-nightly` with its own `kicad/10.99` configuration directory.
+`scripts/kicad-dev-image.sh` builds and publishes that image, and says which nightly went in.
+
+```sh
+export KICADSHARP_KICAD_FLAVOR=nightly
+eval "$(scripts/kicad-ipc-container.sh start tests/KiCadSharp.Tests/data/kicad10-pcbnew.kicad_pcb)"
+eval "$(scripts/kicad-ipc-container.sh start tests/KiCadSharp.Tests/data/duplicate-refs/duplicate-refs.kicad_sch)"
+dotnet test KiCadSharp.slnx -c Release
+scripts/kicad-ipc-container.sh stop
+```
+
+One container per editor: the first `start` exports `KICADSHARP_IPC_SOCKET`, the second
+`KICADSHARP_IPC_SCHEMATIC_SOCKET`, and each also exports the host directory the container sees
+as `/project`, which is where a job's output lands. Every live test asks the KiCad it reached what
+it supports and returns early otherwise, so the same suite passes against both flavors; the
+`ipc-nightly` job in CI runs it against the dev image on every push.
+
+**MEASURED 2026-09-21**, nightly `10.99.0-unknown-6e93fd642e` (KiCad master of that morning) in
+the dev image, pcbnew and eeschema both up:
+
+| Suite | Against master | Against 10.0.6 |
+|---|---|---|
+| `IpcTests` (the 10.0.6 surface) | 11 pass | 11 pass |
+| `IpcMasterTests` (board, master additions) | 17 pass | 17 pass, 14 of them returning early |
+| `IpcSchematicTests` (eeschema) | 10 pass | 10 pass, all returning early: eeschema on 10.0.6 answers nothing |
+
+Five things the live run found that the protos do not say:
+
+- **On 10.0.6, pcbnew answers a project-scoped `ExpandTextVariables` before the project handler
+  can**, and rejects any document that is not the open board: "the requested document  is not
+  open", with the empty name. KiCad's API server stops at the first handler that answers with
+  anything but `AS_UNHANDLED`, and 10.0.6's editor validation answers `AS_BAD_REQUEST`; master's
+  answers `AS_UNHANDLED` for a non-board document and the request reaches the project handler.
+  `GetTextVariables` and `SetTextVariables` are project-handler-only and work on both.
+  `KiCadDocument.ExpandTextVariables` sends the board itself, which both versions accept, and the
+  board's resolver sees the project's variables too; `Project.ExpandTextVariables` is the
+  project-handler form, master and later through pcbnew.
+
+- **eeschema holds the main loop behind two one-button dialogs** when it opens the fixture
+  ("an error was found when loading the schematic that has been automatically fixed", then "Load
+  Schematic"), and answers `AS_NOT_READY` until they are gone. The harness gives each dialog focus
+  and sends Return. That needs the display's auth file: `xvfb-run` guards its display with an
+  Xauthority under `/tmp`, a `podman exec` does not inherit it, and without it `xdotool` connects
+  to nothing and reports no windows. An earlier harness clicked coordinates and appeared to do
+  nothing for exactly that reason.
+- **pcbnew reports a project path its own validation rejects.** `GetOpenDocuments` fills the
+  project path from `GetProjectDirectory()`, no trailing separator; `validateProject` in
+  `api_handler_common.cpp` compares against `GetProjectPath()`, which by contract ends with one;
+  eeschema's `PackProject` reports the latter. Sending pcbnew's specifier straight back to
+  `GetNetClasses` gets "the requested project kicad10-pcbnew is not open at path /project".
+  `Project` adds the separator, which is what the other two agree on. Worth a report upstream.
+- **`LoadAllLibraries` answers `AS_UNIMPLEMENTED` in the GUI** ("not available in GUI mode"),
+  where the proto says it is a no-op. It is for `kicad-cli api-server`. `GetLibraryStatuses`,
+  `GetLibraryItems` and `GetItemsFromLibrary` work; libraries load in the background after the
+  editor starts, and an unloaded library lists as empty, so poll the status first.
+- **A placed symbol is a `SchematicSymbolInstance`**, not a `SchematicSymbol` (the library
+  definition), the way a placed footprint is a `FootprintInstance`. `Schematic.GetItems` returns
+  instances and `PlaceSymbolFromLibrary` unpacks one.
+
+A unix socket path is limited to 107 bytes, so the harness keeps its state under short names and
+refuses a path that would not fit; set `KICADSHARP_IPC_STATE` to somewhere shorter if it does.
+
 ### It does not work against eeschema on KiCad 10.0.6
 
 Measured against KiCad 10.0.6, and the reason there is no schematic API here:
@@ -298,5 +466,8 @@ Measured against KiCad 10.0.6, and the reason there is no schematic API here:
 - Upstream is in the same place: `kipy`'s own `kipy.schematic` fails to import against its generated
   protos, and its `Schematic` class carries `versionadded:: (KiCad 11)`.
 
-So a schematic API is a KiCad 11 story, and nothing in `KiCadSharp` pretends otherwise. `.kicad_sch`
-files are read and written on disk instead, through `SExpressions` or the CLI.
+So on 10.0.x a schematic API is a KiCad 11 story. `.kicad_sch` files are read and written on disk
+instead, through `SExpressions` or the CLI. Against master, `eeschema` registers handlers for the
+whole editor surface plus hierarchy, netlist, variants, jobs and symbol placement, and that is what
+`Schematic` wraps — measured, see the table above: hierarchy, netlist, symbols by sheet path,
+commits, variants, page settings and an SVG export all answer.

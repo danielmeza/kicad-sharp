@@ -84,17 +84,42 @@ public class DocumentDefaultsTests
                 : double.NaN);
     }
 
+    /// <summary>
+    /// A board with no thickness reports the thickness a new one is built with, which is also
+    /// KiCad's own default, <c>DEFAULT_BOARD_THICKNESS_MM</c> (<c>include/board_design_settings.h</c>,
+    /// line 56, at KiCad 10.0.6).
+    /// </summary>
     [Fact]
-    public void ABoardWithNoVersionOrThicknessReportsTheSameValuesANewOneIsBuiltWith()
+    public void ABoardWithNoThicknessReportsTheThicknessANewOneIsBuiltWith()
     {
-        // The half that could drift. A file KiCad never stamped, and a file this library just
-        // created, must not disagree about what format they are or how thick the board is.
         var board = new KiCadBoard();
-        board.Node.RemoveChild(KiCadTokens.Common.Version);
         board.Node.GetChild(KiCadTokens.Board.General)?.RemoveChild(KiCadTokens.Common.Thickness);
 
-        Assert.Equal(KiCadDefaults.BoardVersion, board.Version);
         Assert.Equal(KiCadDefaults.BoardThicknessMm, board.General!.Thickness);
+    }
+
+    /// <summary>
+    /// The board and the symbol library no longer fall back to their constructors' stamps either, and
+    /// no document type falls back to its generator name (#95). A file that declares neither reports
+    /// neither, as <see cref="ALibraryWithNoVersionTokenReportsNone"/> does for the footprint library.
+    /// </summary>
+    [Fact]
+    public void ADocumentWithNoVersionOrGeneratorReportsNone()
+    {
+        var board = new KiCadBoard();
+        board.Node.RemoveChild(KiCadTokens.Common.Version);
+        board.Node.RemoveChild(KiCadTokens.Common.Generator);
+        var symbols = new KiCadSymbolLibrary();
+        symbols.Node.RemoveChild(KiCadTokens.Common.Version);
+        symbols.Node.RemoveChild(KiCadTokens.Common.Generator);
+        var footprints = new KiCadFootprintLibrary();
+        footprints.Node.RemoveChild(KiCadTokens.Common.Generator);
+
+        Assert.Null(board.Version);
+        Assert.Null(board.Generator);
+        Assert.Null(symbols.Version);
+        Assert.Null(symbols.Generator);
+        Assert.Null(footprints.Generator);
     }
 
     [Fact]
@@ -107,7 +132,7 @@ public class DocumentDefaultsTests
     }
 
     /// <summary>
-    /// The one document type whose getter no longer falls back to its constructor's stamp (#76).
+    /// The first document type whose getter stopped falling back to its constructor's stamp (#76).
     /// KiCad reads a board-shaped file with no version as <c>20201115</c> and a <c>.kicad_mod</c>
     /// with none as format 0, so reporting <see cref="KiCadDefaults.FootprintLibraryVersion"/> there
     /// named a format neither the file nor KiCad uses.
@@ -131,7 +156,8 @@ public class DocumentDefaultsTests
         // typed on the line below it, so it held whatever IsPowerSymbol did — review inverted
         // that property to EndsWith and all 200 tests still passed. Assert through the property
         // and the mutation dies.
-        var hierarchy = SchematicHierarchy.Load(TestData.CopyDuplicateRefs(out _));
+        using var scratch = TestData.NewScratchDirectory();
+        var hierarchy = SchematicHierarchy.Load(TestData.CopyDuplicateRefs(scratch));
 
         var power = hierarchy.Placements.First(
             p => p.Symbol.ReferenceProperty?.StartsWith("#PWR", StringComparison.Ordinal) == true);

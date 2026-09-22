@@ -110,7 +110,7 @@ public class EndToEndTests
     [Fact]
     public void AFootprintBuiltFluentlySavesToTheSameFileAsTheAddSequence()
     {
-        var scratch = NewScratchDirectory();
+        using var scratch = NewScratchDirectory();
         var fluentPath = Path.Combine(scratch, "fluent.kicad_mod");
         var imperativePath = Path.Combine(scratch, "imperative.kicad_mod");
 
@@ -183,7 +183,7 @@ public class EndToEndTests
     [Fact]
     public void ASymbolLibraryBuiltFluentlySavesToTheSameFileAsTheAddSequence()
     {
-        var scratch = NewScratchDirectory();
+        using var scratch = NewScratchDirectory();
         var fluentPath = Path.Combine(scratch, "fluent.kicad_sym");
         var imperativePath = Path.Combine(scratch, "imperative.kicad_sym");
 
@@ -212,7 +212,7 @@ public class EndToEndTests
         // `upgrade --force` makes KiCad load each file and write back what it loaded, in its own
         // serialiser. Reading that back is how this test sees what KiCad understood — a count
         // KiCad never parsed cannot survive into its output.
-        var scratch = NewScratchDirectory();
+        using var scratch = NewScratchDirectory();
         var pretty = Directory.CreateDirectory(Path.Combine(scratch, "Fluent.pretty")).FullName;
         KiCadFootprintLibrary.SaveFootprint(FluentFootprint(), Path.Combine(pretty, FootprintName + ".kicad_mod"));
         var prettyOut = Path.Combine(scratch, "FluentOut.pretty");

@@ -21,6 +21,12 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="KiCadSharp.Testing" />
+  </ItemGroup>
+
+  <!-- Shared with KiCadSharp.Tests; see the comment there. -->
+  <ItemGroup>
+    <Compile Include="../Shared/ScratchDirectory.cs" Link="ScratchDirectory.cs" />
   </ItemGroup>
 
 </Project>

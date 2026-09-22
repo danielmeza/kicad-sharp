@@ -279,7 +279,7 @@ public class ZoneFillModeTests
             return;
         }
 
-        var scratch = TestData.NewScratchDirectory();
+        using var scratch = TestData.NewScratchDirectory();
         (string Name, Func<KiCadBoard> Load, Action<KiCadZoneFill> Edit, string? Saved)[] cases =
         [
             ("solid-written-back", () => KiCadBoard.Load(TestData.Kicad10Board), f => f.Mode = f.Mode, null),

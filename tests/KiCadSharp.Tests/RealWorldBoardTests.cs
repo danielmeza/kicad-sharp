@@ -386,7 +386,8 @@ public class RealWorldBoardTests
 
         BoardDocumentTests.ReadEverythingOn(board);
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), "SNEdge.kicad_pcb");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "SNEdge.kicad_pcb");
         board.Save(output);
 
         Assert.Equal(File.ReadAllBytes(TestData.SNEdgeBoard), File.ReadAllBytes(output));
@@ -406,7 +407,8 @@ public class RealWorldBoardTests
         var original = board.Segments[0].Width;
         board.Segments[0].Width = original + 0.1;
 
-        var output = Path.Combine(TestData.NewScratchDirectory(), Path.GetFileName(path));
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, Path.GetFileName(path));
         board.Save(output);
         var after = File.ReadAllText(output);
 

@@ -11,8 +11,11 @@ public class KiCadUtilsTests
         Assert.False(KiCadUtils.ValidateSymbolLibrary(TestData.Footprint));
 
     [Fact]
-    public void ValidateSymbolLibrary_RejectsAMissingFile() =>
-        Assert.False(KiCadUtils.ValidateSymbolLibrary(Path.Combine(TestData.NewScratchDirectory(), "absent.kicad_sym")));
+    public void ValidateSymbolLibrary_RejectsAMissingFile()
+    {
+        using var scratch = TestData.NewScratchDirectory();
+        Assert.False(KiCadUtils.ValidateSymbolLibrary(Path.Combine(scratch, "absent.kicad_sym")));
+    }
 
     [Fact]
     public void ParseSymbolLibrary_ReadsTheHeader()
@@ -50,9 +53,12 @@ public class KiCadUtilsTests
     }
 
     [Fact]
-    public void ParseFootprintLibrary_ThrowsForAMissingFile() =>
+    public void ParseFootprintLibrary_ThrowsForAMissingFile()
+    {
+        using var scratch = TestData.NewScratchDirectory();
         Assert.Throws<FileNotFoundException>(
-            () => KiCadUtils.ParseFootprintLibrary(Path.Combine(TestData.NewScratchDirectory(), "absent.kicad_mod")));
+            () => KiCadUtils.ParseFootprintLibrary(Path.Combine(scratch, "absent.kicad_mod")));
+    }
 
     [Fact]
     public void ValidateFootprintLibrary_AcceptsEveryRootKiCadWrites()
@@ -61,7 +67,8 @@ public class KiCadUtilsTests
         Assert.True(KiCadUtils.ValidateFootprintLibrary(TestData.PowerInputBoard));
 
         // KiCad 5 spelling, which carries no version token.
-        var legacy = Path.Combine(TestData.NewScratchDirectory(), "legacy.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var legacy = Path.Combine(scratch, "legacy.kicad_mod");
         File.WriteAllText(legacy, "(module TEST (layer F.Cu))\n");
         Assert.True(KiCadUtils.ValidateFootprintLibrary(legacy));
     }
@@ -70,13 +77,15 @@ public class KiCadUtilsTests
     public void ValidateFootprintLibrary_RejectsASymbolLibraryAndAMissingFile()
     {
         Assert.False(KiCadUtils.ValidateFootprintLibrary(TestData.SymbolLibrary));
-        Assert.False(KiCadUtils.ValidateFootprintLibrary(Path.Combine(TestData.NewScratchDirectory(), "absent.kicad_mod")));
+        using var scratch = TestData.NewScratchDirectory();
+        Assert.False(KiCadUtils.ValidateFootprintLibrary(Path.Combine(scratch, "absent.kicad_mod")));
     }
 
     [Fact]
     public void ValidateFootprintLibrary_RejectsAFootprintWithNoVersion()
     {
-        var path = Path.Combine(TestData.NewScratchDirectory(), "noversion.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var path = Path.Combine(scratch, "noversion.kicad_mod");
         File.WriteAllText(path, "(footprint \"X\" (layer \"F.Cu\"))\n");
 
         Assert.False(KiCadUtils.ValidateFootprintLibrary(path));
@@ -100,7 +109,8 @@ public class KiCadUtilsTests
     public void ExportFootprintToFile_ReproducesTheFootprintsOwnBytes()
     {
         var footprint = KiCadUtils.ParseFootprintLibrary(TestData.Footprint).Footprints[0];
-        var output = Path.Combine(TestData.NewScratchDirectory(), "LED.kicad_mod");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "LED.kicad_mod");
 
         KiCadUtils.ExportFootprintToFile(footprint, output);
 
@@ -113,7 +123,8 @@ public class KiCadUtilsTests
         // It used to go through SExpressionParser.ParseFile, which returns only the first top-level
         // form, so a save could not reproduce the file it came from.
         var library = KiCadUtils.ParseSymbolLibrary(TestData.SymbolLibrary);
-        var output = Path.Combine(TestData.NewScratchDirectory(), "orbion.kicad_sym");
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "orbion.kicad_sym");
 
         library.Save(output);
 

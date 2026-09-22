@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 syntax = "proto3";
@@ -23,12 +23,16 @@ syntax = "proto3";
 package kiapi.board.commands;
 
 import "common/types/base_types.proto";
+import "common/types/embedded_files.proto";
 import "google/protobuf/any.proto";
 import "common/types/enums.proto";
 import "common/types/project_settings.proto";
 import "board/board.proto";
+import "board/board_rules.proto";
 import "board/board_types.proto";
+import "board/board_jobs.proto";
 import "common/commands/editor_commands.proto";
+
 /*
  * Board stackup and properties
  */
@@ -82,6 +86,26 @@ message SetBoardEnabledLayers
   repeated kiapi.board.types.BoardLayer layers = 3;
 }
 
+// Returns kiapi.common.types.EmbeddedFiles
+message GetEmbeddedFiles
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+}
+
+// Appends embedded files to the board.  Returns Empty.
+message AddEmbeddedFiles
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+  kiapi.common.types.EmbeddedFiles files = 2;
+}
+
+// Replaces all embedded files in the board.  Returns Empty.
+message SetEmbeddedFiles
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+  kiapi.common.types.EmbeddedFiles files = 2;
+}
+
 message GetGraphicsDefaults
 {
   kiapi.common.types.DocumentSpecifier board = 1;
@@ -90,6 +114,50 @@ message GetGraphicsDefaults
 message GraphicsDefaultsResponse
 {
   kiapi.board.GraphicsDefaults defaults = 1;
+}
+
+enum CustomRulesStatus
+{
+  CRS_UNKNOWN = 0;
+  CRS_NONE = 1;
+  CRS_VALID = 2;
+  CRS_INVALID = 3;
+}
+
+message GetBoardDesignRules
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+}
+
+message SetBoardDesignRules
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+  kiapi.board.BoardDesignRules rules = 2;
+}
+
+message BoardDesignRulesResponse
+{
+  kiapi.board.BoardDesignRules rules = 1;
+  CustomRulesStatus custom_rules_status = 2;
+}
+
+message GetCustomDesignRules
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+}
+
+// Returns CustomRulesResponse
+message SetCustomDesignRules
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+  repeated kiapi.board.CustomRule rules = 2;
+}
+
+message CustomRulesResponse
+{
+  CustomRulesStatus status = 1;
+  repeated kiapi.board.CustomRule rules = 2;
+  string error_text = 3;
 }
 
 enum BoardOriginType
@@ -223,12 +291,56 @@ message NetClassForNetsResponse
 }
 
 /*
+ * Netlist import
+ */
+
+// How schematic components are matched to board footprints during netlist import.
+enum NetlistMatchMode
+{
+  NMM_UNKNOWN = 0;
+  NMM_UUID = 1;      // Match by unique ID.
+  NMM_REFERENCE = 2; // Match by reference designator.
+}
+
+// Imports a netlist file exported from the schematic and updates the board.
+// Returns ImportNetlistResponse.
+message ImportNetlist
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+
+  // Path to the netlist file.
+  string netlist_path = 2;
+
+  // If true, report planned changes without modifying the board.
+  bool dry_run = 3;
+
+  NetlistMatchMode match_mode = 4;
+
+  bool delete_extra_footprints = 5;
+  bool update_footprints = 6;
+  bool transfer_groups = 7;
+  bool override_locks = 8;
+}
+
+message ImportNetlistResponse
+{
+  uint32 error_count = 1;
+  uint32 warning_count = 2;
+  uint32 new_footprint_count = 3;
+
+  // Human-readable report of changes and any warnings or errors.
+  string report = 4;
+}
+
+/*
  * Blocking operations
  */
 
 // Refills some or all zones on the board.
-// This is a blocking operation; it will return Empty immediately, but KiCad will return
-// ApiStatusCode.AS_BUSY to all future API requests until the zone fill has completed.
+// When zones is empty and a board editor is running, all zones are refilled in the background:
+// Empty is returned immediately and KiCad returns ApiStatusCode.AS_BUSY to all future API
+// requests until the fill completes.  When specific zones are given, or in headless sessions,
+// the fill runs synchronously and the response is not sent until it has completed.
 message RefillZones
 {
   kiapi.common.types.DocumentSpecifier board = 1;
@@ -304,6 +416,7 @@ message PadstackPresenceResponse
 
 // DRC markers
 
+// Deprecated - use common.types.RuleSeverity
 enum DrcSeverity // Since 10.0
 {
   DRS_UNKNOWN = 0;
@@ -435,6 +548,23 @@ message SetBoardEditorAppearanceSettings
   BoardEditorAppearanceSettings settings = 1;
 }
 
+// Returns BoardPlotSettingsResponse
+message GetBoardPlotSettings
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+}
+
+message SetBoardPlotSettings
+{
+  kiapi.common.types.DocumentSpecifier board = 1;
+  kiapi.board.jobs.BoardPlotSettings plot_settings = 2;
+}
+
+message BoardPlotSettingsResponse
+{
+  kiapi.board.jobs.BoardPlotSettings plot_settings = 1;
+}
+
 enum BoardFlipDirection
 {
   BFD_UNKNOWN    = 0;
@@ -470,6 +600,25 @@ message FlipItemsResponse
 
   repeated ItemFlipResult flipped_items = 3;
 }
+
+// Requests placement of a footprint on a board
+// Returns PlaceFromLibraryResponse
+// Since: 11.0
+message PlaceFootprintFromLibrary
+{
+  kiapi.common.types.ItemHeader header = 1;
+
+  kiapi.common.types.LibraryIdentifier lib_id = 2;
+
+  kiapi.common.types.Vector2 position = 3;
+
+  // If unspecified, will use default orientation
+  optional kiapi.common.types.Angle orientation = 4;
+
+  // If unspecified, will place on F_Cu.  Footprint will be flipped if placed on B_Cu.
+  optional kiapi.board.types.BoardLayer layer = 5;
+}
+
 
 //// Interactive commands ////
 // These commands begin an interactive operation in the editor.
