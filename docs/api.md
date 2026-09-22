@@ -356,8 +356,10 @@ a `.kicad_mod` with no version as format 0. A board or symbol library with no ve
 reads as written at all: KiCad 10.0.6 takes the version only as the first child, and when that child
 is something else it assumes one (`20201115` for a board, the current `20251024` for a library) and
 loses that child. A `(generator …)` there makes it refuse the file, and an empty form ends the file
-early. So `KiCadBoard.Version` and `KiCadSymbolLibrary.Version` cannot be set to `null`, and a version
-set on a file that has none goes first. `KiCadSchematic` still reports `""` for both.
+early. So `KiCadBoard.Version` and `KiCadSymbolLibrary.Version` cannot be set to `null`, and neither
+can `KiCadFootprintLibrary.Version` on a board-shaped library, whose file is the same `kicad_pcb`
+(#109); it still removes the version from a `.kicad_mod`, which KiCad reads with none. A version set
+on a file that has none goes first. `KiCadSchematic` still reports `""` for both.
 
 ### Copper geometry — `KiCadSharp.Geometry`
 

@@ -93,16 +93,33 @@ namespace KiCadSharp.Documents
 
         /// <summary>
         /// Gets or sets the file format version the file declares, its root's <c>(version …)</c>, or
-        /// <see langword="null"/> when it declares none. Setting <see langword="null"/> removes it.
+        /// <see langword="null"/> when it declares none. Setting <see langword="null"/> removes it
+        /// from a <c>.kicad_mod</c>, and throws on a board-shaped library.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// <see langword="null"/> is not a format this library assumes for the file; KiCad has its own
         /// answer. It reads a <c>.kicad_mod</c> with no version as format 0, KiCad 5's
-        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 104), and a board with none as <c>20201115</c>
-        /// (line 1679). For a <c>.kicad_mod</c> this is the footprint's own
-        /// <see cref="KiCadFootprint.Version"/>, and the two always agree (#76). A version set on a
-        /// file that has none goes first, where KiCad reads it.
+        /// (<c>pcb_io_kicad_sexpr_parser.cpp</c>, line 104), because a footprint's parser reads
+        /// <c>version</c> anywhere in the form (line 5039). For a <c>.kicad_mod</c> this is the
+        /// footprint's own <see cref="KiCadFootprint.Version"/>, and the two always agree (#76). A
+        /// version set on a file that has none goes first, where KiCad reads it.
+        /// </para>
+        /// <para>
+        /// A board-shaped library is a <c>kicad_pcb</c>, and KiCad 10.0.6 reads a board's version
+        /// only as the first child (<c>parseHeader</c>, lines 1663–1681). When that child is
+        /// something else it assumes <c>20201115</c> (line 1679), having already taken the child's
+        /// opening token, so the child is lost with it: the <c>(generator …)</c> a new library
+        /// writes there makes KiCad refuse the file, and an empty form such as <c>(general)</c> ends
+        /// the board early, so every footprint after it is dropped. So on a board-shaped library the
+        /// version cannot be set to <see langword="null"/>, as <see cref="KiCadBoard.Version"/>
+        /// cannot (#109). It used to remove it, which wrote a board KiCad could not read.
+        /// </para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException">
+        /// The value set is <see langword="null"/> and the file is board-shaped
+        /// (<see cref="IsSingleFootprint"/> is <see langword="false"/>).
+        /// </exception>
         public string? Version
         {
             get => _root.GetChildValue(KiCadTokens.Common.Version);
@@ -110,6 +127,13 @@ namespace KiCadSharp.Documents
             {
                 if (value is null)
                 {
+                    if (!_rootIsFootprint)
+                    {
+                        throw new ArgumentNullException(
+                            nameof(value),
+                            "A board-shaped footprint library (kicad_pcb) cannot have its version removed: KiCad reads a board's version only as its first child, and a board without one is not a file it reads as written. Only a single footprint (.kicad_mod) can have none.");
+                    }
+
                     _root.RemoveChild(KiCadTokens.Common.Version);
                     return;
                 }
