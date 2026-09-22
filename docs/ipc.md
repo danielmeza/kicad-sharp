@@ -130,6 +130,11 @@ appears on disk, and the client has to spell the path exactly as KiCad does. Unt
 wrote `…\Temp\\kicad\api.sock`: `Path.GetTempPath()` already ends in `\`, and the code added
 another.
 
+The tests that need a peer which takes nng's connection and never completes its handshake, or holds
+it, follow the same rule (`HeldHandshake`): a Unix domain socket on Linux and macOS, and on Windows a
+`NamedPipeServerStream`, because a Unix socket bound at the path is never looked at there and the
+dial fails at once with "Connection refused" (#106, #122).
+
 Measured on Linux, in `ghcr.io/danielmeza/orbion-kicad-release:10.0.6` with no network and a fresh
 `HOME`. Each row started pcbnew with only the variables shown. Three things were read for each:
 - the Unix sockets pcbnew was listening on (`/proc/net/unix`);
@@ -231,8 +236,8 @@ nothing for Apple silicon or Windows on Arm, so those two are built in this repo
 - **Checked.** Each one exports the same nng functions as its x64 counterpart (495 on macOS, 497 on
   Windows) and links the same system libraries. The `nng` workflow rebuilds both on their own
   hardware, GitHub's `macos-14` and `windows-11-arm`, and fails unless each rebuild is the committed
-  file byte for byte. CI runs the test suite on those two machines too, on Windows without three
-  tests that fail there whatever the architecture (#106, #107). Every packed `KiCadSharp` is checked
+  file byte for byte. CI runs the test suite on those two machines too, on Windows without one
+  test that fails there whatever the architecture (#107). Every packed `KiCadSharp` is checked
   for exactly these eight files, each built for its own architecture (`scripts/check-natives.sh`), in
   CI and before a release.
 

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
 using KiCadSharp.Interop;
@@ -128,26 +127,16 @@ public class NngInteropTests
         // that has opened its API socket and is not serving yet -- is not refused and is not
         // accepted. It costs nng's own dial timeout, measured at 10.0 s, every attempt. Anything
         // waiting for KiCad to come up has to count seconds rather than attempts, or three
-        // "retries" become half a minute of apparent hang.
-        var path = SocketPaths.New("silent");
-        using var listener = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
-        listener.Bind(new UnixDomainSocketEndPoint(path));
-        listener.Listen(8);
+        // "retries" become half a minute of apparent hang. HeldHandshake is that socket, and on
+        // Windows the named pipe nng dials there instead (#106).
+        using var silent = HeldHandshake.Start();
+        using var socket = NngRequestSocket.Open();
+        var elapsed = Stopwatch.StartNew();
 
-        try
-        {
-            using var socket = NngRequestSocket.Open();
-            var elapsed = Stopwatch.StartNew();
+        var failure = Assert.Throws<NngException>(() => socket.Dial(silent.Url));
 
-            var failure = Assert.Throws<NngException>(() => socket.Dial($"ipc://{path}"));
-
-            Assert.Contains("Timed out", failure.Message);
-            Assert.InRange(elapsed.Elapsed, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        Assert.Contains("Timed out", failure.Message);
+        Assert.InRange(elapsed.Elapsed, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
     }
 
     [Fact]
