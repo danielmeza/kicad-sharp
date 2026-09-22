@@ -1,341 +1,248 @@
-﻿using Google.Protobuf;
-using Google.Protobuf.WellKnownTypes;
-
+using Kiapi.Board;
+using Kiapi.Board.Commands;
+using Kiapi.Board.Jobs;
+using Kiapi.Board.Types;
 using Kiapi.Common.Commands;
 using Kiapi.Common.Types;
-using Kiapi.Board.Commands;
-using Kiapi.Board.Types;
 
 namespace KiCadSharp
 {
     /// <summary>
-    /// Represents a KiCad PCB board
+    /// A KiCad PCB open in pcbnew, over IPC.
     /// </summary>
-    public class Board : KiCadIPCProxy
+    /// <remarks>
+    /// The editor-level commands, saving, commits, items, selection, page settings, variants and
+    /// jobs, are on <see cref="KiCadDocument"/>. What is here is specific to a board.
+    /// </remarks>
+    public class Board : KiCadDocument
     {
-        private readonly DocumentSpecifier _document;
-        
-        /// <summary>
-        /// Creates a new Board proxy
-        /// </summary>
-        /// <param name="client">KiCad IPC client</param>
-        /// <param name="document">Document specifier for the board</param>
-        public Board(KiCadIPCClient client, DocumentSpecifier document) : base(client)
+        /// <summary>Creates a new Board proxy.</summary>
+        /// <param name="client">KiCad IPC client.</param>
+        /// <param name="document">Document specifier for the board.</param>
+        public Board(KiCadIPCClient client, DocumentSpecifier document) : base(client, document)
         {
-            _document = document;
         }
-        
-        /// <summary>
-        /// Gets the document specifier for this board
-        /// </summary>
-        public DocumentSpecifier Document => _document;
-        
-        /// <summary>
-        /// Gets the name of the board file
-        /// </summary>
-        public string Name => _document.BoardFilename;
-        
-        /// <summary>
-        /// Gets a project object for this board
-        /// </summary>
-        /// <returns>Project object</returns>
+
+        /// <summary>The board file name.</summary>
+        public string Name => Document.BoardFilename;
+
+        /// <summary>The project this board belongs to.</summary>
+        /// <returns>Project object.</returns>
         public Project GetProject()
         {
-            return new Project(Client, _document);
+            return new Project(Client, Document);
         }
-        
-        /// <summary>
-        /// Saves the board
-        /// </summary>
-        public async ValueTask Save(CancellationToken cancellationToken = default)
-        {
-            var command = new SaveDocument
-            {
-                Document = _document
-            };
-            await Send(command, cancellationToken);
-        }
-        
-        /// <summary>
-        /// Saves the board to a new file
-        /// </summary>
-        /// <param name="filename">Path to save the board to</param>
-        /// <param name="overwrite">Whether to overwrite existing files</param>
-        /// <param name="includeProject">Whether to include the project files</param>
-        public async ValueTask SaveAs(string filename, bool overwrite = false, bool includeProject = true, CancellationToken cancellationToken = default)
-        {
-            var command = new SaveCopyOfDocument
-            {
-                Document = _document,
-                Path = filename
-            };
-            command.Options = new SaveOptions
-            {
-                Overwrite = overwrite,
-                IncludeProject = includeProject
-            };
-            await Send(command, cancellationToken);
-        }
-        
-        /// <summary>
-        /// Reverts the board to the last saved state
-        /// </summary>
-        public async ValueTask Revert(CancellationToken cancellationToken = default)
-        {
-            var command = new RevertDocument
-            {
-                Document = _document
-            };
-            await Send(command, cancellationToken);
-        }
-        
-        /// <summary>
-        /// Begins a commit transaction on the board
-        /// </summary>
-        /// <returns>Commit object with ID to be used in push/drop operations</returns>
-        public async ValueTask<Commit> BeginCommit(CancellationToken cancellationToken = default)
-        {
-            var response = await Send<BeginCommitResponse>(new BeginCommit(), cancellationToken);
-            return new Commit(response.Id);
-        }
-        
-        /// <summary>
-        /// Pushes changes made during a commit transaction
-        /// </summary>
-        /// <param name="commit">Commit object returned from BeginCommit</param>
-        /// <param name="message">Optional message describing the changes</param>
-        public async ValueTask PushCommit(Commit commit, string message = "", CancellationToken cancellationToken = default)
-        {
-            var command = new EndCommit
-            {
-                Id = commit.Id,
-                Action = CommitAction.CmaCommit,
-                Message = message
-            };
-            await Send<EndCommitResponse>(command, cancellationToken);
-        }
-        
-        /// <summary>
-        /// Drops (cancels) changes made during a commit transaction
-        /// </summary>
-        /// <param name="commit">Commit object returned from BeginCommit</param>
-        public async ValueTask DropCommit(Commit commit, CancellationToken cancellationToken = default)
-        {
-            var command = new EndCommit
-            {
-                Id = commit.Id,
-                Action = CommitAction.CmaDrop
-            };
-            await Send<EndCommitResponse>(command, cancellationToken);
-        }
-        
-        /// <summary>
-        /// Gets items of specified types from the board
-        /// </summary>
-        /// <param name="types">Types of items to retrieve</param>
-        /// <returns>Array of items</returns>
-        public ValueTask<IMessage[]> GetItems(params KiCadObjectType[] types) => GetItems(default, types);
 
-        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
-        /// <param name="cancellationToken">Cancels the round trip.</param>
-        /// <param name="types">As above.</param>
-        /// <returns>As above.</returns>
-        public async ValueTask<IMessage[]> GetItems(CancellationToken cancellationToken, params KiCadObjectType[] types)
-        {
-            var command = new GetItems
-            {
-                Header = new ItemHeader { Document = _document }
-            };
-            command.Types_.AddRange(types);
-            
-            var response = await Send<GetItemsResponse>(command, cancellationToken);
-            return response.Items.ToArray();
-        }
-        
-        /// <summary>
-        /// Gets the selection on the board
-        /// </summary>
-        /// <param name="types">Optional filter for item types</param>
-        /// <returns>Array of selected items</returns>
-        public ValueTask<IMessage[]> GetSelection(params KiCadObjectType[] types) => GetSelection(default, types);
+        // ----------------------------------------------------------------------------- layers
 
-        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
-        /// <param name="cancellationToken">Cancels the round trip.</param>
-        /// <param name="types">As above.</param>
-        /// <returns>As above.</returns>
-        public async ValueTask<IMessage[]> GetSelection(CancellationToken cancellationToken, params KiCadObjectType[] types)
-        {
-            var command = new GetSelection
-            {
-                Header = new ItemHeader { Document = _document }
-            };
-            if (types != null && types.Length > 0)
-            {
-                command.Types_.AddRange(types);
-            }
-            
-            var response = await Send<SelectionResponse>(command, cancellationToken);
-            return response.Items.ToArray();
-        }
-        
-        /// <summary>
-        /// Clears the current selection on the board
-        /// </summary>
-        public async ValueTask ClearSelection(CancellationToken cancellationToken = default)
-        {
-            var command = new ClearSelection
-            {
-                Header = new ItemHeader { Document = _document }
-            };
-            await Send(command, cancellationToken);
-        }
-        
-        /// <summary>
-        /// Gets the active layer on the board
-        /// </summary>
-        /// <returns>Active layer</returns>
+        /// <summary>The active layer in the editor.</summary>
         public async ValueTask<BoardLayer> GetActiveLayer(CancellationToken cancellationToken = default)
         {
-            var command = new GetActiveLayer
-            {
-                Board = _document
-            };
-            var response = await Send<BoardLayerResponse>(command, cancellationToken);
+            var response = await Send<BoardLayerResponse>(new GetActiveLayer { Board = Document }, cancellationToken);
             return response.Layer;
         }
-        
-        /// <summary>
-        /// Sets the active layer on the board
-        /// </summary>
-        /// <param name="layer">Layer to set as active</param>
+
+        /// <summary>Sets the active layer in the editor.</summary>
+        /// <param name="layer">Layer to make active.</param>
         public async ValueTask SetActiveLayer(BoardLayer layer, CancellationToken cancellationToken = default)
         {
-            var command = new SetActiveLayer
-            {
-                Board = _document,
-                Layer = layer
-            };
-            await Send(command, cancellationToken);
+            await Send(new SetActiveLayer { Board = Document, Layer = layer }, cancellationToken);
         }
-        
-        /// <summary>
-        /// Gets the board as a string in KiCad's board file format
-        /// </summary>
-        /// <returns>Board file content as string</returns>
-        public async ValueTask<string> GetAsString(CancellationToken cancellationToken = default)
-        {
-            var command = new SaveDocumentToString
-            {
-                Document = _document
-            };
-            var response = await Send<SavedDocumentResponse>(command, cancellationToken);
-            return response.Contents;
-        }
-        
-        /// <summary>
-        /// Refills all zones on the board
-        /// </summary>
+
+        /// <summary>Refills every zone on the board.</summary>
         public async ValueTask RefillZones(CancellationToken cancellationToken = default)
         {
-            var command = new RefillZones
-            {
-                Board = _document
-            };
+            await Send(new RefillZones { Board = Document }, cancellationToken);
+        }
+
+        // ---------------------------------------------------------------------- embedded files
+
+        /// <summary>The files embedded in the board.</summary>
+        /// <returns>Each file as KiCad holds it. Decode one with <see cref="EmbeddedFileCodec.Unpack"/>.</returns>
+        /// <remarks>KiCad 10.0.7 and later.</remarks>
+        public async ValueTask<EmbeddedFile[]> GetEmbeddedFiles(CancellationToken cancellationToken = default)
+        {
+            var response = await Send<EmbeddedFiles>(new GetEmbeddedFiles { Board = Document }, cancellationToken);
+            return response.Files.ToArray();
+        }
+
+        /// <summary>Appends files to the board's embedded files.</summary>
+        /// <param name="files">Files as <see cref="EmbeddedFileCodec.Pack"/> builds them.</param>
+        /// <remarks>KiCad 10.0.7 and later. KiCad rejects the whole request if any file's hash does not match its content.</remarks>
+        public ValueTask AddEmbeddedFiles(params EmbeddedFile[] files) => AddEmbeddedFiles(default, files);
+
+        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        /// <param name="files">As above.</param>
+        public async ValueTask AddEmbeddedFiles(CancellationToken cancellationToken, params EmbeddedFile[] files)
+        {
+            var command = new AddEmbeddedFiles { Board = Document, Files = new EmbeddedFiles() };
+            command.Files.Files.AddRange(files);
             await Send(command, cancellationToken);
         }
-        
-        /// <summary>
-        /// Creates items on the board
-        /// </summary>
-        /// <param name="items">Items to create</param>
-        /// <returns>Response containing the created items</returns>
-        public ValueTask<CreateItemsResponse> CreateItems(params IMessage[] items) => CreateItems(default, items);
+
+        /// <summary>Embeds one file, given its raw content.</summary>
+        /// <param name="name">The name KiCad lists it under.</param>
+        /// <param name="content">The raw bytes.</param>
+        /// <param name="type">What KiCad treats it as; <see cref="EmbeddedFileType.EftDatasheet"/> for a datasheet.</param>
+        /// <remarks>KiCad 10.0.7 and later. Compresses, encodes and hashes through <see cref="EmbeddedFileCodec.Pack"/>.</remarks>
+        public ValueTask AddEmbeddedFile(string name, byte[] content, EmbeddedFileType type = EmbeddedFileType.EftOther, CancellationToken cancellationToken = default)
+        {
+            return AddEmbeddedFiles(cancellationToken, EmbeddedFileCodec.Pack(name, content, type));
+        }
+
+        /// <summary>Replaces the board's embedded files.</summary>
+        /// <param name="files">The new set. Empty removes every embedded file.</param>
+        /// <remarks>KiCad 10.0.7 and later.</remarks>
+        public ValueTask SetEmbeddedFiles(params EmbeddedFile[] files) => SetEmbeddedFiles(default, files);
 
         /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
         /// <param name="cancellationToken">Cancels the round trip.</param>
-        /// <param name="items">As above.</param>
-        /// <returns>As above.</returns>
-        public async ValueTask<CreateItemsResponse> CreateItems(CancellationToken cancellationToken, params IMessage[] items)
+        /// <param name="files">As above.</param>
+        public async ValueTask SetEmbeddedFiles(CancellationToken cancellationToken, params EmbeddedFile[] files)
         {
-            var command = new CreateItems
+            var command = new SetEmbeddedFiles { Board = Document, Files = new EmbeddedFiles() };
+            command.Files.Files.AddRange(files);
+            await Send(command, cancellationToken);
+        }
+
+        // ------------------------------------------------------------------------ design rules
+
+        /// <summary>The board's design rules: constraints, predefined sizes, defaults, DRC severities and exclusions.</summary>
+        /// <returns>The rules, plus whether the board's custom rules text is valid.</returns>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask<BoardDesignRulesResponse> GetDesignRules(CancellationToken cancellationToken = default)
+        {
+            return await Send<BoardDesignRulesResponse>(new GetBoardDesignRules { Board = Document }, cancellationToken);
+        }
+
+        /// <summary>Sets the board's design rules.</summary>
+        /// <param name="rules">The rules to apply.</param>
+        /// <returns>The rules as KiCad holds them after the change.</returns>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask<BoardDesignRulesResponse> SetDesignRules(BoardDesignRules rules, CancellationToken cancellationToken = default)
+        {
+            return await Send<BoardDesignRulesResponse>(new SetBoardDesignRules { Board = Document, Rules = rules }, cancellationToken);
+        }
+
+        /// <summary>The board's custom design rules, parsed.</summary>
+        /// <returns>The rules, their validity, and the parser's error text when they are invalid.</returns>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask<CustomRulesResponse> GetCustomDesignRules(CancellationToken cancellationToken = default)
+        {
+            return await Send<CustomRulesResponse>(new GetCustomDesignRules { Board = Document }, cancellationToken);
+        }
+
+        /// <summary>Replaces the board's custom design rules.</summary>
+        /// <param name="rules">The rules to write.</param>
+        /// <returns>The rules as KiCad parsed them back, with their validity and any error text.</returns>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public ValueTask<CustomRulesResponse> SetCustomDesignRules(params CustomRule[] rules) => SetCustomDesignRules(default, rules);
+
+        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
+        /// <param name="cancellationToken">Cancels the round trip.</param>
+        /// <param name="rules">As above.</param>
+        /// <returns>As above.</returns>
+        public async ValueTask<CustomRulesResponse> SetCustomDesignRules(CancellationToken cancellationToken, params CustomRule[] rules)
+        {
+            var command = new SetCustomDesignRules { Board = Document };
+            command.Rules.AddRange(rules);
+            return await Send<CustomRulesResponse>(command, cancellationToken);
+        }
+
+        // ----------------------------------------------------------------------------- netlist
+
+        /// <summary>Updates the board from a netlist exported by the schematic.</summary>
+        /// <param name="netlistPath">Path to the netlist file.</param>
+        /// <param name="dryRun">Report what would change without changing the board.</param>
+        /// <param name="matchMode">How schematic symbols are matched to footprints: by unique id, or by reference designator.</param>
+        /// <param name="deleteExtraFootprints">Remove footprints the netlist does not mention.</param>
+        /// <param name="updateFootprints">Replace footprints whose library link changed.</param>
+        /// <param name="transferGroups">Carry schematic groups over to the board.</param>
+        /// <param name="overrideLocks">Change locked footprints too.</param>
+        /// <returns>Error, warning and new-footprint counts, and KiCad's report text.</returns>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask<ImportNetlistResponse> ImportNetlist(
+            string netlistPath,
+            bool dryRun = false,
+            NetlistMatchMode matchMode = NetlistMatchMode.NmmUuid,
+            bool deleteExtraFootprints = false,
+            bool updateFootprints = false,
+            bool transferGroups = false,
+            bool overrideLocks = false,
+            CancellationToken cancellationToken = default)
+        {
+            var command = new ImportNetlist
             {
-                Header = new ItemHeader { Document = _document }
+                Board = Document,
+                NetlistPath = netlistPath,
+                DryRun = dryRun,
+                MatchMode = matchMode,
+                DeleteExtraFootprints = deleteExtraFootprints,
+                UpdateFootprints = updateFootprints,
+                TransferGroups = transferGroups,
+                OverrideLocks = overrideLocks,
             };
-            
-            foreach (var item in items)
+            return await Send<ImportNetlistResponse>(command, cancellationToken);
+        }
+
+        // ---------------------------------------------------------------------------- plotting
+
+        /// <summary>The board's saved plot settings, the ones the Plot dialog and the plot jobs start from.</summary>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask<BoardPlotSettings> GetPlotSettings(CancellationToken cancellationToken = default)
+        {
+            var response = await Send<BoardPlotSettingsResponse>(new GetBoardPlotSettings { Board = Document }, cancellationToken);
+            return response.PlotSettings;
+        }
+
+        /// <summary>Sets the board's saved plot settings.</summary>
+        /// <param name="plotSettings">The settings to store.</param>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask SetPlotSettings(BoardPlotSettings plotSettings, CancellationToken cancellationToken = default)
+        {
+            await Send(new SetBoardPlotSettings { Board = Document, PlotSettings = plotSettings }, cancellationToken);
+        }
+
+        // --------------------------------------------------------------------------- libraries
+
+        /// <summary>Places a footprint from a library on the board.</summary>
+        /// <param name="libraryId">The footprint, as library nickname and entry name.</param>
+        /// <param name="position">Where to place it.</param>
+        /// <param name="orientation">Its rotation, or null for the library default.</param>
+        /// <param name="layer">Front or back copper, or null for the front. Placing on the back flips it.</param>
+        /// <returns>The placed footprint.</returns>
+        /// <remarks>KiCad 10.99 and later.</remarks>
+        public async ValueTask<FootprintInstance> PlaceFootprintFromLibrary(
+            LibraryIdentifier libraryId,
+            Vector2 position,
+            Angle? orientation = null,
+            BoardLayer? layer = null,
+            CancellationToken cancellationToken = default)
+        {
+            var command = new PlaceFootprintFromLibrary
             {
-                command.Items.Add(Any.Pack(item));
+                Header = Header(),
+                LibId = libraryId,
+                Position = position,
+            };
+            if (orientation is not null)
+            {
+                command.Orientation = orientation;
             }
-            
-            return await Send<CreateItemsResponse>(command, cancellationToken);
-        }
-        
-        /// <summary>
-        /// Updates items on the board
-        /// </summary>
-        /// <param name="items">Items to update</param>
-        /// <returns>Response containing the updated items</returns>
-        public ValueTask<UpdateItemsResponse> UpdateItems(params IMessage[] items) => UpdateItems(default, items);
 
-        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
-        /// <param name="cancellationToken">Cancels the round trip.</param>
-        /// <param name="items">As above.</param>
-        /// <returns>As above.</returns>
-        public async ValueTask<UpdateItemsResponse> UpdateItems(CancellationToken cancellationToken, params IMessage[] items)
-        {
-            var command = new UpdateItems
+            if (layer is { } value)
             {
-                Header = new ItemHeader { Document = _document }
-            };
-            
-            foreach (var item in items)
-            {
-                command.Items.Add(Any.Pack(item));
+                command.Layer = value;
             }
-            
-            return await Send<UpdateItemsResponse>(command, cancellationToken);
-        }
-        
-        /// <summary>
-        /// Deletes items from the board
-        /// </summary>
-        /// <param name="itemIds">IDs of items to delete</param>
-        /// <returns>Response containing the result of the deletion</returns>
-        public ValueTask<DeleteItemsResponse> DeleteItems(params KIID[] itemIds) => DeleteItems(default, itemIds);
 
-        /// <summary>Same, with a cancellation token. The token comes first because a <c>params</c> array must be last.</summary>
-        /// <param name="cancellationToken">Cancels the round trip.</param>
-        /// <param name="itemIds">As above.</param>
-        /// <returns>As above.</returns>
-        public async ValueTask<DeleteItemsResponse> DeleteItems(CancellationToken cancellationToken, params KIID[] itemIds)
-        {
-            var command = new DeleteItems
+            var response = await Send<PlaceFromLibraryResponse>(command, cancellationToken);
+            if (!response.Item.TryUnpack<FootprintInstance>(out var footprint))
             {
-                Header = new ItemHeader { Document = _document }
-            };
-            command.ItemIds.AddRange(itemIds);
-            
-            return await Send<DeleteItemsResponse>(command, cancellationToken);
+                throw new ApiException($"KiCad placed the footprint but returned a {response.Item.TypeUrl}, not a FootprintInstance.");
+            }
+
+            return footprint;
         }
-    }
-    
-    /// <summary>
-    /// Represents a commit transaction on a board
-    /// </summary>
-    public class Commit
-    {
-        /// <summary>
-        /// Creates a new commit with the specified ID
-        /// </summary>
-        /// <param name="id">Commit ID from BeginCommit</param>
-        public Commit(KIID id)
-        {
-            Id = id;
-        }
-        
-        /// <summary>
-        /// Gets the ID of this commit
-        /// </summary>
-        public KIID Id { get; }
     }
 }

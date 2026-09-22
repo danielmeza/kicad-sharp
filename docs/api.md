@@ -92,23 +92,82 @@ connection only: a dial under way is not on it yet, and goes on.
 ### `KiCad` — the connection handle
 
 `Ping()`, `GetVersion()`, `GetKiCadBinaryPath(name)`, `GetPluginSettingsPath(id)`,
-`GetOpenDocuments(DocumentType)`, `GetBoard()`, `GetProject()` / `GetProject(DocumentSpecifier)`,
-`RunAction(name)`, `RefreshEditor(FrameType)`, `GetTextVariables()`.
+`GetOpenDocuments(DocumentType)`, `GetBoard()`, `GetSchematic()` / `GetSchematic(DocumentSpecifier)`,
+`GetProject()` / `GetProject(DocumentSpecifier)`, `RunAction(name)`, `RefreshEditor(FrameType)`,
+`GetTextVariables()`.
+
+Added with the master pin (KiCad 10.99, the 11.0 line; see [docs/ipc.md](ipc.md) for which of
+these KiCad actually handles): `GetPaths()`; `OpenDocument(type, path)`, `CreateDocument(type, path)`,
+`CloseDocument(document)`, `CloseAllDocuments(force)`, `OpenLibraryItem(type, libraryId)`; the
+library commands `GetLibraryTable(type, scope, substituted)`, `AddLibraryTableEntry(entry, scope)`,
+`UpdateLibraryTableEntry(...)`, `DeleteLibraryTableEntry(type, nickname, scope)`,
+`ImportLibrary(path, nickname, type, scope, description)`, `GetLibraryStatuses(scope, ct, params types)`,
+`ReloadLibrary(type, scope, ct, params nicknames)`, `LoadAllLibraries(params types)`,
+`GetLibraryItems(type, params nicknames)`, `GetItemsFromLibrary(type, document, ct, params ids)`,
+`SearchLibraries(type, query)`; and cross-probe: `SyncSelection(...)`, `HighlightNets(params nets)`,
+`FocusOnItem(spec)`, `CrossProbeAnnounce(...)`.
+
+`KiCadVersion`, what `GetVersion()` returns, gained `IsAtLeast(major, minor, patch)`,
+`IsDevelopmentBuild` (master reports `10.99.0`) and the capability flags `SupportsEmbeddedFiles`,
+`SupportsVariants` (10.0.7+), `SupportsSchematic`, `SupportsLibraryCommands`, `SupportsJobs`
+(10.99+), so a caller can fall back on an older KiCad instead of sending a command it will answer
+with `AS_UNHANDLED`.
+
+### `KiCadDocument` — what a board and a schematic share
+
+The base of `Board` and `Schematic`; every command here goes out with the proxy's `Document`.
+`Save()`, `SaveAs(filename, overwrite, includeProject)`, `Revert()`, `GetAsString()`,
+`GetModifiedState()`; `BeginCommit()` / `PushCommit(commit, message)` / `DropCommit(commit)` — the
+commit messages now carry the document, which KiCad 10.0.7 introduced and says it will require;
+`GetItems(params KiCadObjectType[])`, `GetSelection(...)`, `ClearSelection()`,
+`CreateItems(params IMessage[])`, `UpdateItems(...)`, `DeleteItems(params KIID[])`,
+`FocusOnItems(ids, margin)`; `ExpandTextVariables(text, expandEnvironmentVariables)` and the
+`string[]` form, resolved by the editor against the document (and the project's variables through
+it); `GetPageSettings()` / `SetPageSettings(settings)`; the design variants
+`GetVariants()`, `AddVariant(name, description)`, `DeleteVariant(name)`, `RenameVariant(old, new)`,
+`SetVariantDescription(name, description)`, `CopyVariant(old, new, description)`,
+`SetCurrentVariant(name)` / `GetCurrentVariant()`; and `RunJob(job, outputPath)`, which takes any of
+the 22 `Run*Job*` messages from `board_jobs.proto` and `schematic_jobs.proto`, fills in its
+`job_settings` with the document and the output path, and returns the `RunJobResponse`.
 
 ### `Board` — the PCB, over IPC
 
-`Save()`, `SaveAs(filename, overwrite, includeProject)`, `Revert()`,
-`BeginCommit()` / `PushCommit(commit, message)` / `DropCommit(commit)`,
-`GetItems(params KiCadObjectType[])`, `GetSelection(...)`, `ClearSelection()`,
-`GetActiveLayer()` / `SetActiveLayer(BoardLayer)`, `GetAsString()`, `RefillZones()`,
-`CreateItems(params IMessage[])`, `UpdateItems(...)`, `DeleteItems(params KIID[])`,
-plus `Document` and `Name`.
+Everything on `KiCadDocument`, plus `GetActiveLayer()` / `SetActiveLayer(BoardLayer)`,
+`RefillZones()`, `Name`, `GetProject()`. Added with the master pin: `GetEmbeddedFiles()`,
+`AddEmbeddedFiles(params files)`, `AddEmbeddedFile(name, bytes, type)`, `SetEmbeddedFiles(params files)`
+(10.0.7+); `GetDesignRules()` / `SetDesignRules(rules)`, `GetCustomDesignRules()` /
+`SetCustomDesignRules(params rules)`, `ImportNetlist(path, dryRun, matchMode, ...)`,
+`GetPlotSettings()` / `SetPlotSettings(settings)`,
+`PlaceFootprintFromLibrary(libraryId, position, orientation, layer)` (10.99+).
+
+### `Schematic` — the schematic, over IPC (KiCad 10.99+)
+
+Everything on `KiCadDocument`, plus `GetHierarchy()`, `GetNetlist(params KiCadObjectType[])`,
+`PlaceSymbolFromLibrary(libraryId, position, orientation, unit, reference)`, `Name`, `GetProject()`.
+On KiCad 10.0.x eeschema does not answer the API at all; see [docs/ipc.md](ipc.md).
 
 ### `Project` — settings, over IPC
 
-`GetNetClasses()` / `SetNetClasses(netClasses, mergeMode)`, `ExpandTextVariables(string)` and
-`ExpandTextVariables(string[])`, `GetTextVariables()` / `SetTextVariables(vars, mergeMode)`, plus
-`Document`, `Name`, `Path`. Every command in `project_commands.proto` is wrapped.
+`GetNetClasses()` / `SetNetClasses(netClasses, mergeMode)` — both now name the project, which
+KiCad 11 says it will require; `GetNetClassAssignments()` /
+`SetNetClassAssignments(assignments, patterns, mergeMode)` (10.99+);
+`ExpandTextVariables(string, expandEnvironmentVariables)` and `ExpandTextVariables(string[], ...)`
+— the flag also expands `${KIPRJMOD}`-style environment variables (10.0.7+);
+`GetTextVariables()` / `SetTextVariables(vars, mergeMode)`; plus `Document`, `Name`, `Path`. Every
+command in `project_commands.proto` is wrapped; the document open/close ones live on `KiCad`.
+`Project` builds its own specifier — type `DOCTYPE_PROJECT` and the project, with the path ending
+in a separator the way KiCad's own validation compares it — and no longer changes the specifier
+of the `Board` that created it.
+
+### `EmbeddedFileCodec` — bytes in, `EmbeddedFile` out
+
+KiCad's `EmbeddedFile` message does not carry the file. Its `data` is the zstd frame of the content,
+base64-encoded, as ASCII bytes; its `data_hash` is MurmurHash3 x64-128 of the raw content with seed
+`0xABBA2345`, as two uppercase 16-digit hex words. KiCad checks the hash when it unpacks the
+message and rejects the request on a mismatch. `Pack(name, bytes, type)` builds a message that
+passes; `Unpack(file)` decodes one and verifies the hash (also accepting the SHA-256 that files
+from older KiCad versions carry); `ComputeHash(bytes)` is the hash alone. The hash is checked
+against the reference implementation's vectors in the tests.
 
 ### On-disk documents
 
@@ -464,12 +523,19 @@ tracks, drawings, wires, labels) have no `Add*` of their own. They are appended 
 
 ## `KiCadSharp.Protos`
 
-12 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by
-[`protos/KICAD_PIN`](protos/KICAD_PIN) to a KiCad **release tag** — never a branch, because the
-generated client speaks one KiCad version's wire format and a moving branch would desynchronise it
-silently.
+24 `.proto` files from KiCad's `api/proto`, **vendored** under [`protos/`](protos/) and pinned by
+[`protos/KICAD_PIN`](protos/KICAD_PIN) to one KiCad **commit**, recorded together with the tag or
+branch it was taken from. The commit is what the sync script fetches and what CI compares against,
+so a branch pin cannot float: the generated client speaks one KiCad version's wire format, and the
+vendored files change only when someone edits the pin on purpose.
 
-Currently pinned to **KiCad 10.0.6** (`caf7377e9cb6fa1535ec3596dcb8c99bf44a996e`).
+A release tag is the preferred ref, because it is the only ref a user's KiCad build can be matched
+against. Currently pinned to **KiCad `master`** at `965fb68075b53cd4eaf2244954c9ef54ae0b433c`
+(2026-09-21), which builds as `10.99.0-unknown` and is the 11.0 line. It carries what no tag has
+yet: the library-table commands, embedded files, design variants, jobs, rules, cross-probe and
+wizard messages, PCB tables, reference points, teardrops, and the document header on `BeginCommit`
+/ `EndCommit`. The `10.99.0` tag dates from March 2026 and predates all of it. The pin moves to the
+11.0 tag once KiCad cuts it ([#47](https://github.com/danielmeza/kicad-sharp/issues/47)).
 
 They used to arrive through a `submodules/kicad` git submodule pointed at the full KiCad source
 tree. Measured, at the same tag:
@@ -478,20 +544,25 @@ tree. Measured, at the same tag:
 |---|---|
 | Submodule, `git clone --depth 1 --branch 10.0.6` | **1.4 GB** on disk (248 MB `.git` + 1.1 GB working tree), 18,347 files, 18.7 s |
 | Sparse checkout of `api/proto` only | 3.5 MB, 2.2 s — but `actions/checkout` does a plain clone for submodules, so CI pays the full 1.4 GB anyway |
-| **Vendored (this repo)** | **128 KB**, 12 files, already present — no fetch, builds offline |
+| **Vendored (this repo)** | **~198 KB**, 24 files, already present — no fetch, builds offline |
 
 Vendoring wins on the numbers and loses nothing, because the pin is enforced rather than trusted:
 
 ```
-scripts/sync-protos.sh            # re-fetch protos/ from the pinned tag
+scripts/sync-protos.sh            # re-fetch protos/ from the pinned commit
 scripts/sync-protos.sh --check    # fail if protos/ has drifted from the pin  (runs in CI)
 ```
 
-`--check` also fails if the upstream tag itself has been moved to a different commit. Both use a
-blobless sparse clone, so the check costs about 3 MB, not 1.4 GB.
+`--check` also fails if the pinned ref is a tag that has been moved to a different commit, or no
+longer exists; a branch that has moved past the pinned commit is only reported. Both modes fetch the
+one commit as a blobless sparse checkout, so the check costs about 3 MB, not 1.4 GB.
 
 To move to a newer KiCad: edit both lines of `protos/KICAD_PIN`, run `scripts/sync-protos.sh`, and
-commit the result.
+commit the result. To follow the pinned branch to its current tip, `scripts/sync-protos.sh --bump`
+edits `KICAD_COMMIT` and re-syncs in one step. The `kicad-master` workflow does that weekly: it
+bumps the pin, rebuilds and republishes the dev image, runs the whole suite live against the new
+nightly, and opens a pull request with the result, so a KiCad master change reaches this repository
+as a reviewable diff rather than as silence.
 
 ## `KiCadSharp.Cli`
 
