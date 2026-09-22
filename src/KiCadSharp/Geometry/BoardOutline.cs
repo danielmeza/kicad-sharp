@@ -4,6 +4,8 @@ using System.Linq;
 
 using KiCadSharp.Documents;
 
+using SExpressions;
+
 namespace KiCadSharp.Geometry
 {
     /// <summary>
@@ -12,10 +14,21 @@ namespace KiCadSharp.Geometry
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Lines and arcs are chained end to end within <see cref="DefaultChainTolerance"/>; circles,
-    /// rectangles and polygons are closed already. A closed shape inside an odd number of others is a
-    /// cutout — a mounting hole, a slot — and inside an even number, board. Footprint graphics on
-    /// <c>Edge.Cuts</c> count, placed where the footprint puts them.
+    /// Lines, arcs and Bézier curves are chained end to end within <see cref="DefaultChainTolerance"/>;
+    /// circles, rectangles — with a corner radius or without — and polygons are closed already. A
+    /// closed shape inside an odd number of others is a cutout — a mounting hole, a slot — and inside
+    /// an even number, board. Footprint graphics on <c>Edge.Cuts</c> count, placed where the
+    /// footprint puts them.
+    /// </para>
+    /// <para>
+    /// An arc, a circle, a curve, a rounded corner and an <c>(arc …)</c> among a polygon's points
+    /// become points ON them, close enough that no chord strays more than <c>maxError</c> from the
+    /// true edge. A chord cuts the inside of its bend, so a shape's polygon lies within the shape by
+    /// at most that much — the board's within the board, a cutout's within the cutout. A rectangle's
+    /// corner radius is the one written, clamped as KiCad clamps it on load to half the shorter side.
+    /// pcbnew saves a rounded rectangle inside a footprint placed off-axis as a polygon of four arcs
+    /// (MEASURED: <c>data/oracles/outline-curves.kicad_pcb</c>, <c>RR1</c> at 30°), which is why
+    /// the arcs matter here.
     /// </para>
     /// <para>
     /// <b>A cutout is an edge.</b> A track is as far from the rim of a mounting-hole cutout as it is
@@ -53,7 +66,7 @@ namespace KiCadSharp.Geometry
         /// <summary>Gets every edge, as zero-width capsules.</summary>
         public IReadOnlyList<RoundedShape> Edges { get; }
 
-        /// <summary>Gets how many chains of lines and arcs did not close — an outline drawn with a gap.</summary>
+        /// <summary>Gets how many chains of lines, arcs and curves did not close — an outline drawn with a gap.</summary>
         public int OpenChains { get; }
 
         /// <summary>Gets the box around the whole outline, or <see langword="null"/> when nothing is drawn.</summary>
@@ -61,7 +74,7 @@ namespace KiCadSharp.Geometry
 
         /// <summary>Reads the outline off a board.</summary>
         /// <param name="board">The board.</param>
-        /// <param name="maxError">Chord error for arcs and circles, millimetres.</param>
+        /// <param name="maxError">Chord error for arcs, circles, curves and rounded corners, millimetres.</param>
         /// <param name="chainTolerance">How close two ends must be to join, millimetres.</param>
         /// <returns>The outline.</returns>
         public static BoardOutline Of(
@@ -83,6 +96,14 @@ namespace KiCadSharp.Geometry
                 open.Add([.. CopperGeometry.ArcPoints(CopperGeometry.Point(arc.Start), CopperGeometry.Point(arc.Mid), CopperGeometry.Point(arc.End), maxError)]);
             }
 
+            foreach (var curve in board.GraphicCurves.Where(OnEdge))
+            {
+                if (CurvePoints(curve.Points.Select(CopperGeometry.Point).ToList(), maxError) is { } points)
+                {
+                    open.Add(points);
+                }
+            }
+
             foreach (var circle in board.GraphicCircles.Where(OnEdge))
             {
                 closed.Add(CirclePoints(CopperGeometry.Point(circle.Center), CopperGeometry.Point(circle.End), maxError));
@@ -90,14 +111,12 @@ namespace KiCadSharp.Geometry
 
             foreach (var rect in board.GraphicRectangles.Where(OnEdge))
             {
-                var s = CopperGeometry.Point(rect.Start);
-                var e = CopperGeometry.Point(rect.End);
-                closed.Add([s, new(e.X, s.Y), e, new(s.X, e.Y)]);
+                closed.Add(RectanglePoints(CopperGeometry.Point(rect.Start), CopperGeometry.Point(rect.End), rect.CornerRadius, maxError));
             }
 
             foreach (var poly in board.GraphicPolygons.Where(OnEdge))
             {
-                closed.Add([.. poly.Points.Select(CopperGeometry.Point)]);
+                closed.Add(PolygonPoints(poly.Node, p => p, maxError));
             }
 
             foreach (var footprint in board.Footprints)
@@ -114,6 +133,15 @@ namespace KiCadSharp.Geometry
                     open.Add([.. CopperGeometry.ArcPoints(Place(arc.Start), Place(arc.Mid), Place(arc.End), maxError)]);
                 }
 
+                foreach (var curve in footprint.Curves.Where(c => c.Layer == KiCadLayerNames.EdgeCuts))
+                {
+                    // Placing is affine, so the curve through the placed control points is the placed curve.
+                    if (CurvePoints(curve.Points.Select(Place).ToList(), maxError) is { } points)
+                    {
+                        open.Add(points);
+                    }
+                }
+
                 foreach (var circle in footprint.Circles.Where(c => c.Layer == KiCadLayerNames.EdgeCuts))
                 {
                     closed.Add(CirclePoints(Place(circle.Center), Place(circle.End), maxError));
@@ -121,14 +149,14 @@ namespace KiCadSharp.Geometry
 
                 foreach (var rect in footprint.Rectangles.Where(r => r.Layer == KiCadLayerNames.EdgeCuts))
                 {
-                    var s = CopperGeometry.Point(rect.Start);
-                    var e = CopperGeometry.Point(rect.End);
-                    closed.Add([Place(rect.Start), CopperGeometry.ToBoard(footprint, new(e.X, s.Y)), Place(rect.End), CopperGeometry.ToBoard(footprint, new(s.X, e.Y))]);
+                    closed.Add(RectanglePoints(CopperGeometry.Point(rect.Start), CopperGeometry.Point(rect.End), rect.CornerRadius, maxError)
+                        .Select(p => CopperGeometry.ToBoard(footprint, p))
+                        .ToList());
                 }
 
                 foreach (var poly in footprint.Polygons.Where(p => p.Layer == KiCadLayerNames.EdgeCuts))
                 {
-                    closed.Add([.. poly.Points.Select(Place)]);
+                    closed.Add(PolygonPoints(poly.Node, p => CopperGeometry.ToBoard(footprint, p), maxError));
                 }
             }
 
@@ -214,6 +242,112 @@ namespace KiCadSharp.Geometry
             var top = CopperGeometry.ArcPoints(east, new BoardPoint(centre.X, centre.Y - r), west, maxError);
             var bottom = CopperGeometry.ArcPoints(west, new BoardPoint(centre.X, centre.Y + r), east, maxError);
             return [.. top, .. bottom.Skip(1).Take(bottom.Count - 2)];
+        }
+
+        /// <summary>
+        /// Points on a cubic Bézier through its four control points, or <see langword="null"/> when
+        /// there are not four of them: KiCad's parser requires four, so such a curve is no curve.
+        /// </summary>
+        private static List<BoardPoint>? CurvePoints(IReadOnlyList<BoardPoint> control, double maxError) =>
+            control.Count == 4 ? [.. CopperGeometry.BezierPoints(control[0], control[1], control[2], control[3], maxError)] : null;
+
+        /// <summary>
+        /// A polygon's vertices in order, each <c>(xy …)</c> placed, and each <c>(arc (start …)
+        /// (mid …) (end …))</c> among them — KiCad 7+ writes those — drawn as points on the arc.
+        /// Consecutive entries join with a straight edge, so an arc's start need not repeat the
+        /// vertex before it.
+        /// </summary>
+        private static List<BoardPoint> PolygonPoints(SExpression polygon, Func<BoardPoint, BoardPoint> place, double maxError)
+        {
+            var points = new List<BoardPoint>();
+            if (polygon.GetChild(KiCadTokens.Common.Pts) is { } pts)
+            {
+                foreach (var entry in pts.Children)
+                {
+                    if (entry.Token == KiCadTokens.Common.Xy)
+                    {
+                        Append(points, place(Xy(entry)));
+                    }
+                    else if (entry.Token == KiCadTokens.Common.Arc)
+                    {
+                        // Placing turns and moves, so the arc through the placed points is the placed arc.
+                        var arc = CopperGeometry.ArcPoints(
+                            place(Xy(entry.GetChild(KiCadTokens.Common.Start))),
+                            place(Xy(entry.GetChild(KiCadTokens.Common.Mid))),
+                            place(Xy(entry.GetChild(KiCadTokens.Common.End))),
+                            maxError);
+                        foreach (var p in arc)
+                        {
+                            Append(points, p);
+                        }
+                    }
+                }
+            }
+
+            return Close(points);
+        }
+
+        /// <summary>
+        /// A rectangle's four corners — or, with a corner radius, its straight sides and points on
+        /// its four quarter arcs, clockwise on screen from the top side. A side that a large radius
+        /// swallows leaves no zero-length edge behind.
+        /// </summary>
+        private static List<BoardPoint> RectanglePoints(BoardPoint start, BoardPoint end, double cornerRadius, double maxError)
+        {
+            var r = CopperGeometry.CornerRadius(start, end, cornerRadius);
+            if (r <= 0)
+            {
+                return [start, new(end.X, start.Y), end, new(start.X, end.Y)];
+            }
+
+            var x0 = Math.Min(start.X, end.X);
+            var y0 = Math.Min(start.Y, end.Y);
+            var x1 = Math.Max(start.X, end.X);
+            var y1 = Math.Max(start.Y, end.Y);
+            var diagonal = r / Math.Sqrt(2);
+            var points = new List<BoardPoint>();
+
+            void Corner(BoardPoint from, BoardPoint centre, double sx, double sy, BoardPoint to)
+            {
+                foreach (var p in CopperGeometry.ArcPoints(from, centre + new BoardPoint(sx * diagonal, sy * diagonal), to, maxError))
+                {
+                    Append(points, p);
+                }
+            }
+
+            Append(points, new(x0 + r, y0));
+            Append(points, new(x1 - r, y0));
+            Corner(new(x1 - r, y0), new(x1 - r, y0 + r), 1, -1, new(x1, y0 + r));
+            Append(points, new(x1, y1 - r));
+            Corner(new(x1, y1 - r), new(x1 - r, y1 - r), 1, 1, new(x1 - r, y1));
+            Append(points, new(x0 + r, y1));
+            Corner(new(x0 + r, y1), new(x0 + r, y1 - r), -1, 1, new(x0, y1 - r));
+            Append(points, new(x0, y0 + r));
+            Corner(new(x0, y0 + r), new(x0 + r, y0 + r), -1, -1, new(x0 + r, y0));
+            return Close(points);
+        }
+
+        private static BoardPoint Xy(SExpression? node) =>
+            node is null ? default : new BoardPoint(node.GetValueAsDouble(0), node.GetValueAsDouble(1));
+
+        /// <summary>Adds a vertex unless it repeats the last one, which an arc's start or end may.</summary>
+        private static void Append(List<BoardPoint> points, BoardPoint p)
+        {
+            if (points.Count == 0 || points[^1].DistanceTo(p) > 1e-12)
+            {
+                points.Add(p);
+            }
+        }
+
+        /// <summary>Drops a last vertex that repeats the first: the polygon closes on its own.</summary>
+        private static List<BoardPoint> Close(List<BoardPoint> points)
+        {
+            if (points.Count > 1 && points[^1].DistanceTo(points[0]) <= 1e-12)
+            {
+                points.RemoveAt(points.Count - 1);
+            }
+
+            return points;
         }
 
         /// <summary>Joins pieces end to end into closed polygons, and returns what would not close.</summary>

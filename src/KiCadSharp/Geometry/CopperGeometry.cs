@@ -429,9 +429,16 @@ namespace KiCadSharp.Geometry
                 string.Equals(anchor, "rect", StringComparison.Ordinal) ? Rect(w, h) : RoundedShape.Disc(default, w / 2),
             };
 
-            foreach (var primitive in pad.Node.GetChild(KiCadTokens.Footprint.Primitives)?.Children ?? [])
+            // pcbnew 10.0.6 writes (primitives …) for every custom pad, even an empty one; a pad
+            // built in code may have none, and then the anchor is the whole pad (#115). Not
+            // `?.Children ?? []`: a collection expression makes a detached SChildCollection, which
+            // throws when enumerated.
+            if (pad.Node.GetChild(KiCadTokens.Footprint.Primitives) is { } primitives)
             {
-                parts.AddRange(Primitive(primitive, maxError));
+                foreach (var primitive in primitives.Children)
+                {
+                    parts.AddRange(Primitive(primitive, maxError));
+                }
             }
 
             return parts;
@@ -614,7 +621,7 @@ namespace KiCadSharp.Geometry
         /// The corner radius KiCad draws a rectangle with: the one written, clamped as KiCad clamps it
         /// on load to half the shorter side (<c>EDA_SHAPE::SetCornerRadius</c>).
         /// </summary>
-        private static double CornerRadius(BoardPoint start, BoardPoint end, double radius) =>
+        internal static double CornerRadius(BoardPoint start, BoardPoint end, double radius) =>
             Math.Clamp(radius, 0, Math.Min(Math.Abs(end.X - start.X), Math.Abs(end.Y - start.Y)) / 2);
 
         /// <summary>

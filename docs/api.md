@@ -113,7 +113,7 @@ plus `Document` and `Name`.
 | `KiCadSymbolUnit` | — | One `(symbol "R_1_1" …)` sub-unit: `Id`, `Unit`, `BodyStyle`, `Pins`, `GraphicalItems`, `AddPin`. |
 | `KiCadText` | — | Text inside a symbol: `Text`, `Position`, `RotationDegrees`, `FontEffects`. KiCad stores this angle in **tenths of a degree**, so a vertical text is `(at x y 900)` and `Position.Rotation` reads 900. `RotationDegrees` converts. The four-argument constructor writes its angle unchanged and is obsolete. `KiCadSchematicText`, which is text on a sheet, stores degrees, so there `RotationDegrees` is the number in the file. |
 | `KiCadFootprintLibrary` | `.kicad_pcb`, `.kicad_mod` | `Load`/`LoadAsync`/`Parse`, `Save`/`SaveAsync`/`ToText`, `AddFootprint`, `RemoveFootprint`, `GetFootprint`, `Footprints`, `IsSingleFootprint`, `SaveFootprint`, `Version`, `Generator`. A `.kicad_mod` is one footprint at the root — `footprint` (KiCad 6+) or `module` (KiCad 5). `Version` is the version the file declares, or `null` when it declares none. |
-| `KiCadFootprint` | — | `Id`, `Version`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `GetPropertyValue`, `Add*`, `CloneAs`. |
+| `KiCadFootprint` | — | `Id`, `Version`, `Layer`, `Description`, `Tags`, `Tedit`/`Tstamp`, `Attributes`, `Properties`, `Models`, `TextItems`, `Pads`, `Lines`, `Rectangles`, `Circles`, `Arcs`, `Polygons`, `Curves`, `GetPropertyValue`, `Add*`, `CloneAs`. A rectangle's `CornerRadius` is KiCad 10's `(radius r)`, 0 when it has none. |
 | `KiCadSchematic` | `.kicad_sch` | `Load`/`LoadAsync`/`Parse`, `Save`, `ToText`, `Uuid`, `Symbols`, `Sheets`, `FilePath`, `IsModified`. |
 | `KiCadSchematicSymbol` | — | `Uuid`, `LibId`, `Unit`, `Properties`, `ReferenceProperty`, `IsPowerSymbol`, `GetInstanceReference`, `SetInstanceReference`, `PruneInstances`. |
 | `KiCadSheet` | — | `Uuid`, `SheetName`, `SheetFile`, `Properties`. |
@@ -271,7 +271,7 @@ clearance rule asks — answered from the file, with no KiCad running.
 | `RoundedShape` | A point, segment or polygon swept by a radius — which is every piece of copper, EXACTLY: a via, a track, an oval, a round rectangle (the rectangle shrunk by the corner radius, swept by it). `DistanceTo` is the core distance less both radii. |
 | `CopperShape` | One or more of those: a custom pad, an arc's covering capsules. `DistanceTo`, `Clears(other, clearance)`, `Contains`, `Bounds`. |
 | `CopperGeometry` | `Pad(footprint, pad)`, `Hole`, `Segment`, `Arc`, `Via`, `Fill(filledPolygon)`, `PadPosition`, `ArcPoints`, `IsChamfered`, `CopperLayers(board)` in physical order, `CopperLayersOf(declared, layers)` for `*.Cu` and `F&B.Cu`. |
-| `BoardOutline` | `Of(board)`: the closed shapes on `Edge.Cuts` (footprint graphics included) as `Outers` and `Holes`, every edge as `Edges`, `DistanceToEdge(copper)`, `Contains(point)`, and `OpenChains` for an outline drawn with a gap. |
+| `BoardOutline` | `Of(board)`: the closed shapes on `Edge.Cuts` (footprint graphics included; lines, arcs and Bézier curves chained end to end, circles, rectangles with their corner radius, and polygons whole, an `(arc …)` among their points drawn) as `Outers` and `Holes`, every edge as `Edges`, `DistanceToEdge(copper)`, `Contains(point)`, and `OpenChains` for an outline drawn with a gap. |
 
 **Judged against KiCad.** `tests/…/Geometry/CopperGeometryOracleTests` compares `DistanceTo` with
 pcbnew 10.0.6's own `GetEffectiveShape().Collide()` on 5,738 pairs across three boards — every pad
@@ -417,6 +417,7 @@ core fails that test until it is mirrored.
 | `KiCadFootprint` | `AddCircle(centerX, centerY, endX, endY, layer, width = 0.12)` | `WithCircle(…, layer, configure?)`, `WithCircle(…, layer, width, configure?)` | `KiCadFpCircle` |
 | `KiCadFootprint` | `AddModel(path)` | `WithModel(path, configure?)` | `KiCadModel` |
 | `KiCadFpPoly` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
+| `KiCadFpCurve` | `AddPoint(x, y)` | `WithPoint(x, y)` | — |
 | `KiCadSymbolLibrary` | `AddSymbol(symbol)` | `WithSymbol(symbol, configure?)` | the symbol |
 | `KiCadSymbolLibrary` | `AddSymbol(id)` | `WithSymbol(id, configure?)` | `KiCadSymbol` |
 | `KiCadSymbol` | `AddProperty(key, value)` | `WithProperty(key, value, configure?)` | `KiCadProperty`, new or updated |

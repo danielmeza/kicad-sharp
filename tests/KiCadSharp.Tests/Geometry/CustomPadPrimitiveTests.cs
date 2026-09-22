@@ -2,6 +2,7 @@ using System.Globalization;
 
 using KiCadSharp.Documents;
 using KiCadSharp.Geometry;
+using KiCadSharp.Specctra;
 
 namespace KiCadSharp.Tests.Geometry;
 
@@ -177,6 +178,31 @@ public class CustomPadPrimitiveTests
             Assert.False(copper.Contains(on * (0.55 + (3 * MaxError))), $"{degrees} degrees, past the outer edge");
             Assert.False(copper.Contains(on * (0.45 - (3 * MaxError))), $"{degrees} degrees, inside the inner edge");
         }
+    }
+
+    /// <summary>
+    /// A custom pad with no <c>(primitives …)</c> at all is its anchor alone (#115). pcbnew 10.0.6
+    /// writes the form for every custom pad, even an empty one; a pad built in code can leave it
+    /// out, and this used to throw on it — from <see cref="CopperGeometry.Pad"/> and from the
+    /// design export, which goes through the same code.
+    /// </summary>
+    [Fact]
+    public void ACustomPadWithoutPrimitivesIsItsAnchor()
+    {
+        var board = KiCadBoard.Parse(
+            "(kicad_pcb (layers (0 \"F.Cu\" signal) (2 \"B.Cu\" signal) (25 \"Edge.Cuts\" user))"
+            + " (gr_rect (start -5 -5) (end 5 5) (layer \"Edge.Cuts\"))"
+            + " (footprint \"F\" (layer \"F.Cu\") (at 0 0) (pad \"1\" smd custom (at 0 0) (size 0.5 0.5)"
+            + " (layers \"F.Cu\") (options (clearance outline) (anchor circle)))))");
+        var footprint = board.Footprints.Single();
+
+        var copper = CopperGeometry.Pad(footprint, footprint.Pads.Single());
+
+        var anchor = Assert.Single(copper.Parts);
+        Assert.Equal(0.25, anchor.Radius, 12);
+        Assert.True(copper.Contains(new BoardPoint(0.24, 0)));
+        Assert.False(copper.Contains(new BoardPoint(0.26, 0)));
+        Assert.Contains("padstack", SpecctraDesign.Export(board, new SpecctraOptions()), StringComparison.Ordinal);
     }
 
     /// <summary>The copper of a lone custom pad at the origin holding one primitive.</summary>

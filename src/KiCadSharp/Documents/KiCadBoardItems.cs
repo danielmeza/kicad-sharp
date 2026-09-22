@@ -1076,6 +1076,17 @@ namespace KiCadSharp.Documents
             set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
         }
 
+        /// <summary>
+        /// Gets or sets the corner radius in millimetres: KiCad 10's <c>(radius r)</c>, 0 when the
+        /// rectangle has none. KiCad writes the form only for a radius above 0, and clamps one it
+        /// reads to half the rectangle's shorter side.
+        /// </summary>
+        public double CornerRadius
+        {
+            get => ReadChildDouble(KiCadTokens.Common.Radius);
+            set => WriteChildDouble(KiCadTokens.Common.Radius, value);
+        }
+
         /// <summary>Gets the width of the rectangle in millimetres, corner to corner.</summary>
         public double Width2D => Math.Abs(End.X - Start.X);
 
