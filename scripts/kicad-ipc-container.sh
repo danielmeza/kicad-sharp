@@ -94,10 +94,16 @@ start() {
   rm -rf "$project"
   mkdir -p "$project" "$socket"
   cp "$document" "$project/"
-  local sibling
-  for sibling in "$(dirname "$document")"/*.kicad_sch "$(dirname "$document")"/*.kicad_pro; do
-    [[ -f "$sibling" && ! -e "$project/$(basename "$sibling")" ]] && cp "$sibling" "$project/"
-  done
+  # The document's own project file, when there is one: without it KiCad runs a null project,
+  # and master refuses to save project settings such as text variables into that.
+  local project_file="${document%.*}.kicad_pro"
+  [[ -f "$project_file" ]] && cp "$project_file" "$project/"
+  if [[ "$editor" == sch ]]; then
+    local sibling
+    for sibling in "$(dirname "$document")"/*.kicad_sch "$(dirname "$document")"/*.kicad_pro; do
+      [[ -f "$sibling" && ! -e "$project/$(basename "$sibling")" ]] && cp "$sibling" "$project/"
+    done
+  fi
   rm -f "$socket"/api.sock "$socket"/api.lock
 
   "$RUNTIME" rm -f "$container" >/dev/null 2>&1 || true

@@ -51,6 +51,21 @@ build() {
   created="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   local description="KiCad 10.0.6 and the KiCad master nightly (10.99, the 11.0 line) side by side -- pcbnew/eeschema and pcbnew-nightly/eeschema-nightly -- with the Orbion IPC helpers. The dev stage of orbion-kicad-container, published for kicad-sharp's integration tests against master. Not for producing releases."
 
+  # Labels go in the image config and are what links the package to this repository. The
+  # annotations go on the manifest, which is what GHCR renders; buildah takes --annotation,
+  # docker's builder does not, so they are podman-only and the labels carry the rest.
+  local -a annotations=()
+  if [[ "$RUNTIME" == *podman* ]]; then
+    annotations=(
+      --annotation "org.opencontainers.image.title=orbion-kicad-dev"
+      --annotation "org.opencontainers.image.description=$description"
+      --annotation "org.opencontainers.image.source=https://github.com/danielmeza/kicad-sharp"
+      --annotation "org.opencontainers.image.version=10.99"
+      --annotation "org.opencontainers.image.created=$created"
+      --annotation "org.opencontainers.image.revision=$ctx"
+    )
+  fi
+
   log "Building the dev stage (source $ctx) ..."
   "$RUNTIME" build --target dev --build-arg "ORBION_CONTEXT=$ctx" \
     --label "org.opencontainers.image.title=orbion-kicad-dev" \
@@ -59,12 +74,7 @@ build() {
     --label "org.opencontainers.image.version=10.99" \
     --label "org.opencontainers.image.created=$created" \
     --label "org.opencontainers.image.revision=$ctx" \
-    --annotation "org.opencontainers.image.title=orbion-kicad-dev" \
-    --annotation "org.opencontainers.image.description=$description" \
-    --annotation "org.opencontainers.image.source=https://github.com/danielmeza/kicad-sharp" \
-    --annotation "org.opencontainers.image.version=10.99" \
-    --annotation "org.opencontainers.image.created=$created" \
-    --annotation "org.opencontainers.image.revision=$ctx" \
+    "${annotations[@]}" \
     -t "$LOCAL" -f "$WORK/ctx/containers/Containerfile" "$WORK/ctx" >&2
 
   # Prove it is the dev stage, and read which nightly went in: "10.99.0-unknown-<commit>~...".
@@ -96,6 +106,9 @@ publish() {
     "$RUNTIME" push "$IMAGE:$tag" >&2
   done
   log "published $IMAGE:10.99, :$nightly and :ctx-$ctx"
+  # The one line on stdout: which nightly went in, for a caller that records it (the kicad-master
+  # workflow puts it in its pull request).
+  printf '%s\n' "$nightly"
 }
 
 case "${1:-}" in

@@ -140,11 +140,19 @@ namespace KiCadSharp
         }
 
         /// <summary>
-        /// Expands text variables in a string
+        /// Expands text variables in a string, resolved against the project
         /// </summary>
         /// <param name="text">Text containing variables to expand</param>
         /// <param name="expandEnvironmentVariables">Also expand environment variables such as <c>${KIPRJMOD}</c>, after the text variables. KiCad 10.0.7 and later; ignored before.</param>
         /// <returns>Text with variables expanded</returns>
+        /// <remarks>
+        /// Handled by KiCad's project handler, which every editor shares. MEASURED: on KiCad
+        /// 10.0.6 a pcbnew connection never gets there, because pcbnew's own handler for this
+        /// command runs first and answers "the requested document is not open" for anything but
+        /// the board; on master it passes the request on. Against 10.0.6, expand through the
+        /// document instead: <see cref="KiCadDocument.ExpandTextVariables(string, bool, CancellationToken)"/>
+        /// resolves the project's variables too.
+        /// </remarks>
         public async ValueTask<string> ExpandTextVariables(string text, bool expandEnvironmentVariables = false, CancellationToken cancellationToken = default)
         {
             var expanded = await ExpandTextVariables([text], expandEnvironmentVariables, cancellationToken);

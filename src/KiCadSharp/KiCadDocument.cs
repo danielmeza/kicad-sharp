@@ -246,6 +246,38 @@ namespace KiCadSharp
             await Send(command, cancellationToken);
         }
 
+        // --------------------------------------------------------------------- text variables
+
+        /// <summary>Expands text variables in strings, resolved against this document.</summary>
+        /// <param name="texts">Texts with <c>${VAR}</c> references.</param>
+        /// <param name="expandEnvironmentVariables">Also expand environment variables such as <c>${KIPRJMOD}</c>, after the text variables. KiCad 10.0.7 and later; ignored before.</param>
+        /// <returns>The texts, expanded, in the same order.</returns>
+        /// <remarks>
+        /// The editor's own resolver answers, so a board's variables and the project's are both
+        /// in scope. This is the expansion that works on every KiCad: MEASURED, a pcbnew on
+        /// 10.0.6 answers <see cref="Project.ExpandTextVariables(string, bool, CancellationToken)"/>
+        /// first, with its own handler, and rejects the project document without letting KiCad's
+        /// project handler see it; master lets it through. See docs/ipc.md.
+        /// </remarks>
+        public async ValueTask<string[]> ExpandTextVariables(IEnumerable<string> texts, bool expandEnvironmentVariables = false, CancellationToken cancellationToken = default)
+        {
+            var command = new ExpandTextVariables { Document = Document, ExpandEnvVars = expandEnvironmentVariables };
+            command.Text.AddRange(texts);
+
+            var response = await Send<ExpandTextVariablesResponse>(command, cancellationToken);
+            return response.Text.ToArray();
+        }
+
+        /// <summary>Expands text variables in one string, resolved against this document.</summary>
+        /// <param name="text">Text with <c>${VAR}</c> references.</param>
+        /// <param name="expandEnvironmentVariables">As above.</param>
+        /// <returns>The text, expanded.</returns>
+        public async ValueTask<string> ExpandTextVariables(string text, bool expandEnvironmentVariables = false, CancellationToken cancellationToken = default)
+        {
+            var expanded = await ExpandTextVariables([text], expandEnvironmentVariables, cancellationToken);
+            return expanded.Length > 0 ? expanded[0] : string.Empty;
+        }
+
         // ------------------------------------------------------------------------------- page
 
         /// <summary>The document's page size, orientation and drawing sheet.</summary>

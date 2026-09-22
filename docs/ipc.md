@@ -139,7 +139,17 @@ the dev image, pcbnew and eeschema both up:
 | `IpcMasterTests` (board, master additions) | 17 pass | 17 pass, 14 of them returning early |
 | `IpcSchematicTests` (eeschema) | 10 pass | 10 pass, all returning early: eeschema on 10.0.6 answers nothing |
 
-Four things the live run found that the protos do not say:
+Five things the live run found that the protos do not say:
+
+- **On 10.0.6, pcbnew answers a project-scoped `ExpandTextVariables` before the project handler
+  can**, and rejects any document that is not the open board: "the requested document  is not
+  open", with the empty name. KiCad's API server stops at the first handler that answers with
+  anything but `AS_UNHANDLED`, and 10.0.6's editor validation answers `AS_BAD_REQUEST`; master's
+  answers `AS_UNHANDLED` for a non-board document and the request reaches the project handler.
+  `GetTextVariables` and `SetTextVariables` are project-handler-only and work on both.
+  `KiCadDocument.ExpandTextVariables` sends the board itself, which both versions accept, and the
+  board's resolver sees the project's variables too; `Project.ExpandTextVariables` is the
+  project-handler form, master and later through pcbnew.
 
 - **eeschema holds the main loop behind two one-button dialogs** when it opens the fixture
   ("an error was found when loading the schematic that has been automatically fixed", then "Load

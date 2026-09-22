@@ -104,10 +104,14 @@ lib.Save("orbion.kicad_sym");
 **Net classes and text variables**
 
 ```csharp
-var project = await kicad.GetProject();
-var classes = await project.GetNetClasses();
-var expanded = await project.ExpandTextVariables("${ORBION_PN} rev ${BOARD_REV}");
+var board = await kicad.GetBoard();
+var classes = await board.GetProject().GetNetClasses();
+var expanded = await board.ExpandTextVariables("${ORBION_PN} rev ${BOARD_REV}");
 ```
+
+Expand through the document rather than the project: the board's resolver sees the project's
+variables too, and on KiCad 10.0.6 pcbnew rejects a project-scoped expansion before KiCad's own
+project handler can answer it (measured; docs/ipc.md).
 
 Every type and member: [docs/api.md](docs/api.md).
 

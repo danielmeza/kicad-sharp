@@ -4,6 +4,7 @@
 #
 #   scripts/sync-protos.sh           refresh protos/ from the pin
 #   scripts/sync-protos.sh --check   verify protos/ still matches the pin (exit 1 if not)
+#   scripts/sync-protos.sh --bump    move KICAD_COMMIT to where KICAD_REF points now, then refresh
 #
 # The pin (protos/KICAD_PIN) is a commit, KICAD_COMMIT, plus the tag or branch it came from,
 # KICAD_REF. The commit is what gets fetched and compared, so a branch pin cannot float: the branch
@@ -36,7 +37,13 @@ if [[ ! "$KICAD_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
 fi
 
 CHECK=0
-[[ "${1:-}" == "--check" ]] && CHECK=1
+BUMP=0
+case "${1:-}" in
+    --check) CHECK=1 ;;
+    --bump)  BUMP=1 ;;
+    "") ;;
+    *) echo "usage: $0 [--check|--bump]" >&2; exit 2 ;;
+esac
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -57,11 +64,17 @@ if [[ -n "$TAG_COMMIT" ]]; then
     fi
     echo "Tag $KICAD_REF resolves to the pinned commit."
 elif [[ -n "$BRANCH_COMMIT" ]]; then
-    if [[ "$BRANCH_COMMIT" != "$KICAD_COMMIT" ]]; then
-        echo "note: branch $KICAD_REF is now at $BRANCH_COMMIT; the pin stays at $KICAD_COMMIT."
-        echo "      To follow the branch, edit KICAD_COMMIT in $PIN_FILE and re-run this script."
-    else
+    if [[ "$BRANCH_COMMIT" == "$KICAD_COMMIT" ]]; then
         echo "Branch $KICAD_REF is at the pinned commit."
+    elif [[ "$BUMP" == "1" ]]; then
+        # The one way the pin moves along a branch: on purpose, here, and the edit is what gets
+        # committed together with the re-synced protos.
+        echo "Moving the pin: branch $KICAD_REF is at $BRANCH_COMMIT, the pin was $KICAD_COMMIT."
+        sed -i "s/^KICAD_COMMIT=.*/KICAD_COMMIT=$BRANCH_COMMIT/" "$PIN_FILE"
+        KICAD_COMMIT="$BRANCH_COMMIT"
+    else
+        echo "note: branch $KICAD_REF is now at $BRANCH_COMMIT; the pin stays at $KICAD_COMMIT."
+        echo "      To follow the branch, run $0 --bump and commit the result."
     fi
 else
     echo "error: KiCad has no tag or branch named '$KICAD_REF'." >&2

@@ -702,6 +702,37 @@ public class IpcCommandTests
     }
 
     [Fact]
+    public async Task Document_ExpandTextVariables_NamesTheDocument()
+    {
+        using var peer = NngTestPeer.Start(new ExpandTextVariablesResponse { Text = { "/project/x", "y" } });
+        using var client = Client(peer);
+
+        var expanded = await new Board(client, BoardDocument).ExpandTextVariables(["${KIPRJMOD}/x", "y"], expandEnvironmentVariables: true);
+
+        Assert.Equal(["/project/x", "y"], expanded);
+        var request = peer.Single<ExpandTextVariables>();
+        Assert.Equal(BoardDocument, request.Document);   // the board itself, typed PCB, which pcbnew's handler accepts
+        Assert.True(request.ExpandEnvVars);
+    }
+
+    [Fact]
+    public async Task KiCad_GetTextVariables_GoesThroughTheOpenBoardsProject()
+    {
+        using var peer = NngTestPeer.Start(request =>
+            request.Message.Is(GetOpenDocuments.Descriptor)
+                ? NngTestPeer.Ok(new GetOpenDocumentsResponse { Documents = { BoardDocument } })
+                : NngTestPeer.Ok(new TextVariables { Variables = { ["REV"] = "B" } }));
+        using var client = Client(peer);
+
+        var variables = await new KiCad(client).GetTextVariables();
+
+        Assert.Equal("B", variables["REV"]);
+        var request = peer.Requests[1].Message.Unpack<GetTextVariables>();
+        Assert.Equal(DocumentType.DoctypeProject, request.Document.Type);
+        Assert.Equal(BoardProject, request.Document.Project);   // named: master refuses an empty project here
+    }
+
+    [Fact]
     public void Project_DoesNotChangeTheBoardsOwnSpecifier()
     {
         using var peer = NngTestPeer.Start(new Empty());

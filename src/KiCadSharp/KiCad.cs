@@ -484,16 +484,20 @@ namespace KiCadSharp
             await Send(command, cancellationToken);
         }
 
-        public async ValueTask<IDictionary<string, string>> GetTextVariables()
+        /// <summary>The text variables of the project the open board belongs to.</summary>
+        /// <returns>Name to value.</returns>
+        /// <remarks>
+        /// Asks KiCad which board is open and reads its project's variables, because KiCad master
+        /// insists on a named project for this command ("a project name and path must be
+        /// specified"; MEASURED) and a connection has no project of its own. With a
+        /// <see cref="Project"/> in hand, its <see cref="Project.GetTextVariables"/> is one round
+        /// trip fewer.
+        /// </remarks>
+        public async ValueTask<IDictionary<string, string>> GetTextVariables(CancellationToken cancellationToken = default)
         {
-            var response = await Send<TextVariables>(new GetTextVariables()
-            {
-                Document = new DocumentSpecifier()
-                {
-                    Type = DocumentType.DoctypeProject,
-                }
-            });
-            return response.Variables.ToDictionary();
+            var project = await GetProject(cancellationToken);
+            var variables = await project.GetTextVariables(cancellationToken);
+            return variables.Variables.ToDictionary();
         }
     }
 

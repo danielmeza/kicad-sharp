@@ -59,7 +59,9 @@ The base of `Board` and `Schematic`; every command here goes out with the proxy'
 commit messages now carry the document, which KiCad 10.0.7 introduced and says it will require;
 `GetItems(params KiCadObjectType[])`, `GetSelection(...)`, `ClearSelection()`,
 `CreateItems(params IMessage[])`, `UpdateItems(...)`, `DeleteItems(params KIID[])`,
-`FocusOnItems(ids, margin)`; `GetPageSettings()` / `SetPageSettings(settings)`; the design variants
+`FocusOnItems(ids, margin)`; `ExpandTextVariables(text, expandEnvironmentVariables)` and the
+`string[]` form, resolved by the editor against the document (and the project's variables through
+it); `GetPageSettings()` / `SetPageSettings(settings)`; the design variants
 `GetVariants()`, `AddVariant(name, description)`, `DeleteVariant(name)`, `RenameVariant(old, new)`,
 `SetVariantDescription(name, description)`, `CopyVariant(old, new, description)`,
 `SetCurrentVariant(name)` / `GetCurrentVariant()`; and `RunJob(job, outputPath)`, which takes any of
@@ -298,7 +300,11 @@ longer exists; a branch that has moved past the pinned commit is only reported. 
 one commit as a blobless sparse checkout, so the check costs about 3 MB, not 1.4 GB.
 
 To move to a newer KiCad: edit both lines of `protos/KICAD_PIN`, run `scripts/sync-protos.sh`, and
-commit the result.
+commit the result. To follow the pinned branch to its current tip, `scripts/sync-protos.sh --bump`
+edits `KICAD_COMMIT` and re-syncs in one step. The `kicad-master` workflow does that weekly: it
+bumps the pin, rebuilds and republishes the dev image, runs the whole suite live against the new
+nightly, and opens a pull request with the result, so a KiCad master change reaches this repository
+as a reviewable diff rather than as silence.
 
 ## `KiCadSharp.Cli`
 

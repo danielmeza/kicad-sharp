@@ -7,6 +7,7 @@ using Kiapi.Board.Jobs;
 using Kiapi.Board.Types;
 using Kiapi.Common;
 using Kiapi.Common.Commands;
+using Kiapi.Common.Project;
 using Kiapi.Common.Types;
 
 namespace KiCadSharp.Tests;
@@ -377,6 +378,49 @@ public partial class IpcMasterTests
     }
 
     [Fact]
+    public async Task Project_TextVariables_RoundTripThroughTheBareProjectSpecifier()
+    {
+        // Ungated on purpose: Project now sends a specifier with only DOCTYPE_PROJECT and the
+        // project, and this is the measurement that a 10.0.6 KiCad and master both accept it for
+        // the three project-handler commands (set, get, expand).
+        if (await LiveKiCad.Board() is not { } kicad)
+        {
+            return;
+        }
+
+        var board = await kicad.GetBoard();
+        var project = board.GetProject();
+        var original = await project.GetTextVariables();
+        var value = "kicad-sharp-" + Guid.NewGuid().ToString("N")[..8];
+
+        await project.SetTextVariables(new TextVariables { Variables = { ["KICADSHARP_TEST"] = value } });
+        try
+        {
+            Assert.Equal(value, (await project.GetTextVariables()).Variables["KICADSHARP_TEST"]);
+            Assert.Equal(value, (await kicad.GetTextVariables())["KICADSHARP_TEST"]);
+
+            // Expansion through the document: the board's resolver sees project variables too,
+            // and this is the one that answers on 10.0.6 as well as on master.
+            Assert.Equal(value, await board.ExpandTextVariables("${KICADSHARP_TEST}"));
+            Assert.Equal([value, "x"], await board.ExpandTextVariables(["${KICADSHARP_TEST}", "x"]));
+
+            // Expansion through the project: MEASURED, 10.0.6's pcbnew answers it first and
+            // rejects the project document ("the requested document  is not open"); master
+            // passes it on to the project handler.
+            if ((await kicad.GetVersion()).SupportsJobs)
+            {
+                Assert.Equal(value, await project.ExpandTextVariables("${KICADSHARP_TEST}"));
+            }
+        }
+        finally
+        {
+            await project.SetTextVariables(original, MapMergeMode.MmmReplace);
+        }
+
+        Assert.False((await project.GetTextVariables()).Variables.ContainsKey("KICADSHARP_TEST"));
+    }
+
+    [Fact]
     public async Task Project_ExpandsEnvironmentVariablesOnRequest()
     {
         if (await LiveKiCad.Board(version => version.SupportsEmbeddedFiles) is not { } kicad)
@@ -384,9 +428,9 @@ public partial class IpcMasterTests
             return;
         }
 
-        var project = (await kicad.GetBoard()).GetProject();
+        var board = await kicad.GetBoard();
 
-        var expanded = await project.ExpandTextVariables("${KIPRJMOD}/x", expandEnvironmentVariables: true);
+        var expanded = await board.ExpandTextVariables("${KIPRJMOD}/x", expandEnvironmentVariables: true);
         Assert.DoesNotContain("${KIPRJMOD}", expanded);
         Assert.EndsWith("/x", expanded);
     }
