@@ -40,6 +40,8 @@ configured, the client adopts the one KiCad returns on the first successful roun
 | `GetBoard()` with no board open | `ApiException`, `StatusCode` = `null` | — |
 | The caller's token was cancelled: before the request went out, while the send waits for a KiCad to take it, or while the reply is awaited | `OperationCanceledException`, whose `CancellationToken` is the caller's | — |
 | `Disconnect()` cut the request off | `OperationCanceledException` | — |
+| `Dispose()` while the call was under way: connecting, waiting behind another call on the same client, waiting to send, or waiting for the reply | `OperationCanceledException`, the same at every one of those points | the dial's failure, for a dial that failed after `Dispose()` |
+| A call made after `Dispose()` | `ObjectDisposedException` | — |
 
 `AS_UNHANDLED` is how KiCad says it has no handler for a command, so it is how a caller finds out a
 command is not there:
@@ -70,6 +72,14 @@ dial: the send then has nobody to hand the request to, and it waits for somebody
 thread, until the token or `RequestTimeout` ends the wait. Pass a token with a deadline for a
 per-call bound, or set `RequestTimeout` for a client-wide one. There is no useful single default —
 `Ping` returns in under a millisecond and `RefillZones` on a large board does not.
+
+`Dispose()` ends every call under way as a cancellation, as `HttpClient` does its pending requests:
+the call did not fail, it was stopped. It is safe to call more than once, and from any thread while
+calls, `Disconnect()` or another `Dispose()` run. It does not wait for the calls it ends. The one call
+it cannot end at once is one that is dialing, because nng's dial cannot be interrupted. That call ends
+with the same `OperationCanceledException` when the dial returns, and the socket the dial opened is
+closed. The dial returns at once against a path with nothing at it, and after nng's own 10 s at most
+against a socket that never completes the handshake.
 
 ### `KiCad` — the connection handle
 
