@@ -18,6 +18,13 @@ namespace KiCadSharp.Tests;
 /// measures that, which is why neither <c>Version</c> can be set to <see langword="null"/>.
 /// </para>
 /// <para>
+/// A board-shaped <see cref="KiCadFootprintLibrary"/> is the same file, a <c>kicad_pcb</c>, so its
+/// <c>Version</c> cannot be set to <see langword="null"/> either (#109). A <c>.kicad_mod</c> can: a
+/// footprint's parser reads <c>version</c> anywhere, and reads a footprint with none as format 0.
+/// <see cref="KiCadDoesNotReadABoardShapedLibraryWithNoVersion_TheFileVersionNullUsedToWrite"/>
+/// measures the board-shaped case.
+/// </para>
+/// <para>
 /// The kicad-cli test is opt-in, as every test that needs KiCad is: set <c>KICADSHARP_KICAD_CLI</c>
 /// to a <c>kicad-cli</c>. Without it the test returns early, because CI has no KiCad.
 /// </para>
@@ -115,6 +122,45 @@ public class DeclaredVersionTests
         Assert.Equal(libraryBefore, library.ToText());
     }
 
+    /// <summary>
+    /// A board-shaped footprint library is a <c>kicad_pcb</c>, and KiCad reads its version the same
+    /// way, so it refuses <see langword="null"/> as <see cref="KiCadBoard.Version"/> does (#109). It
+    /// used to remove the version, which wrote a board KiCad 10.0.6 refuses.
+    /// </summary>
+    [Theory]
+    [InlineData("built")]
+    [InlineData("loaded")]
+    public void AVersionCannotBeSetToNone_OnABoardShapedFootprintLibrary(string origin)
+    {
+        var library = origin == "built" ? NewLibraryHoldingOneFootprint() : KiCadFootprintLibrary.Load(TestData.Kicad10Board);
+        Assert.False(library.IsSingleFootprint);
+        var before = library.ToText();
+
+        Assert.Throws<ArgumentNullException>(() => library.Version = null);
+
+        Assert.Equal(before, library.ToText());
+        Assert.NotNull(library.Version);
+    }
+
+    /// <summary>
+    /// A <c>.kicad_mod</c> keeps the behaviour #76 gave it: <see langword="null"/> removes the
+    /// version, for a KiCad 6+ <c>footprint</c> root and a KiCad 5 <c>module</c> root alike.
+    /// </summary>
+    [Theory]
+    [InlineData("(footprint \"F\" (version 20211014) (layer \"F.Cu\"))", "(footprint \"F\" (layer \"F.Cu\"))")]
+    [InlineData("(module M (version 20211014) (layer F.Cu))", "(module M (layer F.Cu))")]
+    public void AVersionSetToNone_OnAKiCadMod_StillRemovesIt(string text, string expected)
+    {
+        var library = KiCadFootprintLibrary.Parse(text);
+        Assert.True(library.IsSingleFootprint);
+
+        library.Version = null;
+
+        Assert.Null(library.Version);
+        Assert.Null(Assert.Single(library.Footprints).Version);
+        Assert.Equal(expected, library.ToText());
+    }
+
     [Fact]
     public void AVersionSetOnAFileWithNone_GoesFirst()
     {
@@ -197,6 +243,65 @@ public class DeclaredVersionTests
         Assert.Equal(0, Run(cli, scratch, "sym", "upgrade", "--force", "-o", libraryOut, libraryPath).Exit);
         var symbol = Assert.Single(KiCadSymbolLibrary.Load(libraryOut).Symbols);
         Assert.Equal("~", symbol.GetPropertyValue(KiCadPropertyNames.Value)); // read as 20251024, where ~ is ~
+    }
+
+    /// <summary>
+    /// The three files a board-shaped <see cref="KiCadFootprintLibrary"/> holding one footprint can
+    /// be saved as, handed to kicad-cli 10.0.6 (#109). Each version-less file is written by removing
+    /// the token from the tree, which is what <c>Version = null</c> did before this test.
+    /// <list type="bullet">
+    /// <item><c>(generator …)</c> first, the file <c>Version = null</c> wrote: refused, "Expecting '('".</item>
+    /// <item><c>(general)</c> first, the file <c>Generator = null</c> then <c>Version = null</c> wrote:
+    /// loads, but KiCad's re-save has no footprint. The empty form ended the board.</item>
+    /// <item>The version the setter now keeps: loads, and the footprint is kept.</item>
+    /// </list>
+    /// </summary>
+    [Fact]
+    public void KiCadDoesNotReadABoardShapedLibraryWithNoVersion_TheFileVersionNullUsedToWrite()
+    {
+        if (TestData.KiCadCli is not { } cli)
+        {
+            return;
+        }
+
+        using var scratch = TestData.NewScratchDirectory();
+
+        var generatorFirst = Path.Combine(scratch, "generator-first.kicad_pcb");
+        var library = NewLibraryHoldingOneFootprint();
+        library.Node.RemoveChild(KiCadTokens.Common.Version);
+        Assert.Null(library.Version);
+        library.Save(generatorFirst);
+        var (exit, errors) = Run(cli, scratch, "pcb", "upgrade", "--force", generatorFirst);
+        Assert.NotEqual(0, exit);
+        Assert.Contains("Failed to load board", errors, StringComparison.Ordinal);
+        Assert.Contains("Expecting ''(''", errors, StringComparison.Ordinal);
+
+        var generalFirst = Path.Combine(scratch, "general-first.kicad_pcb");
+        library = NewLibraryHoldingOneFootprint();
+        library.Generator = null;
+        library.Node.RemoveChild(KiCadTokens.Common.Version);
+        library.Save(generalFirst);
+        Assert.Equal(0, Run(cli, scratch, "pcb", "upgrade", "--force", generalFirst).Exit);
+        var truncated = KiCadBoard.Load(generalFirst);
+        Assert.Equal("pcbnew", truncated.Generator); // KiCad loaded it and wrote it back itself
+        Assert.Empty(truncated.Footprints);
+
+        var stamped = Path.Combine(scratch, "stamped.kicad_pcb");
+        library = NewLibraryHoldingOneFootprint();
+        Assert.Throws<ArgumentNullException>(() => library.Version = null);
+        Assert.Equal(KiCadDefaults.FootprintLibraryVersion, library.Version);
+        library.Save(stamped);
+        Assert.Equal(0, Run(cli, scratch, "pcb", "upgrade", "--force", stamped).Exit);
+        var kept = KiCadBoard.Load(stamped);
+        Assert.Equal("pcbnew", kept.Generator);
+        Assert.Equal("F", Assert.Single(kept.Footprints).GetPropertyValue(KiCadPropertyNames.Value));
+    }
+
+    private static KiCadFootprintLibrary NewLibraryHoldingOneFootprint()
+    {
+        var library = new KiCadFootprintLibrary();
+        library.AddFootprint(new KiCadFootprint("F"));
+        return library;
     }
 
     private static (int Exit, string Errors) Run(string cli, string workingDirectory, params string[] arguments)
