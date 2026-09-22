@@ -59,11 +59,12 @@ workflow do: exactly the eight libraries, each built for its own architecture.
 dotnet test KiCadSharp.slnx -c Release
 ```
 
-The suite needs nothing installed. Three environment variables change what it does:
+The suite needs nothing installed. Four environment variables change what it does:
 
 | Variable | Effect |
 | --- | --- |
 | `KICADSHARP_KICAD_CLI` | A `kicad-cli` to shell out to. The tests that hand a file to KiCad itself return early without it, since CI has no KiCad. |
+| `KICADSHARP_KICAD_SYMBOLS` | The directory holding KiCad's own symbol libraries (`Timer.kicad_sym` and the rest); `/usr/share/kicad/symbols` in the `ghcr.io/danielmeza/orbion-kicad-release:10.0.6` image. The tests that rename one of them and hand it to `kicad-cli` return early without it, since the libraries are not vendored here. |
 | `KICADSHARP_IPC_SOCKET` | The API socket of a running KiCad, for the live tests in `IpcTests`. `scripts/kicad-ipc-container.sh` starts one and sets it. |
 | `KICADSHARP_KEEP_TEST_FILES` | Set to `1` to keep every test's scratch directory instead of deleting it. |
 

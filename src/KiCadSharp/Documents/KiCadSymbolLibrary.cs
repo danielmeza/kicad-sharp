@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -193,13 +194,77 @@ namespace KiCadSharp.Documents
         /// set <see cref="Version"/> to the source's. Set it after adding to choose the stamp yourself.
         /// <c>Symbols.Add</c> moves the node without touching the version.
         /// </para>
+        /// <para>
+        /// <b>A rename that happened while parent and derived symbol were apart is caught up with
+        /// here.</b> Setting <see cref="KiCadSymbol.Id"/> re-points <c>(extends …)</c> only among
+        /// the symbols still next to the renamed one, and the loop that renames a symbol and moves it
+        /// before touching the next separates them: KiCad's own libraries are in name order, so a
+        /// derived symbol often precedes its parent and has already been moved when the parent is
+        /// renamed (MEASURED on KiCad 10.0.6's <c>Timer.kicad_sym</c>: 15 of its 40 derived symbols
+        /// precede their parent, and the loop left all 15 naming the old parent, a library
+        /// <c>kicad-cli</c> refuses). So a symbol remembers the ids it has had
+        /// (<see cref="KiCadSymbol.FormerIds"/>), and when one arrives here, every <c>(extends …)</c>
+        /// in this library that names one of its former ids is pointed at its current name, and its
+        /// own <c>(extends …)</c>, when it names no symbol here, is pointed at the symbol here that
+        /// used to bear that name. A name still borne by a symbol in this library is not touched: the
+        /// derived symbol means that one. Rename and move in either order, one symbol at a time, and
+        /// the result names the new parents; <c>Symbols.Add</c> does none of this.
+        /// </para>
         /// </remarks>
         public KiCadSymbol AddSymbol(KiCadSymbol symbol)
         {
             ArgumentNullException.ThrowIfNull(symbol);
             TakeVersionOfSourceLibrary(symbol.Node.Parent);
             _root.AddChild(symbol.Node);
+            RepointExtendsAcrossRenames(symbol);
             return symbol;
+        }
+
+        /// <summary>
+        /// Points <c>(extends …)</c> across a rename that a derived symbol or its parent missed
+        /// because the two were in different libraries at the time. See
+        /// <see cref="AddSymbol(KiCadSymbol)"/>.
+        /// </summary>
+        /// <param name="arrived">The symbol just added, already a child of this library.</param>
+        private void RepointExtendsAcrossRenames(KiCadSymbol arrived)
+        {
+            var symbols = Symbols;
+            var names = symbols.Select(s => KiCadSymbol.ItemName(s.Id)).ToHashSet(StringComparer.Ordinal);
+            var arrivedName = KiCadSymbol.ItemName(arrived.Id);
+
+            // Derived symbols already here that still name what the arrived symbol was called.
+            foreach (var former in arrived.FormerIds)
+            {
+                var formerName = KiCadSymbol.ItemName(former);
+                if (string.Equals(formerName, arrivedName, StringComparison.Ordinal) || names.Contains(formerName))
+                {
+                    continue;
+                }
+
+                foreach (var sibling in symbols)
+                {
+                    if (!ReferenceEquals(sibling.Node, arrived.Node)
+                        && sibling.Node.GetChild(KiCadTokens.Symbol.Extends) is { } extends
+                        && string.Equals(extends.GetValue(0), formerName, StringComparison.Ordinal))
+                    {
+                        extends.SetValue(0, arrivedName, SQuoteStyle.Quoted);
+                    }
+                }
+            }
+
+            // The arrived symbol's own parent, when a symbol here used to be called that.
+            if (arrived.Node.GetChild(KiCadTokens.Symbol.Extends) is { } own
+                && own.GetValue(0) is { } parent
+                && !names.Contains(parent))
+            {
+                var renamed = symbols.FirstOrDefault(s =>
+                    !ReferenceEquals(s.Node, arrived.Node)
+                    && s.FormerIds.Any(f => string.Equals(KiCadSymbol.ItemName(f), parent, StringComparison.Ordinal)));
+                if (renamed is not null)
+                {
+                    own.SetValue(0, KiCadSymbol.ItemName(renamed.Id), SQuoteStyle.Quoted);
+                }
+            }
         }
 
         /// <summary>Creates and appends a new symbol.</summary>
@@ -272,6 +337,12 @@ namespace KiCadSharp.Documents
     /// </remarks>
     public class KiCadSymbol : KiCadNode
     {
+        /// <summary>
+        /// The ids each renamed symbol has had, keyed by its form so the memory travels with the node
+        /// rather than with any one view over it, and goes away with it.
+        /// </summary>
+        private static readonly ConditionalWeakTable<SExpression, List<string>> s_formerIds = new();
+
         /// <summary>Creates a view over an existing <c>(symbol ...)</c> form.</summary>
         /// <param name="node">The form.</param>
         public KiCadSymbol(SExpression node)
@@ -309,12 +380,32 @@ namespace KiCadSharp.Documents
         /// schematic as <c>"Device:R"</c> owns sub-units <c>"R_1_1"</c>. The <c>lib_id</c> of the
         /// symbols placed on a sheet is not touched.
         /// </para>
+        /// <para>
+        /// A derived symbol that is no longer next to it is not reached, and the loop that renames
+        /// one symbol and moves it before the next separates them. So the old id is kept in
+        /// <see cref="FormerIds"/>, and <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/>
+        /// re-points across the gap when either symbol arrives.
+        /// </para>
         /// </remarks>
         public string Id
         {
             get => Node.GetValue(0) ?? "Unknown";
             set => Rename(value);
         }
+
+        /// <summary>
+        /// Gets the ids this symbol had before its current <see cref="Id"/>, oldest first: empty
+        /// until it is renamed, and a rename to the name it already has adds nothing.
+        /// </summary>
+        /// <remarks>
+        /// The memory belongs to the form, so a view taken later, from any library the symbol is moved
+        /// to, reads the same list, and <see cref="CloneAs"/>'s copy remembers the name it was copied
+        /// from. <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/> reads it to point
+        /// <c>(extends …)</c> across a rename that happened while parent and derived symbol were in
+        /// different libraries.
+        /// </remarks>
+        public IReadOnlyList<string> FormerIds =>
+            s_formerIds.TryGetValue(Node, out var ids) ? ids.AsReadOnly() : Array.Empty<string>();
 
         /// <summary>Gets the symbol's properties, as a live view.</summary>
         public KiCadNodeList<KiCadProperty> Properties => new(Node, KiCadTokens.Common.Property, n => new KiCadProperty(n));
@@ -432,7 +523,9 @@ namespace KiCadSharp.Documents
         /// <remarks>
         /// The copy keeps its link to the source text, so writing it out unchanged still reproduces
         /// the original bytes. Its sub-units are renamed with it, as setting <see cref="Id"/> does;
-        /// the copy has no parent, so no other symbol's <c>(extends …)</c> is touched.
+        /// the copy has no parent, so no other symbol's <c>(extends …)</c> is touched. The copy
+        /// remembers the name it was copied from in <see cref="FormerIds"/>, so a library it is added
+        /// to re-points the derived symbols that name it, as for a renamed symbol.
         /// </remarks>
         public KiCadSymbol CloneAs(string newId)
         {
@@ -454,7 +547,7 @@ namespace KiCadSharp.Documents
         /// </summary>
         /// <param name="id">A symbol name, <c>"R"</c> or <c>"Device:R"</c>.</param>
         /// <returns>The item name, <c>"R"</c> for both.</returns>
-        private static string ItemName(string id)
+        internal static string ItemName(string id)
         {
             var colon = id.IndexOf(':', StringComparison.Ordinal);
             return colon < 0 ? id : id[(colon + 1)..];
@@ -465,6 +558,10 @@ namespace KiCadSharp.Documents
             ArgumentNullException.ThrowIfNull(newId);
             var oldId = Node.GetValue(0);
             WriteValue(0, newId, SQuoteStyle.Quoted);
+            if (oldId is not null && !string.Equals(oldId, newId, StringComparison.Ordinal))
+            {
+                s_formerIds.GetOrCreateValue(Node).Add(oldId);
+            }
 
             // A sub-unit's name is not data of its own: KiCad's writer composes it from the
             // symbol's item name and the unit and body-style numbers every time it saves. Doing the

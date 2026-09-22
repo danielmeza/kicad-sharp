@@ -28,6 +28,18 @@ namespace KiCadSharp.Tests;
 /// without KiCad; the last two tests hand the output to KiCad itself when
 /// <c>KICADSHARP_KICAD_CLI</c> is set.
 /// </para>
+/// <para>
+/// The rename-then-move section is #132. Since #48 a rename re-points <c>(extends …)</c> among the
+/// symbols still next to it, which is not enough for the loop that renames one symbol and moves it
+/// before renaming the next: a derived symbol that precedes its parent has already left when the
+/// parent is renamed. KiCad's own libraries are in name order, so it often does (MEASURED on KiCad
+/// 10.0.6's <c>Timer.kicad_sym</c>: <c>8253</c> <c>(extends "82C54")</c> is the first symbol,
+/// <c>82C54</c> the fourth; 15 of its 40 derived symbols precede their parent, and 33 of
+/// <c>Interface_UART.kicad_sym</c>'s 101 do, the 48 kicad-ultra counted). A symbol now
+/// remembers the ids it has had, and <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/>
+/// re-points across the gap in both directions. Four of those tests fail on the code before it,
+/// six with kicad-cli.
+/// </para>
 /// </remarks>
 public class SymbolRenameTests
 {
@@ -148,6 +160,132 @@ public class SymbolRenameTests
         Assert.Empty(KiCadRuleViolations(reloaded.Node));
     }
 
+    // ------------------------------------------------- rename, then move, one symbol at a time
+
+    [Fact]
+    public void RenamingThenMovingOneSymbolAtATime_RepointsADerivedSymbolThatPrecedesItsParent()
+    {
+        // The loop from #132, as kicad-ultra ran it. DERIVED is moved with (extends "BASE") before
+        // BASE is renamed, so the rename finds no sibling to re-point.
+        var source = DerivedFirst();
+        var destination = new KiCadSymbolLibrary("kicad-sharp-tests");
+
+        foreach (var symbol in source.Symbols)
+        {
+            symbol.Id = "UL_" + symbol.Id;
+            destination.AddSymbol(symbol);
+        }
+
+        Assert.Equal(new[] { "UL_DERIVED", "UL_BASE", "UL_BASE_X" }, destination.Symbols.Select(s => s.Id));
+        Assert.Equal("UL_BASE", Parent(destination.GetSymbol("UL_DERIVED")!));
+        Assert.Empty(source.Symbols);
+        Assert.Empty(KiCadRuleViolations(destination.Node));
+    }
+
+    [Fact]
+    public void MovingThenRenamingOneSymbolAtATime_RepointsADerivedSymbolThatFollowsItsParent()
+    {
+        // The other order of the same two statements. BASE is renamed once it is in the
+        // destination, where DERIVED is not yet, so DERIVED arrives still naming "BASE".
+        var source = KiCadSymbolLibrary.Load(TestData.DerivedSymbolLibrary);
+        var destination = new KiCadSymbolLibrary("kicad-sharp-tests");
+
+        foreach (var symbol in source.Symbols)
+        {
+            destination.AddSymbol(symbol);
+            symbol.Id = "UL_" + symbol.Id;
+        }
+
+        Assert.Equal(new[] { "UL_BASE", "UL_BASE_X", "UL_DERIVED" }, destination.Symbols.Select(s => s.Id));
+        Assert.Equal("UL_BASE", Parent(destination.GetSymbol("UL_DERIVED")!));
+        Assert.Empty(KiCadRuleViolations(destination.Node));
+    }
+
+    [Fact]
+    public void ASymbol_RemembersTheIdsItHasHad_OldestFirst()
+    {
+        var library = KiCadSymbolLibrary.Load(TestData.DerivedSymbolLibrary);
+        var symbol = library.GetSymbol("BASE")!;
+        Assert.Empty(symbol.FormerIds);
+
+        symbol.Id = "BASE";
+        Assert.Empty(symbol.FormerIds);
+
+        symbol.Id = "UL_BASE";
+        symbol.Id = "XX_BASE";
+
+        Assert.Equal(new[] { "BASE", "UL_BASE" }, symbol.FormerIds);
+        // The memory is the node's, not the view's: a view taken from the library afterwards has it too.
+        Assert.Equal(new[] { "BASE", "UL_BASE" }, library.GetSymbol("XX_BASE")!.FormerIds);
+    }
+
+    [Fact]
+    public void AddSymbol_RepointsADerivedSymbolThatNamesAnyFormerIdOfTheArrivingParent()
+    {
+        var source = DerivedFirst();
+        var destination = new KiCadSymbolLibrary("kicad-sharp-tests");
+        destination.AddSymbol(source.GetSymbol("DERIVED")!);
+
+        var parent = source.GetSymbol("BASE")!;
+        parent.Id = "UL_BASE";
+        parent.Id = "XX_BASE";
+        destination.AddSymbol(parent);
+
+        Assert.Equal("XX_BASE", Parent(destination.GetSymbol("DERIVED")!));
+    }
+
+    [Fact]
+    public void AddSymbol_LeavesAnExtendsAlone_WhenTheNameItGivesIsStillASymbolInTheLibrary()
+    {
+        // The destination has a BASE of its own, which is what DERIVED there means. A symbol that
+        // used to be called BASE arriving from elsewhere must not take that link.
+        var destination = KiCadSymbolLibrary.Load(TestData.DerivedSymbolLibrary);
+        var other = KiCadSymbolLibrary.Load(TestData.DerivedSymbolLibrary).GetSymbol("BASE")!;
+        other.Id = "UL_BASE";
+
+        destination.AddSymbol(other);
+
+        Assert.Equal("BASE", Parent(destination.GetSymbol("DERIVED")!));
+        Assert.Empty(KiCadRuleViolations(destination.Node));
+    }
+
+    [Fact]
+    public void AddSymbol_LeavesADerivedSymbolsExtendsAlone_WhenItsParentIsHereUnderThatName()
+    {
+        var destination = KiCadSymbolLibrary.Load(TestData.DerivedSymbolLibrary);
+        var other = KiCadSymbolLibrary.Load(TestData.DerivedSymbolLibrary);
+        other.GetSymbol("BASE")!.Id = "UL_BASE";
+        var derived = other.GetSymbol("DERIVED")!;
+        derived.Id = "UL_DERIVED";
+        Assert.Equal("UL_BASE", Parent(derived));
+        derived.Node.GetChild(KiCadTokens.Symbol.Extends)!.SetValue(0, "BASE", SQuoteStyle.Quoted);
+
+        destination.AddSymbol(derived);
+
+        // BASE is in the destination, so (extends "BASE") resolves and is not a rename to catch up with.
+        Assert.Equal("BASE", Parent(destination.GetSymbol("UL_DERIVED")!));
+    }
+
+    [Fact]
+    public void CloningThenAddingOneSymbolAtATime_RepointsADerivedSymbolThatPrecedesItsParent()
+    {
+        // The copying form of the same loop. A clone remembers the name it was copied from.
+        var source = DerivedFirst();
+        var destination = new KiCadSymbolLibrary("kicad-sharp-tests");
+
+        foreach (var symbol in source.Symbols)
+        {
+            var copy = symbol.CloneAs("UL_" + symbol.Id);
+            Assert.Equal(new[] { symbol.Id }, copy.FormerIds);
+            destination.AddSymbol(copy);
+        }
+
+        Assert.Equal("UL_BASE", Parent(destination.GetSymbol("UL_DERIVED")!));
+        Assert.Equal("BASE", Parent(source.GetSymbol("DERIVED")!));
+        Assert.Empty(source.GetSymbol("BASE")!.FormerIds);
+        Assert.Empty(KiCadRuleViolations(destination.Node));
+    }
+
     // ----------------------------------------------------------------------- built from nothing
 
     [Fact]
@@ -203,6 +341,58 @@ public class SymbolRenameTests
         AssertKiCadLoads(cli, output);
     }
 
+    [Fact]
+    public void KiCadLoadsWhatARenameThenMoveLoopWrites_WhenADerivedSymbolPrecedesItsParent()
+    {
+        if (TestData.KiCadCli is not { } cli)
+        {
+            return;
+        }
+
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "UL_derived-first.kicad_sym");
+        var destination = new KiCadSymbolLibrary("kicad-sharp-tests");
+        foreach (var symbol in DerivedFirst().Symbols)
+        {
+            symbol.Id = "UL_" + symbol.Id;
+            destination.AddSymbol(symbol);
+        }
+
+        destination.Save(output);
+
+        AssertKiCadLoads(cli, output);
+    }
+
+    [Fact]
+    public void KiCadLoadsItsOwnTimerLibrary_RenamedThenMovedOneSymbolAtATime()
+    {
+        // MEASURED against kicad-cli 10.0.6 and its Timer.kicad_sym (200,370 bytes, 67 symbols of
+        // which 40 are derived, 15 of them before their parent): before this fix the loop below
+        // left those 15 naming their old parent and kicad-cli exited 2, "Unable to load library".
+        if (TestData.KiCadCli is not { } cli || TestData.KiCadSymbols is not { } symbols
+            || Path.Combine(symbols, "Timer.kicad_sym") is not { } timer || !File.Exists(timer))
+        {
+            return;
+        }
+
+        using var scratch = TestData.NewScratchDirectory();
+        var output = Path.Combine(scratch, "UL_Timer.kicad_sym");
+        var destination = new KiCadSymbolLibrary("kicad-sharp-tests");
+        foreach (var symbol in KiCadSymbolLibrary.Load(timer).Symbols)
+        {
+            symbol.Id = "UL_" + symbol.Id;
+            destination.AddSymbol(symbol);
+        }
+
+        destination.Save(output);
+
+        var reloaded = KiCadSymbolLibrary.Load(output);
+        Assert.Equal(67, reloaded.Symbols.Count);
+        Assert.Equal(40, reloaded.Symbols.Count(s => Parent(s) is not null));
+        Assert.Empty(KiCadRuleViolations(reloaded.Node));
+        AssertKiCadLoads(cli, output);
+    }
+
     // ----------------------------------------------------------------------------------- helpers
 
     /// <summary>
@@ -210,9 +400,10 @@ public class SymbolRenameTests
     /// into a library of its own. danielmeza/kicad-ultra's <c>KiCadImportEngine</c> is this loop.
     /// </summary>
     /// <remarks>
-    /// The list is copied first. <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/> moves the
-    /// node out of the library it came from, so enumerating the live <c>Symbols</c> while adding
-    /// skips every other symbol: 18 of <c>orbion.kicad_sym</c>'s 35 arrive.
+    /// The list is copied first, as it had to be before #53: <see cref="KiCadSymbolLibrary.AddSymbol(KiCadSymbol)"/>
+    /// moves the node out of the library it came from, and enumerating the live <c>Symbols</c> while
+    /// adding then skipped every other symbol (18 of <c>orbion.kicad_sym</c>'s 35 arrived). The
+    /// enumerator snapshots since #53; the rename-then-move tests above enumerate the live view.
     /// </remarks>
     private static void ImportWithPrefix(string source, string output, string prefix)
     {
@@ -224,6 +415,33 @@ public class SymbolRenameTests
         }
 
         target.Save(output);
+    }
+
+    /// <summary>
+    /// <c>derived-symbols.kicad_sym</c> with <c>DERIVED</c> moved in front of <c>BASE</c>, parsed
+    /// back from its own text so nothing but the order differs from the fixture.
+    /// </summary>
+    /// <remarks>
+    /// That is the order KiCad's own libraries are in: they are sorted by name, and a derived
+    /// symbol's name has no reason to sort after its parent's (<c>Timer.kicad_sym</c> in KiCad
+    /// 10.0.6 opens with <c>8253</c>, which extends <c>82C54</c>, its fourth symbol). It is not an
+    /// order <c>kicad-cli sym upgrade --force</c> writes (MEASURED with 10.0.6: given this fixture
+    /// with <c>DERIVED</c> renamed <c>A_DERIVED</c>, it wrote <c>BASE</c>, <c>BASE_X</c>,
+    /// <c>A_DERIVED</c>, the input's own order, byte for byte), so there is no fixture for it that
+    /// KiCad wrote; the two opt-in tests take the real thing from KiCad's symbol directory instead.
+    /// </remarks>
+    private static KiCadSymbolLibrary DerivedFirst()
+    {
+        var library = KiCadSymbolLibrary.Load(TestData.DerivedSymbolLibrary);
+        var derived = library.GetSymbol("DERIVED")!.Node;
+        var first = library.Node.Children.IndexOf(library.GetSymbol("BASE")!.Node);
+        library.Node.Children.Remove(derived);
+        library.Node.Children.Insert(first, derived);
+
+        var reordered = KiCadSymbolLibrary.Parse(library.ToText());
+        Assert.Equal(new[] { "DERIVED", "BASE", "BASE_X" }, reordered.Symbols.Select(s => s.Id));
+        Assert.Equal("BASE", Parent(reordered.GetSymbol("DERIVED")!));
+        return reordered;
     }
 
     /// <summary>
