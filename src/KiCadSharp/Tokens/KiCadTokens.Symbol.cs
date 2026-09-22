@@ -25,6 +25,9 @@ namespace KiCadSharp
             /// <summary>A property's ordinal, KiCad 6's <c>(id n)</c>.</summary>
             public const string Id = "id";
 
+            /// <summary>The symbol a derived symbol inherits from: <c>(extends "Name")</c>.</summary>
+            public const string Extends = "extends";
+
             /// <summary>A pin's number, as printed on the part.</summary>
             public const string Number = "number";
 
