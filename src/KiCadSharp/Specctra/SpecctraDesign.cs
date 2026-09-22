@@ -30,7 +30,8 @@ namespace KiCadSharp.Specctra
     ///   <item>A track <b>arc</b> is written as the polyline that follows it. KiCad writes a straight
     ///   path from one end to the other, which puts copper where there is none.</item>
     ///   <item>A <b>custom pad</b> is written as the convex hull of its primitives, which covers it.
-    ///   KiCad writes the first outline of their union, and has no union to borrow here.</item>
+    ///   KiCad writes a convex hull too, of the polygon it draws for the pad, which lies inside the pad
+    ///   by up to KiCad's max error (5 µm by default).</item>
     ///   <item>Image <b>outlines</b> — courtyard and silkscreen — are not written. The router does not
     ///   read them.</item>
     ///   <item>Numbers are written to 0.1 nm rather than to six significant figures.</item>

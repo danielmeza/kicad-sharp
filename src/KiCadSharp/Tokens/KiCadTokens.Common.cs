@@ -102,6 +102,9 @@ namespace KiCadSharp
             /// <summary>The centre of a circle or of a circular shape.</summary>
             public const string Center = "center";
 
+            /// <summary>A rectangle's corner radius: KiCad 10's <c>(gr_rect … (radius r))</c>, absent for square corners.</summary>
+            public const string Radius = "radius";
+
             /// <summary>A width/height pair: <c>(size w h)</c>.</summary>
             public const string Size = "size";
 
