@@ -269,11 +269,20 @@ namespace KiCadSharp.Documents
         /// because they are one s-expression form.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// KiCad 5 spelled the form <c>module</c>. A board old enough to use that spelling is
         /// readable through <see cref="KiCadFootprintLibrary"/>, which accepts both tokens; this
         /// list is the KiCad 6+ <c>footprint</c> spelling only.
+        /// </para>
+        /// <para>
+        /// A footprint added or inserted here loses the <c>version</c>, <c>generator</c> and
+        /// <c>generator_version</c> it carried as a file of its own, as pcbnew writes a footprint
+        /// inside a board; its <see cref="KiCadFootprint.Version"/> then reads <see langword="null"/>,
+        /// and <see cref="Version"/> is the one KiCad reads the whole board under (#73). A footprint
+        /// with none, which is every footprint on a board KiCad wrote, moves untouched.
+        /// </para>
         /// </remarks>
-        public KiCadNodeList<KiCadFootprint> Footprints => new(_root, KiCadTokens.Footprint.Root, n => new KiCadFootprint(n));
+        public KiCadNodeList<KiCadFootprint> Footprints => new(_root, KiCadTokens.Footprint.Root, n => new KiCadFootprint(n), KiCadFootprint.PlaceOnBoard);
 
         /// <summary>Gets the straight track segments.</summary>
         public KiCadNodeList<KiCadTrackSegment> Segments => new(_root, KiCadTokens.Board.Segment, n => new KiCadTrackSegment(n));

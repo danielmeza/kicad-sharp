@@ -36,9 +36,17 @@ public class DocumentDefaultsTests
     public void TheBoardStampIsTheKiCad9Format() =>
         Assert.Equal("20241229", new KiCadBoard().Version);
 
+    /// <summary>
+    /// A board-shaped library is a <c>kicad_pcb</c>, so it carries the board's stamp, and its
+    /// footprints, which lose their own version on the way in (#73), are read under it. It used to
+    /// be KiCad 6's <c>20211014</c>, under which KiCad hid a new footprint's Reference and Value.
+    /// </summary>
     [Fact]
-    public void TheFootprintLibraryStampIsTheKiCad6Format() =>
-        Assert.Equal("20211014", new KiCadFootprintLibrary().Version);
+    public void TheFootprintLibraryStampIsTheBoardsKiCad9Format()
+    {
+        Assert.Equal("20241229", new KiCadFootprintLibrary().Version);
+        Assert.Equal(new KiCadBoard().Version, new KiCadFootprintLibrary().Version);
+    }
 
     [Fact]
     public void TheSymbolLibraryStampIsTheKiCad6Format() =>

@@ -327,11 +327,23 @@ footprint library (#63). Without a version, KiCad reads a `.kicad_mod` as format
 it refuses an arc drawn by `start`, `mid` and `end`, and it makes a footprint with no `attr` a
 through-hole one. A footprint read from a file keeps the version it has, or none, and so does a copy
 of one. A KiCad 5 module's `start`/`end`/`angle` arcs depend on having none. `KiCadFootprint.Version`
-reads it and sets it, and `null` removes it. KiCad writes a footprint inside a board without a
-version. A footprint that has one there makes KiCad read the rest of the board under the greater of
-the two versions. For example, a via after a new footprint on a `new KiCadBoard()` (`20241229`) loses
-its explicit "no" covering and plugging. To place a new footprint on a board stamped with an older
-format, set its `Version` to `null` first (#73).
+reads it and sets it, and `null` removes it.
+
+**A footprint placed on a board has no version of its own.** KiCad writes a footprint inside a board
+without a `version`, and a footprint that has one there makes KiCad read the rest of the board under
+the greater of the two versions. Measured with kicad-cli 10.0.6: a via after a new footprint on a
+`new KiCadBoard()` (`20241229`) lost its explicit "no" covering, plugging, capping and filling. So
+placing a footprint on a board — `KiCadBoard.Footprints.Add` or `Insert`, or
+`KiCadFootprintLibrary.AddFootprint` — removes its `version`, `generator` and `generator_version`, as
+pcbnew does, and its `Version` then reads `null` (#73). A footprint with none, which is every
+footprint on a board KiCad wrote, moves untouched. The footprint is then read under the board's
+version, and nothing converts its content to that version: a new footprint's fields read as hidden
+under a stamp older than `20230620`, and its arcs are refused under `20210925` or older. For that
+reason a new board-shaped `KiCadFootprintLibrary` is now stamped like a new board, `20241229`, and no
+longer KiCad 6's `20211014`: measured with kicad-cli 10.0.6, a new footprint in a new library came
+back with its Reference and Value hidden under the old stamp and as built under the new one. Take a
+copy first, `CloneAs` or `Node.Clone()`, to keep one with its version. A footprint saved with
+`SaveFootprint` keeps its version.
 
 **A footprint built in memory is written in KiCad 10's forms.** `new KiCadFootprint(id)` starts with
 the four fields KiCad gives every footprint, written as `(property …)`: `Reference` (`REF**`, on
@@ -346,7 +358,8 @@ text items, and a bare `width` stays bare when written to.
 
 **A new board-shaped `KiCadFootprintLibrary` starts with a layer table**, the same one a new
 `KiCadBoard` has. It used to write an empty `(layers)`, which KiCad refuses as "0 is not a valid layer
-count" (#74).
+count" (#74). It also carries the same stamp as a new board, `KiCadDefaults.BoardVersion`
+(`20241229`), because it is a `kicad_pcb` and its footprints are read under it (#73).
 
 **`Version` and `Generator` report only what the file declares.** On `KiCadBoard`,
 `KiCadFootprintLibrary` and `KiCadSymbolLibrary` they are `null` for a file that declares none. They
