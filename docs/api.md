@@ -263,6 +263,27 @@ other value is the one KiCad reads for a zone without a `(hatch …)`: `none`, o
 what `HatchPitch` reads there. Any other word throws `ArgumentException` and writes nothing, and
 writing back the values just read leaves the file as it was.
 
+**A zone with no clearance reads 0.5 mm, the clearance KiCad reads for it.** KiCad writes
+`(connect_pads (clearance …))` on every zone, so only a zone built in memory, or edited by hand, has
+none. `KiCadZone.ConnectPadsClearance` used to read 0 there, a clearance KiCad never uses; it now
+reads `KiCadDefaults.ZoneClearanceMm`, 0.5, which is what kicad-cli 10.0.6's `pcb upgrade` writes
+back for such a zone (#102). The one board where the two disagree carries a legacy
+`(setup (zone_clearance …))`, which KiCad reads as that board's default instead; a zone view does not
+know its board, so it reads 0.5 there too. Setting the clearance on a zone without one writes a whole
+`(connect_pads (clearance …))`, with no word, which is thermal reliefs.
+
+**A number KiCad cannot read is refused before it is written.** `double.NaN`,
+`double.PositiveInfinity` and `double.NegativeInfinity` format as `NaN`, `Infinity` and `-Infinity`,
+and kicad-cli 10.0.6 refuses the whole file over any of them: "need a number for 'hatch pitch'", for
+'zone clearance', for 'X coordinate', whichever token the value is in, because the check is the
+lexer's. Every setter that writes a `double`, a `KiCadPosition`, a `KiCadSize` or a `KiCadXyz`, and
+every `AddPoint`, throws `ArgumentOutOfRangeException` for such a value and writes nothing (#101):
+not the value, and not the form a set would have created on the way to it — the `(at …)` of a new
+footprint, the `(hatch style pitch)` a pitch lives in, the `(polygon (pts …))` a vertex does. A
+`KiCadPosition` built with `NaN` is still a value: it holds it and describes it; only writing it is
+refused. A range is not checked: KiCad clamps some values when it loads a board rather than refusing
+it, and which values, to what, is per token.
+
 **Adding a view moves its node.** `AddSymbol`, `AddFootprint`, `AddPin`, `AddGraphicalItem` and
 `KiCadNodeList<T>.Add`/`Insert` put the node you pass into the destination and take it out of
 wherever it was, another file included. The view you hold is then the element in the destination,

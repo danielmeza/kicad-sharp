@@ -110,6 +110,34 @@ namespace KiCadSharp
         public const double BoardThicknessMm = 1.6;
 
         /// <summary>
+        /// The clearance KiCad 10.0.6 reads between a zone and the pads it connects to when the zone
+        /// has no <c>(connect_pads (clearance …))</c>, in millimetres.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>parseZONE</c> starts from the board's default zone settings (<c>pcbnew/zone.cpp</c>,
+        /// line 89), whose clearance is <c>ZONE_CLEARANCE_MM</c> (<c>pcbnew/zone_settings.cpp</c>,
+        /// line 49; <c>pcbnew/zones.h</c>, line 36), and a <c>(clearance …)</c> inside
+        /// <c>(connect_pads …)</c> overrides it (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 7979–7982).
+        /// MEASURED against kicad-cli 10.0.6: <c>pcb upgrade</c> re-saves a zone that has no
+        /// <c>(connect_pads …)</c> with <c>(connect_pads (clearance 0.5))</c>.
+        /// </para>
+        /// <para>
+        /// It has one half only, the getter's, <c>KiCadZone.ConnectPadsClearance</c>: KiCad writes
+        /// a clearance on every zone, so no constructor here writes one. The other constant of its
+        /// kind, <see cref="BoardThicknessMm"/>, has both halves.
+        /// </para>
+        /// <para>
+        /// <b>A legacy board can change it.</b> A <c>(setup (zone_clearance …))</c>, which KiCad 5
+        /// wrote and KiCad 10 still reads (<c>pcb_io_kicad_sexpr_parser.cpp</c>, lines 2550–2554),
+        /// replaces the default for every zone on that board that has no clearance of its own;
+        /// MEASURED: <c>pcb upgrade</c> re-saves such a zone with the setup's 0.3 rather than 0.5. A
+        /// zone view does not know its board, so it reports this constant there too (#102).
+        /// </para>
+        /// </remarks>
+        public const double ZoneClearanceMm = 0.5;
+
+        /// <summary>
         /// The generator name a new <see cref="Documents.KiCadBoard"/> writes. A board that names none
         /// reports <see langword="null"/>, not this (#95).
         /// </summary>

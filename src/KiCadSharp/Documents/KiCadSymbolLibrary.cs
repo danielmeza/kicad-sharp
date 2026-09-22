@@ -660,7 +660,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>
@@ -726,7 +726,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>Gets or sets the pin length in millimetres.</summary>
@@ -868,10 +868,13 @@ namespace KiCadSharp.Documents
         /// <summary>Appends a vertex.</summary>
         /// <param name="x">X, millimetres.</param>
         /// <param name="y">Y, millimetres.</param>
+        /// <exception cref="ArgumentOutOfRangeException">A coordinate is not a number KiCad reads (#101).</exception>
         public void AddPoint(double x, double y)
         {
+            var xText = Numbers.Format(x);
+            var yText = Numbers.Format(y);
             var points = Node.GetChild(KiCadTokens.Common.Pts) ?? Node.CreateChild(KiCadTokens.Common.Pts);
-            points.CreateChild(KiCadTokens.Common.Xy, Numbers.Format(x), Numbers.Format(y));
+            points.CreateChild(KiCadTokens.Common.Xy, xText, yText);
         }
     }
 
@@ -901,14 +904,14 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the opposite corner.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
     }
 
@@ -937,7 +940,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Center
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Center));
-            set => value.Write(Require(KiCadTokens.Common.Center), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Center, includeRotation: false);
         }
 
         /// <summary>Gets or sets the radius in millimetres.</summary>
@@ -977,21 +980,21 @@ namespace KiCadSharp.Documents
         public KiCadPosition Start
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Start));
-            set => value.Write(Require(KiCadTokens.Common.Start), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Start, includeRotation: false);
         }
 
         /// <summary>Gets or sets the mid point the arc passes through.</summary>
         public KiCadPosition Mid
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.Mid));
-            set => value.Write(Require(KiCadTokens.Common.Mid), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.Mid, includeRotation: false);
         }
 
         /// <summary>Gets or sets the end point.</summary>
         public KiCadPosition End
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.End));
-            set => value.Write(Require(KiCadTokens.Common.End), includeRotation: false);
+            set => value.Write(this, KiCadTokens.Common.End, includeRotation: false);
         }
     }
 
@@ -1060,7 +1063,7 @@ namespace KiCadSharp.Documents
         public KiCadPosition Position
         {
             get => KiCadPosition.Read(Node.GetChild(KiCadTokens.Common.At));
-            set => value.Write(Require(KiCadTokens.Common.At), includeRotation: true);
+            set => value.Write(this, KiCadTokens.Common.At, includeRotation: true);
         }
 
         /// <summary>Gets or sets the text's angle in degrees, converting to what the file stores.</summary>
