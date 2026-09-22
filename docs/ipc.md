@@ -97,6 +97,86 @@ that version's name first, and falls back to the newest one. Pass it `KiCadVersi
 `env_vars.cpp:103-118`), with one difference in the fallback: KiCad takes whichever name sorts first
 in its map, and this takes the newest.
 
+### Where KiCad listens, for a client it did not launch
+
+A plugin that KiCad launches gets `KICAD_API_SOCKET`. Any other client has no such variable: a
+test, a CLI, or an application started by hand. For those, `AddKiCad` uses
+`KiCadEnvironment.GetDefaultSocketPath()`, which works the address out the way KiCad 10.0.6 does.
+
+`KICAD_API_SERVER::Start` (`common/api/api_server.cpp:79-86`) builds `<temp>/kicad/api.sock` with
+`wxFileName`, and listens on `ipc://` followed by that path (lines 127-128). `<temp>` is:
+
+- **macOS:** `/tmp`, always (the `__WXMAC__` branch). macOS sets `TMPDIR` for every user, and
+  KiCad ignores it.
+- **Everywhere else:** `wxStandardPaths::GetTempDir()`, which is `wxFileName::GetTempDir()`
+  (`src/common/stdpbase.cpp`). The code is the same in wxWidgets 3.2.9, which the 10.0.6 image
+  links, and in 3.3.1, which KiCad's Windows build pins in `vcpkg.json` (`src/common/filename.cpp`,
+  lines 1215-1266 and 1228-1279). It works like this:
+  1. It takes the first of `TMPDIR`, `TMP` and `TEMP` that names an **existing** directory.
+     `TMPDIR` counts on Windows too.
+  2. If none does, Windows falls back to the Win32 `GetTempPath`.
+  3. Trailing separators are removed.
+  4. On Unix, when nothing matched, it uses `/tmp`. If `/tmp` does not exist either, it uses `.`,
+     which is KiCad's working directory.
+
+`wxFileName` then drops empty components, so `/tmp//x/` becomes `/tmp/x`. On Windows, `\` and `/`
+both separate, and the result is written with `\`.
+
+**On Windows, `ipc://` is a named pipe, not a file.** Both nng 1.11 (KiCad's Windows build, and the
+Linux image) and nng 1.4.0 (what this package ships for Windows) open `\\.\pipe\` followed by the
+path (1.11's listener in `win_ipclisten.c:211`, 1.4.0's dialer in `win_ipcdial.c:240`, the prefix
+in `win_ipc.h:20` in both). Nothing
+appears on disk, and the client has to spell the path exactly as KiCad does. Until #97 this method
+wrote `…\Temp\\kicad\api.sock`: `Path.GetTempPath()` already ends in `\`, and the code added
+another.
+
+Measured on Linux, in `ghcr.io/danielmeza/orbion-kicad-release:10.0.6` with no network and a fresh
+`HOME`. Each row started pcbnew with only the variables shown. Three things were read for each:
+- the Unix sockets pcbnew was listening on (`/proc/net/unix`);
+- the `KICAD_API_SOCKET` it handed an `exec` plugin;
+- `GetDefaultSocketPath()` from a probe run with the same variables and no `KICAD_API_SOCKET`.
+
+The probe then connected and asked for `GetVersion()` and `GetBoard()`.
+
+| pcbnew started with | Listening on | Plugin got, and the probe computed | Probe connected |
+|---|---|---|---|
+| nothing | `/tmp/kicad/api.sock` | `ipc:///tmp/kicad/api.sock` | yes |
+| `TMPDIR=/tmp/custom-b` | `/tmp/custom-b/kicad/api.sock` | `ipc:///tmp/custom-b/kicad/api.sock` | yes |
+| `TMPDIR=/does/not/exist TMP=/tmp/tmpvar-c` | `/tmp/tmpvar-c/kicad/api.sock` | `ipc:///tmp/tmpvar-c/kicad/api.sock` | yes |
+| `TMPDIR=/tmp//dbl-d/` | `/tmp/dbl-d/kicad/api.sock` | `ipc:///tmp/dbl-d/kicad/api.sock` | yes |
+| a 92-character `TMPDIR` | its 107-byte path | the same | yes |
+| a 93-character `TMPDIR` | **nothing** | its 108-byte path | no: `KiCadConnectionException`, "Address invalid" |
+| a 120-character `TMPDIR` | **nothing** | its 135-byte path | no, the same |
+
+Before #97, the method returned `ipc:///tmp/kicad/api.sock` in every row.
+
+**When the path does not fit, KiCad has no API socket at all.** On Linux a socket path has to fit
+in `sun_path`: 108 bytes, including the terminating NUL. KiCad adds `/kicad/api.sock`, 15
+characters, so a `TMPDIR` of up to 92 characters works and a longer one does not. nng refuses the
+path in one of two places:
+- over 128 bytes, when the listener is created (`nni_ipc_listener_alloc`,
+  `posix_ipclisten.c:463-478`);
+- over 107, when it starts (`ipc_listener_listen`, through `nni_posix_nn2sockaddr`,
+  `posix_sockaddr.c:74-78`).
+
+KiCad's `KINNG_REQUEST_SERVER::listenThread` (`libs/kinng/src/kinng.cpp:102-114`) logs a failed
+create and ignores the result of `nng_listener_start`. Either way, `KICAD_API_SERVER::Running()`
+stays true: it only asks whether the thread is joinable. So KiCad still hands its plugins the
+address, as the last two rows show, and it leaves `kicad/api.lock` behind with no socket beside it.
+
+`GetDefaultSocketPath()` returns the address KiCad chose even then. A shorter path would lead
+nowhere, because nothing listens anywhere. The dial fails at once, as a `KiCadConnectionException`.
+
+On Windows, nng refuses a path of 128 characters or more when the listener is created
+(`win_ipclisten.c:321-328`). That case was not measured.
+
+Two more cases have no default address that could be right:
+
+- **A second KiCad**, started while the first one holds `api.sock`, listens on
+  `api-<pid>.sock` in the same directory (`api_server.cpp:115-125`). The default reaches the first.
+- **KiCad from Flathub, seen from outside its sandbox.** It runs with `TMPDIR=/var/tmp`, which
+  is `~/.var/app/org.kicad.KiCad/cache/tmp` on the host. That is #110.
+
 ### nng, and which platforms it reaches
 
 The transport is nng. `KiCadSharp` calls it through a **P/Invoke wrapper of thirteen entry points**
