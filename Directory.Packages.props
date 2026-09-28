@@ -42,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageVersion Include="System.CommandLine" Version="2.0.11" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.12" />
   </ItemGroup>
 
   <!-- Test-only packages. -->
