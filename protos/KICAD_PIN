@@ -16,4 +16,4 @@
 #
 # To move the pin: edit both lines, run scripts/sync-protos.sh, and commit the result.
 KICAD_REF=master
-KICAD_COMMIT=965fb68075b53cd4eaf2244954c9ef54ae0b433c
+KICAD_COMMIT=dffc61437573d7fccfc5bbf5ec321eb4493d0bb7
