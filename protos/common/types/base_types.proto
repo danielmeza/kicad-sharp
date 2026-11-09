@@ -630,3 +630,14 @@ message CustomProperty
   string key = 1;
   string value = 2;
 }
+
+enum MarkerType
+{
+    MT_UNKNOWN       = 0;
+    MT_ERC           = 1;
+    MT_DRC           = 2;
+    MT_DRAWING_SHEET = 3;
+    MT_RATSNEST      = 4;
+    MT_PARITY        = 5;
+    MT_SIMULATION    = 6;
+}
